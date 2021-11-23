@@ -1,0 +1,47 @@
+{
+    "name": "fligno/starter-kit",
+    "description": "Starter Kit for Fligno Laravel Developers",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "James Carlo Luchavez",
+            "email": "jamescarlo.luchavez@fligno.com",
+            "homepage": "https://www.linkedin.com/in/jsluchavez/"
+        }
+    ],
+    "homepage": "https://github.com/fligno/starter-kit",
+    "keywords": ["Laravel", "StarterKit"],
+    "require": {
+        "illuminate/support": "~7|~8",
+        "composer/composer": "^2.0",
+        "fligno/starter-kit": "master"
+    },
+    "require-dev": {
+        "roave/security-advisories": "dev-latest",
+        "phpunit/phpunit": "~9.0",
+        "orchestra/testbench": "~5|~6"
+    },
+    "autoload": {
+        "files": [
+            "helpers/CustomHelpers.php"
+        ],
+        "psr-4": {
+            "Fligno\\StarterKit\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Fligno\\StarterKit\\Tests\\": "tests"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Fligno\\StarterKit\\StarterKitServiceProvider"
+            ],
+            "aliases": {
+                "StarterKit": "Fligno\\StarterKit\\Facades\\StarterKit"
+            }
+        }
+    }
+}
