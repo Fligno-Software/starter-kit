@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  *
- * @method static void enableRepositoryPattern(string $path)
+ * @method static void registerRepositories(string $repositoriesPath, string $modelsPath = null)
  *
  * @see \Fligno\StarterKit\StarterKit
  */

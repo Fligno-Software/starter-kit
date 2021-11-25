@@ -17,7 +17,7 @@ class StarterKit
      * @param string $repositoriesPath
      * @param string|null $modelsPath
      */
-    public function enableRepositoryPattern(string $repositoriesPath, string $modelsPath = null): void
+    public function registerRepositories(string $repositoriesPath, string $modelsPath = null): void
     {
         // Check if both paths exist
         if (file_exists($repositoriesPath)) {
@@ -35,13 +35,8 @@ class StarterKit
             $modelsPath = realpath($modelsPath);
         }
 
-//        info($repositoriesPath . ' => ' . $modelsPath);
-
         $repositoriesClasses = $this->getClassesFromPath($repositoriesPath);
         $modelsClasses = $this->getClassesFromPath($modelsPath);
-
-//        info(json_encode($repositoriesClasses, JSON_THROW_ON_ERROR));
-//        info(json_encode($modelsClasses, JSON_THROW_ON_ERROR));
 
         $repositoriesClasses->each(static function ($repo, $key) use ($modelsClasses) {
             $model = $modelsClasses->get($key);
@@ -51,30 +46,6 @@ class StarterKit
                 });
             }
         });
-
-//        foreach ($classes as $class) {
-//            try {
-//                $modelNamespace = $this->getModelNamespaceFromClass($class);
-//
-//                if(!$modelNamespace)
-//                {
-//                    $modelNamespace = 'App\Models';
-//                }
-//
-//                $model = $this->getModelNameFromClass($class, $modelNamespace);
-//
-//                if ($model) {
-//                    $this->app->when($class)
-//                        ->needs(Builder::class)
-//                        ->give(function() use ($model) {
-//                            return call_user_func($model.'::query');
-//                        });
-//                }
-//            }
-//            catch (Exception $e) {
-//                continue;
-//            }
-//        }
     }
 
     /**
