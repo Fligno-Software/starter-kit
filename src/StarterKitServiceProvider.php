@@ -4,30 +4,23 @@ namespace Fligno\StarterKit;
 
 use Fligno\StarterKit\Exceptions\Handler;
 use Fligno\StarterKit\Macros\ArrMacros;
+use Fligno\StarterKit\Providers\AbstractStarterKitServiceProvider;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Support\Arr;
-use Illuminate\Support\ServiceProvider;
 use ReflectionException;
 
-class StarterKitServiceProvider extends ServiceProvider
+class StarterKitServiceProvider extends AbstractStarterKitServiceProvider
 {
     /**
      * Perform post-registration booting of services.
      *
      * @return void
      * @throws ReflectionException
+     * @throws \JsonException
      */
     public function boot(): void
     {
-        // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'fligno');
-        // $this->loadViewsFrom(__DIR__.'/../resources/views', 'fligno');
-        // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-        // $this->loadRoutesFrom(__DIR__.'/routes.php');
-
-        // Publishing is only necessary when using the CLI.
-        if ($this->app->runningInConsole()) {
-            $this->bootForConsole();
-        }
+        parent::boot();
 
         // Register Custom Exception Handler
         if (config('boilerplate-generator.override_exception_handler')) {

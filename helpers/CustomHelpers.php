@@ -10,6 +10,7 @@ use Fligno\StarterKit\ExtendedResponse;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 
 if (! function_exists('customResponse')) {
     /**
@@ -18,6 +19,16 @@ if (! function_exists('customResponse')) {
     function customResponse(): ExtendedResponse
     {
         return resolve('extended-response');
+    }
+}
+
+if (! function_exists('custom_response')) {
+    /**
+     * @return ExtendedResponse
+     */
+    function custom_response(): ExtendedResponse
+    {
+        return customResponse();
     }
 }
 
@@ -159,3 +170,48 @@ if (!function_exists('get_class_name_from_object')) {
     }
 }
 
+/***** COLLECTION-RELATED *****/
+
+if (! function_exists('collection_decode')) {
+    /**
+     * Decode a string to a Collection instance.
+     *
+     * @param string|null $collection
+     * @return Collection|string|null
+     * @throws JsonException
+     */
+    function collection_decode(?string $collection): string|Collection|null
+    {
+        if ($collection) {
+            $temp = json_decode($collection, true, 512, JSON_THROW_ON_ERROR);
+
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return collect($temp);
+            }
+        }
+
+        return $collection;
+    }
+}
+
+if (! function_exists('collection_encode')) {
+    /**
+     * Decode a string to a Collection instance.
+     *
+     * @param Collection|null $collection
+     * @return false|Collection|string|null
+     * @throws JsonException
+     */
+    function collection_encode(?Collection $collection): bool|string|Collection|null
+    {
+        if ($collection) {
+            $temp = json_encode($collection, JSON_THROW_ON_ERROR);
+
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $temp;
+            }
+        }
+
+        return $collection;
+    }
+}

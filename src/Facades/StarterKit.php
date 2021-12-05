@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Facade;
 /**
  *
  * @method static void registerRepositories(string $repositoriesPath, string $modelsPath = null)
+ * @method static void registerPolicies(string $policiesPath, string $modelsPath = null)
+ * @method static void registerObservers(string $observersPath, string $modelsPath = null)
  *
  * @see \Fligno\StarterKit\StarterKit
  */
