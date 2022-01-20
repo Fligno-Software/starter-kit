@@ -3,16 +3,19 @@
 namespace Fligno\StarterKit\Providers;
 
 use Fligno\StarterKit\Facades\StarterKit;
+use Fligno\StarterKit\Interfaces\UsesConsoleKernelInterface;
+use Fligno\StarterKit\Interfaces\UsesHttpKernelInterface;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use ReflectionClass;
 
 /**
- * Class AbstractStarterKitServiceProvider
+ * Class BaseStarterKitServiceProvider
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
  */
-abstract class AbstractStarterKitServiceProvider extends ServiceProvider
+abstract class BaseStarterKitServiceProvider extends ServiceProvider
 {
     /**
      * Artisan Commands
@@ -48,6 +51,19 @@ abstract class AbstractStarterKitServiceProvider extends ServiceProvider
         // Publishing is only necessary when using the CLI.
         if ($this->app->runningInConsole()) {
             $this->bootForConsole();
+        }
+
+        // Register Console Kernel & Http Kernel
+        if ($this instanceof UsesConsoleKernelInterface) {
+            $this->app->booted(function () {
+                $this->registerToConsoleKernel(app(Schedule::class));
+            });
+        }
+
+        if ($this instanceof UsesHttpKernelInterface) {
+            $this->app->booted(function () {
+                $this->registerToHttpKernel(app('router'));
+            });
         }
 
         // For Polymorphism
@@ -168,7 +184,7 @@ abstract class AbstractStarterKitServiceProvider extends ServiceProvider
      */
     public function guessFileOrFolderPath(string $folderName, int $maxLevelToGuess = 3): string
     {
-        $extendingClassFileName = (new ReflectionClass(static::class))->getFileName(); //class that extends `AbstractStarterKitServiceProvider`
+        $extendingClassFileName = (new ReflectionClass(static::class))->getFileName(); //class that extends `BaseStarterKitServiceProvider`
 
         for ($level = 1; $level <= $maxLevelToGuess ; $level++)
         {

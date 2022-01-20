@@ -4,12 +4,12 @@ namespace Fligno\StarterKit;
 
 use Fligno\StarterKit\Exceptions\Handler;
 use Fligno\StarterKit\Macros\ArrMacros;
-use Fligno\StarterKit\Providers\AbstractStarterKitServiceProvider;
+use Fligno\StarterKit\Providers\BaseStarterKitServiceProvider;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Support\Arr;
 use ReflectionException;
 
-class StarterKitServiceProvider extends AbstractStarterKitServiceProvider
+class StarterKitServiceProvider extends BaseStarterKitServiceProvider
 {
     /**
      * Perform post-registration booting of services.

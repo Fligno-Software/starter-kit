@@ -24,7 +24,7 @@
     },
     "autoload": {
         "files": [
-            "helpers/CustomHelpers.php"
+            "helpers/starter-kit-helper.php"
         ],
         "psr-4": {
             "Fligno\\StarterKit\\": "src/"
