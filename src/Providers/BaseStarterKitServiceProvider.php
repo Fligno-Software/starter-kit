@@ -7,7 +7,9 @@ use Fligno\StarterKit\Interfaces\UsesConsoleKernelInterface;
 use Fligno\StarterKit\Interfaces\UsesHttpKernelInterface;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
+use JsonException;
 use ReflectionClass;
 
 /**
@@ -67,7 +69,9 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
         }
 
         // For Polymorphism
-        $this->enforceMorphMap($this->morphMap);
+        if (config('starter-kit.enforce_morph_map')) {
+            $this->enforceMorphMap($this->morphMap);
+        }
     }
 
     /**
@@ -206,5 +210,34 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     public function enforceMorphMap(array $map, bool $merge = true): void
     {
         Relation::enforceMorphMap($map, $merge);
+    }
+
+    /**
+     * @param string|null $key
+     * @return Collection|mixed|null
+     */
+    public function getComposerJson(?string $key): mixed
+    {
+        if ($path = $this->guessFileOrFolderPath('composer.json', 3)) {
+            try {
+                $collection = collect(json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR));
+                if ($key) {
+                    return $collection->get($key);
+                }
+                return $collection;
+            } catch (JsonException) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getPackageNameFromComposerJson(): ?string
+    {
+        return $this->getComposerJson('name');
     }
 }

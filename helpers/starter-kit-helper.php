@@ -32,7 +32,7 @@ if (! function_exists('custom_response')) {
     }
 }
 
-if (!function_exists('array_filter_recursive')) {
+if (! function_exists('array_filter_recursive')) {
     /**
      * @param array $arr
      * @param bool $accept_boolean
@@ -57,7 +57,7 @@ if (!function_exists('array_filter_recursive')) {
     }
 }
 
-if (!function_exists('is_request_instance')) {
+if (! function_exists('is_request_instance')) {
 
     /**
      * @param $request
@@ -69,7 +69,7 @@ if (!function_exists('is_request_instance')) {
     }
 }
 
-if (!function_exists('request_or_array_has')) {
+if (! function_exists('request_or_array_has')) {
     /**
      * Check if the Request or associative array has a specific key.
      *
@@ -101,7 +101,7 @@ if (!function_exists('request_or_array_has')) {
     }
 }
 
-if (!function_exists('request_or_array_get')) {
+if (! function_exists('request_or_array_get')) {
     /**
      * Get a value from Request or associative array using a string key.
      *
@@ -124,7 +124,7 @@ if (!function_exists('request_or_array_get')) {
     }
 }
 
-if (!function_exists('is_request_or_array_filled')) {
+if (! function_exists('is_request_or_array_filled')) {
     /**
      * Check if a key exists and is not empty on a Request or associative array.
      *
@@ -146,7 +146,7 @@ if (!function_exists('is_request_or_array_filled')) {
     }
 }
 
-if (!function_exists('is_eloquent_model')) {
+if (! function_exists('is_eloquent_model')) {
     /**
      * Determine if the class using the trait is a subclass of Eloquent Model.
      *
@@ -159,7 +159,7 @@ if (!function_exists('is_eloquent_model')) {
     }
 }
 
-if (!function_exists('get_class_name_from_object')) {
+if (! function_exists('get_class_name_from_object')) {
     /**
      * @param mixed $object_or_class
      * @return mixed
@@ -213,5 +213,29 @@ if (! function_exists('collection_encode')) {
         }
 
         return $collection;
+    }
+}
+
+if (! function_exists('getFilesOrDirectories'))
+{
+    /**
+     * @param string $directory
+     * @return array|false
+     */
+    function getFilesOrDirectories(string $directory): bool|array
+    {
+        return array_values(array_diff(scandir($directory), ['..', '.']));
+    }
+}
+
+if (! function_exists('get_files_or_directories'))
+{
+    /**
+     * @param string $directory
+     * @return array|false
+     */
+    function get_files_or_directories(string $directory): bool|array
+    {
+        return getFilesOrDirectories($directory);
     }
 }
