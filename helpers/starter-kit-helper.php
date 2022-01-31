@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Symfony\Component\Process\Process;
 
 if (! function_exists('customResponse')) {
     /**
@@ -32,7 +33,7 @@ if (! function_exists('custom_response')) {
     }
 }
 
-if (!function_exists('array_filter_recursive')) {
+if (! function_exists('array_filter_recursive')) {
     /**
      * @param array $arr
      * @param bool $accept_boolean
@@ -57,7 +58,7 @@ if (!function_exists('array_filter_recursive')) {
     }
 }
 
-if (!function_exists('is_request_instance')) {
+if (! function_exists('is_request_instance')) {
 
     /**
      * @param $request
@@ -69,7 +70,7 @@ if (!function_exists('is_request_instance')) {
     }
 }
 
-if (!function_exists('request_or_array_has')) {
+if (! function_exists('request_or_array_has')) {
     /**
      * Check if the Request or associative array has a specific key.
      *
@@ -101,7 +102,7 @@ if (!function_exists('request_or_array_has')) {
     }
 }
 
-if (!function_exists('request_or_array_get')) {
+if (! function_exists('request_or_array_get')) {
     /**
      * Get a value from Request or associative array using a string key.
      *
@@ -124,7 +125,7 @@ if (!function_exists('request_or_array_get')) {
     }
 }
 
-if (!function_exists('is_request_or_array_filled')) {
+if (! function_exists('is_request_or_array_filled')) {
     /**
      * Check if a key exists and is not empty on a Request or associative array.
      *
@@ -146,7 +147,7 @@ if (!function_exists('is_request_or_array_filled')) {
     }
 }
 
-if (!function_exists('is_eloquent_model')) {
+if (! function_exists('is_eloquent_model')) {
     /**
      * Determine if the class using the trait is a subclass of Eloquent Model.
      *
@@ -159,7 +160,7 @@ if (!function_exists('is_eloquent_model')) {
     }
 }
 
-if (!function_exists('get_class_name_from_object')) {
+if (! function_exists('get_class_name_from_object')) {
     /**
      * @param mixed $object_or_class
      * @return mixed
@@ -213,5 +214,44 @@ if (! function_exists('collection_encode')) {
         }
 
         return $collection;
+    }
+}
+
+if (! function_exists('get_files_or_directories'))
+{
+    /**
+     * @param string $directory
+     * @return array|null
+     */
+    function get_files_or_directories(string $directory): array|null
+    {
+        $directory = trim($directory);
+
+        if ($directory && $arr = scandir($directory)) {
+            return array_values(array_diff($arr, ['..', '.']));
+        }
+
+        return null;
+    }
+}
+
+if (! function_exists('make_process'))
+{
+    /**
+     * @param Collection|array $arguments
+     * @param string|null $workingDirectory
+     * @return Process
+     */
+    function make_process(Collection|array $arguments, string $workingDirectory = null): Process
+    {
+        if (! $workingDirectory) {
+            $workingDirectory = base_path();
+        }
+
+        if ($arguments instanceof Collection) {
+            $arguments = $arguments->toArray();
+        }
+
+        return new Process($arguments, $workingDirectory);
     }
 }

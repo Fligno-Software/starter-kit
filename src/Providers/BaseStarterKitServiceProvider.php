@@ -7,8 +7,11 @@ use Fligno\StarterKit\Interfaces\UsesConsoleKernelInterface;
 use Fligno\StarterKit\Interfaces\UsesHttpKernelInterface;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
+use JsonException;
 use ReflectionClass;
+use function Composer\Autoload\includeFile;
 
 /**
  * Class BaseStarterKitServiceProvider
@@ -29,7 +32,12 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
      *
      * @var array
      */
-    protected array $morphMap = [];
+    protected array $morph_map = [];
+
+    // /**
+    // * @var array
+    // */
+    // protected array $facade_aliases = [];
 
     /**
      * Perform post-registration booting of services.
@@ -40,8 +48,12 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     {
         // Default Load Functions
         $this->loadMigrationsFrom($this->guessFileOrFolderPath('database/migrations'));
-        $this->loadRoutesFrom($this->guessFileOrFolderPath('routes/api.php'));
-        $this->loadRoutesFrom($this->guessFileOrFolderPath('routes/web.php'));
+
+        // Load Routes
+        if ($this->isRoutesEnabled()) {
+            $this->loadRoutesFrom($this->guessFileOrFolderPath('routes/api.php'));
+            $this->loadRoutesFrom($this->guessFileOrFolderPath('routes/web.php'));
+        }
 
         // Custom Load Functions With Folder Guessing
         $this->loadRepositoriesFrom($this->guessFileOrFolderPath('Repositories'));
@@ -67,7 +79,25 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
         }
 
         // For Polymorphism
-        $this->enforceMorphMap($this->morphMap);
+        if ($this->isMorphMapEnabled()) {
+            $this->enforceMorphMap($this->morph_map);
+        }
+    }
+
+    /**
+     * Register any package services.
+     *
+     * @return void
+     */
+    public function register(): void
+    {
+        // Load Helper Files
+        $this->loadHelpersFrom($this->guessFileOrFolderPath('helpers'));
+
+        // Todo: Facade Aliases
+        // foreach ($this->facade_aliases as $key=> $value) {
+        //     $this->app->alias($key, $value);
+        // }
     }
 
     /**
@@ -166,6 +196,15 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
         StarterKit::registerObservers($observersPath, $modelsPath);
     }
 
+    protected function loadHelpersFrom(string $path): void
+    {
+        if ($helpers = get_files_or_directories($path)) {
+            foreach ($helpers as $helper) {
+                includeFile($path . '/' . $helper);
+            }
+        }
+    }
+
     /***** ABSTRACT METHODS *****/
 
     /**
@@ -206,5 +245,54 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     public function enforceMorphMap(array $map, bool $merge = true): void
     {
         Relation::enforceMorphMap($map, $merge);
+    }
+
+    /**
+     * Get composer.json contents
+     *
+     * @param string|null $key
+     * @return Collection|mixed|null
+     */
+    public function getComposerJson(?string $key): mixed
+    {
+        if ($path = $this->guessFileOrFolderPath('composer.json', 3)) {
+            try {
+                $collection = collect(json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR));
+                if ($key) {
+                    return $collection->get($key);
+                }
+                return $collection;
+            } catch (JsonException) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get Package Name from composer.json
+     *
+     * @return string|null
+     */
+    public function getPackageNameFromComposerJson(): ?string
+    {
+        return $this->getComposerJson('name');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRoutesEnabled(): bool
+    {
+        return config('starter-kit.routes_enabled');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isMorphMapEnabled(): bool
+    {
+        return config('starter-kit.enforce_morph_map');
     }
 }
