@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Symfony\Component\Process\Process;
 
 if (! function_exists('customResponse')) {
     /**
@@ -216,26 +217,41 @@ if (! function_exists('collection_encode')) {
     }
 }
 
-if (! function_exists('getFilesOrDirectories'))
-{
-    /**
-     * @param string $directory
-     * @return array|false
-     */
-    function getFilesOrDirectories(string $directory): bool|array
-    {
-        return array_values(array_diff(scandir($directory), ['..', '.']));
-    }
-}
-
 if (! function_exists('get_files_or_directories'))
 {
     /**
      * @param string $directory
-     * @return array|false
+     * @return array|null
      */
-    function get_files_or_directories(string $directory): bool|array
+    function get_files_or_directories(string $directory): array|null
     {
-        return getFilesOrDirectories($directory);
+        $directory = trim($directory);
+
+        if ($directory && $arr = scandir($directory)) {
+            return array_values(array_diff($arr, ['..', '.']));
+        }
+
+        return null;
+    }
+}
+
+if (! function_exists('make_process'))
+{
+    /**
+     * @param Collection|array $arguments
+     * @param string|null $workingDirectory
+     * @return Process
+     */
+    function make_process(Collection|array $arguments, string $workingDirectory = null): Process
+    {
+        if (! $workingDirectory) {
+            $workingDirectory = base_path();
+        }
+
+        if ($arguments instanceof Collection) {
+            $arguments = $arguments->toArray();
+        }
+
+        return new Process($arguments, $workingDirectory);
     }
 }

@@ -4,19 +4,18 @@ namespace Fligno\StarterKit;
 
 use Fligno\StarterKit\Exceptions\Handler;
 use Fligno\StarterKit\Macros\ArrMacros;
-use Fligno\StarterKit\Providers\BaseStarterKitServiceProvider;
+use Fligno\StarterKit\Providers\BaseStarterKitServiceProvider as ServiceProvider;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Support\Arr;
 use ReflectionException;
 
-class StarterKitServiceProvider extends BaseStarterKitServiceProvider
+class StarterKitServiceProvider extends ServiceProvider
 {
     /**
      * Perform post-registration booting of services.
      *
      * @return void
      * @throws ReflectionException
-     * @throws \JsonException
      */
     public function boot(): void
     {
@@ -38,6 +37,8 @@ class StarterKitServiceProvider extends BaseStarterKitServiceProvider
      */
     public function register(): void
     {
+        parent::register();
+
         $this->mergeConfigFrom(__DIR__.'/../config/starter-kit.php', 'starter-kit');
 
         // Register the service the package provides.

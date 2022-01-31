@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
 use JsonException;
 use ReflectionClass;
+use function Composer\Autoload\includeFile;
 
 /**
  * Class BaseStarterKitServiceProvider
@@ -31,7 +32,12 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
      *
      * @var array
      */
-    protected array $morphMap = [];
+    protected array $morph_map = [];
+
+    // /**
+    // * @var array
+    // */
+    // protected array $facade_aliases = [];
 
     /**
      * Perform post-registration booting of services.
@@ -42,8 +48,12 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     {
         // Default Load Functions
         $this->loadMigrationsFrom($this->guessFileOrFolderPath('database/migrations'));
-        $this->loadRoutesFrom($this->guessFileOrFolderPath('routes/api.php'));
-        $this->loadRoutesFrom($this->guessFileOrFolderPath('routes/web.php'));
+
+        // Load Routes
+        if ($this->isRoutesEnabled()) {
+            $this->loadRoutesFrom($this->guessFileOrFolderPath('routes/api.php'));
+            $this->loadRoutesFrom($this->guessFileOrFolderPath('routes/web.php'));
+        }
 
         // Custom Load Functions With Folder Guessing
         $this->loadRepositoriesFrom($this->guessFileOrFolderPath('Repositories'));
@@ -69,9 +79,25 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
         }
 
         // For Polymorphism
-        if (config('starter-kit.enforce_morph_map')) {
-            $this->enforceMorphMap($this->morphMap);
+        if ($this->isMorphMapEnabled()) {
+            $this->enforceMorphMap($this->morph_map);
         }
+    }
+
+    /**
+     * Register any package services.
+     *
+     * @return void
+     */
+    public function register(): void
+    {
+        // Load Helper Files
+        $this->loadHelpersFrom($this->guessFileOrFolderPath('helpers'));
+
+        // Todo: Facade Aliases
+        // foreach ($this->facade_aliases as $key=> $value) {
+        //     $this->app->alias($key, $value);
+        // }
     }
 
     /**
@@ -170,6 +196,15 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
         StarterKit::registerObservers($observersPath, $modelsPath);
     }
 
+    protected function loadHelpersFrom(string $path): void
+    {
+        if ($helpers = get_files_or_directories($path)) {
+            foreach ($helpers as $helper) {
+                includeFile($path . '/' . $helper);
+            }
+        }
+    }
+
     /***** ABSTRACT METHODS *****/
 
     /**
@@ -213,6 +248,8 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     }
 
     /**
+     * Get composer.json contents
+     *
      * @param string|null $key
      * @return Collection|mixed|null
      */
@@ -234,10 +271,28 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     }
 
     /**
+     * Get Package Name from composer.json
+     *
      * @return string|null
      */
     public function getPackageNameFromComposerJson(): ?string
     {
         return $this->getComposerJson('name');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRoutesEnabled(): bool
+    {
+        return config('starter-kit.routes_enabled');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isMorphMapEnabled(): bool
+    {
+        return config('starter-kit.enforce_morph_map');
     }
 }
