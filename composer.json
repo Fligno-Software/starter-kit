@@ -25,12 +25,18 @@
     "autoload": {
         "psr-4": {
             "Fligno\\StarterKit\\": "src/"
-        }
+        },
+        "files": [
+            "helpers/starter-kit-helper.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
             "Fligno\\StarterKit\\Tests\\": "tests"
-        }
+        },
+        "files": [
+            "helpers/starter-kit-helper.php"
+        ]
     },
     "extra": {
         "laravel": {

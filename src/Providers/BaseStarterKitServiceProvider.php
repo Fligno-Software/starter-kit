@@ -4,6 +4,7 @@ namespace Fligno\StarterKit\Providers;
 
 use Fligno\StarterKit\Facades\StarterKit;
 use Fligno\StarterKit\Interfaces\UsesConsoleKernelInterface;
+use Fligno\StarterKit\Interfaces\UsesDynamicRelationshipsInterface;
 use Fligno\StarterKit\Interfaces\UsesHttpKernelInterface;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -11,7 +12,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
 use JsonException;
 use ReflectionClass;
-use function Composer\Autoload\includeFile;
 
 /**
  * Class BaseStarterKitServiceProvider
@@ -76,6 +76,11 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
             $this->app->booted(function () {
                 $this->registerToHttpKernel(app('router'));
             });
+        }
+
+        // Register Dynamic Relationships
+        if ($this instanceof UsesDynamicRelationshipsInterface && $this->isDynamicRelationshipsEnabled()) {
+            $this->registerDynamicRelationships();
         }
 
         // For Polymorphism
@@ -200,7 +205,7 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     {
         if ($helpers = get_files_or_directories($path)) {
             foreach ($helpers as $helper) {
-                includeFile($path . '/' . $helper);
+                include_once $path . '/' . $helper;
             }
         }
     }
@@ -294,5 +299,13 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     public function isMorphMapEnabled(): bool
     {
         return config('starter-kit.enforce_morph_map');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDynamicRelationshipsEnabled(): bool
+    {
+        return config('starter-kit.dynamic_relationships_enabled');
     }
 }

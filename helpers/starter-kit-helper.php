@@ -5,7 +5,6 @@
  * @since 2021-11-09
  */
 
-
 use Fligno\StarterKit\ExtendedResponse;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
