@@ -25,7 +25,10 @@
     "autoload": {
         "psr-4": {
             "Fligno\\StarterKit\\": "src/"
-        }
+        },
+        "files": [
+            "helpers/starter-kit-helper.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
