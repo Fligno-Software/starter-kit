@@ -3,11 +3,11 @@
 namespace Fligno\StarterKit\Interfaces;
 
 /**
- * Interface UsesDynamicRelationshipsInterface
+ * Interface ProviderDynamicRelationshipsInterface
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
  */
-interface UsesDynamicRelationshipsInterface
+interface ProviderDynamicRelationshipsInterface
 {
     /**
      * @return void

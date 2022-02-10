@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 /**
- * Trait UsesUUID
+ * Trait UsesUUIDTrait
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
  * @since 2021-11-19
  */
-trait UsesUUID
+trait UsesUUIDTrait
 {
     /**
      * Generates a UUID during model creation.

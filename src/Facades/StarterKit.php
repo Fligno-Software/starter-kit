@@ -6,9 +6,9 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  *
- * @method static void registerRepositories(string $repositoriesPath, string $modelsPath = null)
- * @method static void registerPolicies(string $policiesPath, string $modelsPath = null)
- * @method static void registerObservers(string $observersPath, string $modelsPath = null)
+ * @method static void registerRepositories(string $repositoriesPath = null, string $modelsPath = null)
+ * @method static void registerPolicies(string $policiesPath = null, string $modelsPath = null)
+ * @method static void registerObservers(string $observersPath = null, string $modelsPath = null)
  *
  * @see \Fligno\StarterKit\StarterKit
  */

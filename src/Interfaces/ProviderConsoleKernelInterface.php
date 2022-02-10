@@ -9,7 +9,7 @@ use Illuminate\Console\Scheduling\Schedule;
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
  */
-interface UsesConsoleKernelInterface
+interface ProviderConsoleKernelInterface
 {
     /**
      * @param Schedule $schedule
