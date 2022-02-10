@@ -17,17 +17,21 @@ use Illuminate\Support\Str;
 class StarterKit
 {
     /**
-     * @param string $repositoriesPath
+     * @param string|null $repositoriesPath
      * @param string|null $modelsPath
      */
-    public function registerRepositories(string $repositoriesPath, string $modelsPath = null): void
+    public function registerRepositories(string $repositoriesPath = null, string $modelsPath = null): void
     {
+        if (empty($repositoriesPath)) {
+            return;
+        }
+
         if (! $this->verifyPathsExist($repositoriesPath, $modelsPath)) {
             return;
         }
 
-        $repositoriesClasses = $this->getClassesFromPath($repositoriesPath, 'Repository');
-        $modelsClasses = $this->getClassesFromPath($modelsPath);
+        $repositoriesClasses = collectClassesFromPath($repositoriesPath, 'Repository');
+        $modelsClasses = collectClassesFromPath($modelsPath);
 
         $repositoriesClasses->each(static function ($repo, $key) use ($modelsClasses) {
             $model = $modelsClasses->get($key);
@@ -40,17 +44,21 @@ class StarterKit
     }
 
     /**
-     * @param string $policiesPath
+     * @param string|null $policiesPath
      * @param string|null $modelsPath
      */
-    public function registerPolicies(string $policiesPath, string $modelsPath = null): void
+    public function registerPolicies(string $policiesPath = null, string $modelsPath = null): void
     {
+        if (empty($policiesPath)) {
+            return;
+        }
+
         if (! $this->verifyPathsExist($policiesPath, $modelsPath)) {
             return;
         }
 
-        $policiesClasses = $this->getClassesFromPath($policiesPath, 'Policy');
-        $modelsClasses = $this->getClassesFromPath($modelsPath);
+        $policiesClasses = collectClassesFromPath($policiesPath, 'Policy');
+        $modelsClasses = collectClassesFromPath($modelsPath);
 
         $policiesClasses->each(static function ($policy, $key) use ($modelsClasses) {
             $model = $modelsClasses->get($key);
@@ -61,17 +69,21 @@ class StarterKit
     }
 
     /**
-     * @param string $observersPath
+     * @param string|null $observersPath
      * @param string|null $modelsPath
      */
-    public function registerObservers(string $observersPath, string $modelsPath = null): void
+    public function registerObservers(string $observersPath = null, string $modelsPath = null): void
     {
+        if (empty($observersPath)) {
+            return;
+        }
+
         if (! $this->verifyPathsExist($observersPath, $modelsPath)) {
             return;
         }
 
-        $observersClasses = $this->getClassesFromPath($observersPath, 'Observer');
-        $modelsClasses = $this->getClassesFromPath($modelsPath);
+        $observersClasses = collectClassesFromPath($observersPath, 'Observer');
+        $modelsClasses = collectClassesFromPath($modelsPath);
 
         $observersClasses->each(static function ($observer, $key) use ($modelsClasses) {
             $model = $modelsClasses->get($key);
@@ -103,26 +115,5 @@ class StarterKit
         }
 
         return false;
-    }
-
-    /**
-     * @param string $path
-     * @param string|null $suffix
-     * @return Collection
-     */
-    private function getClassesFromPath(string$path, string $suffix = null): Collection
-    {
-        $classPaths = array_keys(ClassMapGenerator::createMap($path));
-
-        $classes = [];
-
-        foreach ($classPaths as $classPath) {
-            $key = (string) Str::of($classPath)->afterLast('\\')->before($suffix ?? '');
-            if ($key) {
-                $classes[$key] = $classPath;
-            }
-        }
-
-        return collect($classes);
     }
 }

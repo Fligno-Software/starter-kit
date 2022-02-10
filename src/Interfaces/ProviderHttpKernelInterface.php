@@ -9,7 +9,7 @@ use Illuminate\Routing\Router;
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
  */
-interface UsesHttpKernelInterface
+interface ProviderHttpKernelInterface
 {
     /**
      * @param Router $router
