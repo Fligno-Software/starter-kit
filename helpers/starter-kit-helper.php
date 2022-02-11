@@ -419,7 +419,7 @@ if (! function_exists('get_dir_from_object_class_dir')) {
             $dir = dirname($dir);
         }
 
-        return $dir;
+        return str_replace('\\', '/', $dir);
     }
 }
 
