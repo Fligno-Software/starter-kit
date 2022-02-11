@@ -91,7 +91,7 @@ trait UsesProviderStarterKitTrait
      */
     protected function setProviderStarterKitFields(): void
     {
-        $this->provider_directory = get_dir_from_object_class_dir($this);
+        $this->provider_directory = str_replace('\\', '/', get_dir_from_object_class_dir($this));
 
         $this->package_name = $this->getComposerJson('name');
 
