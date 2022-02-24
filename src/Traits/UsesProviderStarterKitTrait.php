@@ -46,7 +46,6 @@ trait UsesProviderStarterKitTrait
         $this->bootLaravelFiles($this->package_directory);
 
         // Load Domains
-        info($this->getDomainsDirectory());
         if (($dir = $this->getDomainsDirectory()) && $domainPath = guess_file_or_directory_path($dir, 'Domains')) {
             $this->bootDomainsFrom($domainPath);
         }

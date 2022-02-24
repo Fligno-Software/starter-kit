@@ -32,7 +32,7 @@ if (! function_exists('customResponse')) {
      */
     function customResponse(): ExtendedResponse
     {
-        return customResponse();
+        return custom_response();
     }
 }
 
