@@ -127,9 +127,8 @@ trait UsesProviderStarterKitTrait
         $this->loadMigrationsFrom(guess_file_or_directory_path($objectOrClassOrFolder, 'database/migrations', $shouldGoUp));
 
         // Load Routes
-        if ($this->isRoutesEnabled()) {
-            $this->loadRoutesFrom(guess_file_or_directory_path($objectOrClassOrFolder, 'routes/api.php', $shouldGoUp));
-            $this->loadRoutesFrom(guess_file_or_directory_path($objectOrClassOrFolder, 'routes/web.php', $shouldGoUp));
+        if ($this->isRoutesEnabled() && $path = guess_file_or_directory_path($objectOrClassOrFolder, 'routes', $shouldGoUp)) {
+            collect_files_or_directories($path, false, true, true)?->each(fn($route) => $this->loadRoutesFrom($route));
         }
 
         // Custom Load Functions With Folder Guessing

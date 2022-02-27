@@ -1,7 +1,8 @@
 <?php
 
-namespace Fligno\StarterKit\Interfaces;
+namespace Fligno\StarterKit\Abstracts;
 
+use Fligno\StarterKit\Interfaces\RepositoryInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -35,9 +36,7 @@ abstract class BaseRepository implements RepositoryInterface
      */
     public function all(): Collection|array
     {
-        $builder = $this->builder;
-
-        return $builder->get();
+        return $this->builder->get();
     }
 
     /**
@@ -46,9 +45,7 @@ abstract class BaseRepository implements RepositoryInterface
      */
     public function create($attributes): Model|Builder
     {
-        $builder = $this->builder;
-
-        return $builder->firstOrCreate($attributes);
+        return $this->builder->firstOrCreate($attributes);
     }
 
     /**
@@ -58,9 +55,7 @@ abstract class BaseRepository implements RepositoryInterface
     public function get($id = null): Model|Collection|Builder|array|null
     {
         if ($id) {
-            $builder = $this->builder;
-
-            return $builder->findOrFail($id);
+            return $this->builder->findOrFail($id);
         }
 
         return $this->all();
@@ -87,9 +82,7 @@ abstract class BaseRepository implements RepositoryInterface
      */
     public function delete($id): mixed
     {
-        $model = $this->get($id);
-
-        return $model->delete();
+        return $this->get($id)?->delete();
     }
 
     /**
