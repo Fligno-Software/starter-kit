@@ -76,10 +76,14 @@ trait UsesProviderStarterKitTrait
         // Load Helper Files
         $this->loadHelpersFrom(guess_file_or_directory_path($this->package_directory, 'helpers'));
 
+        // Load Service Providers
+        $this->loadProvidersFrom(guess_file_or_directory_path($this->package_directory, 'Providers'));
+
         // Load Helpers inside Domains
         if (($dir = $this->getDomainsDirectory()) && $domainPath = guess_file_or_directory_path($dir, 'Domains')) {
             collect_files_or_directories($domainPath, true, false, true)?->each(function ($value) {
                 $this->loadHelpersFrom(guess_file_or_directory_path($value, 'helpers'));
+                $this->loadProvidersFrom(guess_file_or_directory_path($value, 'Providers'));
             });
         }
     }
@@ -243,6 +247,15 @@ trait UsesProviderStarterKitTrait
                 include_once $value;
             });
         }
+    }
+
+    /**
+     * @param string|null $path
+     * @return void
+     */
+    protected function loadProvidersFrom(string $path = null): void
+    {
+        $path && collect_classes_from_path($path)->each(fn($value) => $this->app->register($value));
     }
 
     /**
