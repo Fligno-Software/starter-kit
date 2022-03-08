@@ -373,7 +373,7 @@ if (! function_exists('collect_files_or_directories'))
             }
 
             if ($prependDirectory) {
-                $arr = $arr->map(fn($value) => $directory . DIRECTORY_SEPARATOR . $value);
+                $arr = $arr->map(fn($value) => $directory . '/' . $value);
             }
 
             return $arr;
@@ -437,54 +437,93 @@ if (! function_exists('getDirFromObjectClassDir')) {
 if (! function_exists('guess_file_or_directory_path'))
 {
     /**
-     * @param object|string $objectOrClassOrDir
-     * @param string $fileOrFolderToFind
-     * @param bool $shouldGoUp
-     * @param int $maxLevelToGuess
-     * @return string|null
+     * @param object|string $sourceObjectOrClassOrDir
+     * @param Collection|array|string $targetFileOrFolder
+     * @param bool $traverseUp
+     * @param int $maxLevels
+     * @return Collection|array|string|null
      */
-    function guess_file_or_directory_path(object|string $objectOrClassOrDir, string $fileOrFolderToFind, bool $shouldGoUp = false, int $maxLevelToGuess = 3): ?string
+    function guess_file_or_directory_path(object|string $sourceObjectOrClassOrDir, Collection|array|string $targetFileOrFolder, bool $traverseUp = false, int $maxLevels = 3): array|string|Collection|null
     {
-        $dir = get_dir_from_object_class_dir($objectOrClassOrDir);
+        $dir = get_dir_from_object_class_dir($sourceObjectOrClassOrDir);
 
-        if ($shouldGoUp) {
-            for ($level = 0; $level <= $maxLevelToGuess ; $level++)
-            {
-                if (file_exists($temp = ($level ? dirname($dir, $level) : $dir) . DIRECTORY_SEPARATOR . $fileOrFolderToFind))
-                {
-                    return $temp;
+        $targets = collect($targetFileOrFolder);
+
+        $result = collect();
+
+        $addToResult = static function (string $dir, $fileOrFolder, Collection $result) {
+            if ($exists = file_exists($temp = $dir . '/' . $fileOrFolder)) {
+                $result->put($fileOrFolder, $temp);
+            }
+
+            return $exists;
+        };
+
+        // For level 0
+
+        $targets = $targets->filter(function ($value) use ($addToResult, $dir, $result) {
+            return ! $addToResult($dir, $value, $result);
+        });
+
+        if ($targets->count()) {
+
+            // For upward folder traversal
+            if ($traverseUp) {
+                for ($level = 1; $targets->count() && $level <= $maxLevels ; $level++) {
+                    $targets = $targets->filter(function ($value) use ($addToResult, $level, $dir, $result) {
+                        return ! $addToResult(dirname($dir, $level), $value, $result);
+                    });
+                }
+            }
+
+            // For downward folder traversal
+            else {
+                $directories = collect($dir);
+                for ($level = 1; $targets->count() && $level <= $maxLevels; $level++) {
+                    $directories = $directories->mapWithKeys(function ($value) use (&$directories, $result, $addToResult, &$targets) {
+                        if ($targets->count()) {
+                            $subDirs = collect_files_or_directories($value, true, false, true) ?? collect();
+                            if ($subDirs->count()) {
+                                $targets = $targets->filter(function ($value) use ($addToResult, $subDirs, $result) {
+                                    foreach ($subDirs as $directory) {
+                                        if ($addToResult($directory, $value, $result)) {
+                                            return false;
+                                        }
+                                    }
+                                    return true;
+                                });
+                            }
+                        }
+
+                        return [];
+                    });
                 }
             }
         }
-        else {
-            if (file_exists($temp = $dir . DIRECTORY_SEPARATOR . $fileOrFolderToFind)) {
-                return $temp;
-            }
 
-            if ($maxLevelToGuess >= 0 && $directories = collect_files_or_directories($dir, true, false, true)) {
-                foreach ($directories as $directory) {
-                    if ($found = guess_file_or_directory_path($directory, $fileOrFolderToFind, false, ($maxLevelToGuess - 1))) {
-                        return $found;
-                    }
-                }
-            }
+        if (is_string($targetFileOrFolder)) {
+            return $result->first();
         }
 
-        return null;
+        if (is_array($targetFileOrFolder)) {
+            return $result->toArray();
+        }
+
+        return $result;
     }
 }
 
 if (! function_exists('guessFileOrDirectoryPath')) {
     /**
-     * @param object|string $objectOrClassOrFolder
-     * @param string $fileOrFolderToFind
-     * @param bool $shouldGoUp
-     * @param int $maxLevelToGuess
+     * @param object|string $sourceObjectOrClassOrDir
+     * @param Collection|string[]|string $targetFileOrFolder
+     * @param bool $traverseUp
+     * @param int $maxLevels
      * @return string|null
      */
-    function guessFileOrDirectoryPath(object|string $objectOrClassOrFolder, string $fileOrFolderToFind, bool $shouldGoUp = false, int $maxLevelToGuess = 3): ?string
+    function guessFileOrDirectoryPath(object|string $sourceObjectOrClassOrDir, Collection|array|string $targetFileOrFolder, bool $traverseUp = false, int $maxLevels = 3): ?string
     {
-        return guess_file_or_directory_path($objectOrClassOrFolder, $fileOrFolderToFind, $shouldGoUp, $maxLevelToGuess);
+        return guess_file_or_directory_path($sourceObjectOrClassOrDir, $targetFileOrFolder, $traverseUp, $maxLevels);
     }
 }
 
