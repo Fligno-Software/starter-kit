@@ -7,6 +7,7 @@
 
 use Composer\Autoload\ClassMapGenerator;
 use Fligno\StarterKit\ExtendedResponse;
+use Fligno\StarterKit\StarterKit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -15,6 +16,28 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use JetBrains\PhpStorm\Pure;
 use Symfony\Component\Process\Process;
+
+if (! function_exists('starterKit'))
+{
+    /**
+     * @return StarterKit
+     */
+    function starterKit(): StarterKit
+    {
+        return resolve('starter-kit');
+    }
+}
+
+if (! function_exists('starter_kit'))
+{
+    /**
+     * @return StarterKit
+     */
+    function starter_kit(): StarterKit
+    {
+        return starterKit();
+    }
+}
 
 if (! function_exists('custom_response')) {
     /**
@@ -373,7 +396,7 @@ if (! function_exists('collect_files_or_directories'))
             }
 
             if ($prependDirectory) {
-                $arr = $arr->map(fn($value) => $directory . '/' . $value);
+                $arr = $arr->mapWithKeys(fn($value) => [$value => $directory . '/' . $value]);
             }
 
             return $arr;
@@ -480,7 +503,7 @@ if (! function_exists('guess_file_or_directory_path'))
             else {
                 $directories = collect($dir);
                 for ($level = 1; $targets->count() && $level <= $maxLevels; $level++) {
-                    $directories = $directories->mapWithKeys(function ($value) use (&$directories, $result, $addToResult, &$targets) {
+                    $directories = $directories->mapWithKeys(function ($value) use ($result, $addToResult, &$targets) {
                         if ($targets->count()) {
                             $subDirs = collect_files_or_directories($value, true, false, true) ?? collect();
                             if ($subDirs->count()) {
@@ -531,22 +554,22 @@ if (!function_exists('collect_classes_from_path')) {
     /**
      * @param string $path
      * @param string|null $suffix
-     * @return Collection
+     * @return Collection|null
      */
-    function collect_classes_from_path(string $path, string $suffix = null): Collection
+    function collect_classes_from_path(string $path, string $suffix = null): ?Collection
     {
-        $classPaths = array_keys(ClassMapGenerator::createMap($path));
-
-        $classes = [];
-
-        foreach ($classPaths as $classPath) {
-            $key = (string) Str::of($classPath)->afterLast('\\')->before($suffix ?? '');
-            if ($key) {
-                $classes[$key] = $classPath;
-            }
+        if (! file_exists($path)) {
+            return null;
         }
 
-        return collect($classes);
+        return collect(ClassMapGenerator::createMap($path))
+            ->mapWithKeys(function ($item, $key) use ($suffix) {
+                if ($suffix) {
+                    $item = Str::of($key)->afterLast('\\')->before($suffix)->jsonSerialize();
+                }
+
+                return [$item => $key];
+            });
     }
 }
 
