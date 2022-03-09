@@ -2,10 +2,9 @@
 
 namespace Fligno\StarterKit;
 
-use Composer\Autoload\ClassMapGenerator;
-use Illuminate\Database\Eloquent\Builder;
+use Closure;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 /**
@@ -16,104 +15,216 @@ use Illuminate\Support\Str;
  */
 class StarterKit
 {
+    protected string $main_tag = 'sk';
+
+    // Setters & Getters
+
     /**
-     * @param string|null $repositoriesPath
-     * @param string|null $modelsPath
+     * @param string $main_tag
      */
-    public function registerRepositories(string $repositoriesPath = null, string $modelsPath = null): void
+    public function setMainTag(string $main_tag): void
     {
-        if (empty($repositoriesPath)) {
-            return;
-        }
-
-        if (! $this->verifyPathsExist($repositoriesPath, $modelsPath)) {
-            return;
-        }
-
-        $repositoriesClasses = collectClassesFromPath($repositoriesPath, 'Repository');
-        $modelsClasses = collectClassesFromPath($modelsPath);
-
-        $repositoriesClasses->each(static function ($repo, $key) use ($modelsClasses) {
-            $model = $modelsClasses->get($key);
-            if ($model) {
-                app()->when($repo)->needs(Builder::class)->give(function () use ($model) {
-                    return call_user_func($model . '::query');
-                });
-            }
-        });
+        $this->main_tag = $main_tag;
     }
 
     /**
-     * @param string|null $policiesPath
-     * @param string|null $modelsPath
+     * @return string
      */
-    public function registerPolicies(string $policiesPath = null, string $modelsPath = null): void
+    public function getMainTag(): string
     {
-        if (empty($policiesPath)) {
-            return;
-        }
-
-        if (! $this->verifyPathsExist($policiesPath, $modelsPath)) {
-            return;
-        }
-
-        $policiesClasses = collectClassesFromPath($policiesPath, 'Policy');
-        $modelsClasses = collectClassesFromPath($modelsPath);
-
-        $policiesClasses->each(static function ($policy, $key) use ($modelsClasses) {
-            $model = $modelsClasses->get($key);
-            if ($model) {
-                Gate::policy($model, $policy);
-            }
-        });
+        return $this->main_tag;
     }
 
-    /**
-     * @param string|null $observersPath
-     * @param string|null $modelsPath
-     */
-    public function registerObservers(string $observersPath = null, string $modelsPath = null): void
-    {
-        if (empty($observersPath)) {
-            return;
-        }
-
-        if (! $this->verifyPathsExist($observersPath, $modelsPath)) {
-            return;
-        }
-
-        $observersClasses = collectClassesFromPath($observersPath, 'Observer');
-        $modelsClasses = collectClassesFromPath($modelsPath);
-
-        $observersClasses->each(static function ($observer, $key) use ($modelsClasses) {
-            $model = $modelsClasses->get($key);
-            if ($model) {
-                call_user_func($model . '::observe', $observer);
-            }
-        });
-    }
+    // Methods
 
     /**
-     * @param string $folderPath
-     * @param string|null $modelsPath
      * @return bool
      */
-    private function verifyPathsExist(string &$folderPath, string &$modelsPath = null): bool
+    public function clearCache(): bool
     {
-        $modelsPath = null;
-        // Check if both paths exist
-        if (file_exists($folderPath)) {
-            if (! file_exists($modelsPath) && file_exists($tempPath = $folderPath . '/../Models')) {
-                $modelsPath = $tempPath;
+        return Cache::tags($this->getMainTag())->flush();
+    }
+
+    /**
+     * @param string|null ...$tags
+     * @return array
+     */
+    public function getTags(string|null ...$tags): array
+    {
+        return collect($this->getMainTag())->merge($tags)->filter()->toArray();
+    }
+
+    /**
+     * @param string $package_name
+     * @param string $directory
+     * @return Collection|null
+     */
+    public function getDomains(string $package_name, string $directory): ?Collection
+    {
+        return Cache::tags($this->getTags($package_name))->rememberForever('domains', function () use ($directory) {
+            $domainPath = guess_file_or_directory_path($directory, 'Domains');
+            return collect_files_or_directories($domainPath, true, false, true);
+        });
+    }
+
+    /**
+     * @param string $package_name
+     * @param Closure $callable
+     * @return Collection
+     */
+    public function getTargetDirectories(string $package_name, Closure $callable): Collection
+    {
+        return Cache::tags($this->getTags($package_name))->rememberForever('directories', function () use ($callable) {
+            return $callable();
+        });
+    }
+
+    /**
+     * @param string $package_name
+     * @param object|string $sourceObjectOrClassOrDir
+     * @param Collection|array|string $targetFileOrFolder
+     * @param string|null $domain
+     * @param bool $traverseUp
+     * @param int $maxLevels
+     * @return Collection|array|string|null
+     */
+    public function getTargetDirectoriesPaths(string $package_name, object|string $sourceObjectOrClassOrDir, Collection|array|string $targetFileOrFolder, string $domain = null, bool $traverseUp = false, int $maxLevels = 3): Collection|array|string|null
+    {
+        return Cache::tags($this->getTags($package_name, $domain))->rememberForever('paths', function () use ($maxLevels, $traverseUp, $targetFileOrFolder, $sourceObjectOrClassOrDir) {
+            return guess_file_or_directory_path($sourceObjectOrClassOrDir, $targetFileOrFolder, $traverseUp, $maxLevels);
+        });
+    }
+
+    /**
+     * @param string $package_name
+     * @param string $directory
+     * @param string|null $domain
+     * @return Collection|null
+     */
+    public function getHelpers(string $package_name, string $directory, string $domain = null): ?Collection
+    {
+        return Cache::tags($this->getTags($package_name, $domain))->rememberForever('helpers', function () use ($directory) {
+            return collect_files_or_directories($directory, false, true, true);
+        });
+    }
+
+    /**
+     * @param string $package_name
+     * @param string $directory
+     * @param string|null $domain
+     * @return Collection|null
+     */
+    public function getRoutes(string $package_name, string $directory, string $domain = null): ?Collection
+    {
+        return Cache::tags($this->getTags($package_name, $domain))->rememberForever('routes', function () use ($directory) {
+            return collect_files_or_directories($directory, false, true, true);
+        });
+    }
+
+    /**
+     * @return Collection|null
+     */
+    public function getDefaultPossibleModels(): ?Collection
+    {
+        return Cache::tags($this->getTags(null))->rememberForever('models', function () {
+            return collect_classes_from_path(app_path('Models'));
+        });
+    }
+
+    /**
+     * @param string $package_name
+     * @param string $directory
+     * @param string|null $domain
+     * @return Collection|null
+     */
+    public function getPossibleModels(string $package_name, string $directory, string $domain = null): ?Collection
+    {
+        return Cache::tags($this->getTags($package_name, $domain))->rememberForever('models', function () use ($package_name, $directory, $domain) {
+            $possibleModels = collect();
+
+            if ($domain && Str::contains($directory, $domain) && $path = guess_file_or_directory_path(Str::of($directory)->before($domain)->append($domain)->jsonSerialize(), 'Models', false, 1)) {
+                $possibleModels = $possibleModels->merge(collect_classes_from_path($path));
             }
 
-            // Convert Relative Paths to Real Paths
-            $folderPath = realpath($folderPath);
-            $modelsPath = realpath($modelsPath);
+            if (Str::contains($directory, $package_name) && $path = guess_file_or_directory_path(Str::of($directory)->before($package_name)->append($package_name)->jsonSerialize(), 'Models', false, 1)) {
+                $possibleModels = $possibleModels->merge(collect_classes_from_path($path));
+            }
 
-            return true;
-        }
+            return $possibleModels->merge($this->getDefaultPossibleModels())
+                ->mapWithKeys(function ($item) {
+                    $key = Str::of($item)->afterLast('\\')->jsonSerialize();
+                    return [$item => $key];
+                })->mapToGroups(function ($item, $key) {
+                    return [$item => $key];
+                });
+        });
+    }
 
-        return false;
+    /**
+     * @param string $package_name
+     * @param string $directory
+     * @param array $policy_map
+     * @param string|null $domain
+     * @return Collection|null
+     */
+    public function getPolicies(string $package_name, string $directory, array $policy_map, string $domain = null): ?Collection
+    {
+        return $this->getModelRelatedMap('Policy', $package_name, $directory, $policy_map, $domain);
+    }
+
+    /**
+     * @param string $package_name
+     * @param string $directory
+     * @param array $observer_map
+     * @param string|null $domain
+     * @return Collection|null
+     */
+    public function getObservers(string $package_name, string $directory, array $observer_map, string $domain = null): ?Collection
+    {
+        return $this->getModelRelatedMap('Observer', $package_name, $directory, $observer_map, $domain);
+    }
+
+    /**
+     * @param string $package_name
+     * @param string $directory
+     * @param array $repository_map
+     * @param string|null $domain
+     * @return Collection|null
+     */
+    public function getRepositories(string $package_name, string $directory, array $repository_map, string $domain = null): ?Collection
+    {
+        return $this->getModelRelatedMap('Repository', $package_name, $directory, $repository_map, $domain);
+    }
+
+    /**
+     * @param string $file_type
+     * @param string $package_name
+     * @param string $directory
+     * @param Collection|array $map
+     * @param string|null $domain
+     * @return Collection|null
+     */
+    private function getModelRelatedMap(string $file_type, string $package_name, string $directory, Collection|array $map, string $domain = null): ?Collection
+    {
+        $type = Str::of($file_type);
+
+        return Cache::tags($this->getTags($package_name, $domain))->rememberForever($type->plural()->snake(), function () use ($map, $type, $domain, $package_name, $directory) {
+            if (file_exists($directory)) {
+                $map = collect($map);
+                $classes = collect_classes_from_path($directory, $type->studly())
+                    ?->mapWithKeys(fn($item, $key) => [$item => $key]);
+                $classes = $classes->merge($map->only($classes->keys()->toArray()));
+                $classesForGuessing = $classes->except($map->keys()->toArray());
+                if ($classesForGuessing->count() && $possibleModels = $this->getPossibleModels($package_name, $directory, $domain)) {
+                    $classesForGuessing = $classesForGuessing->map(function ($item) use ($possibleModels) {
+                        return $possibleModels->get($item);
+                    });
+                    $classes = $classes->merge($classesForGuessing);
+                }
+
+                return $classes;
+            }
+            return null;
+        });
     }
 }

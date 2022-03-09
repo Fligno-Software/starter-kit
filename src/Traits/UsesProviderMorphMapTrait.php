@@ -10,7 +10,9 @@ namespace Fligno\StarterKit\Traits;
 trait UsesProviderMorphMapTrait
 {
     /**
-     * Polymorphism Morph Maps
+     * Polymorphism Morph Map
+     * @link https://laravel.com/docs/8.x/eloquent-relationships#custom-polymorphic-types
+     * @example [ 'user' => User::class ]
      *
      * @var array
      */

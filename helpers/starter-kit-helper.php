@@ -7,6 +7,7 @@
 
 use Composer\Autoload\ClassMapGenerator;
 use Fligno\StarterKit\ExtendedResponse;
+use Fligno\StarterKit\StarterKit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -15,6 +16,28 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use JetBrains\PhpStorm\Pure;
 use Symfony\Component\Process\Process;
+
+if (! function_exists('starterKit'))
+{
+    /**
+     * @return StarterKit
+     */
+    function starterKit(): StarterKit
+    {
+        return resolve('starter-kit');
+    }
+}
+
+if (! function_exists('starter_kit'))
+{
+    /**
+     * @return StarterKit
+     */
+    function starter_kit(): StarterKit
+    {
+        return starterKit();
+    }
+}
 
 if (! function_exists('custom_response')) {
     /**
@@ -373,7 +396,7 @@ if (! function_exists('collect_files_or_directories'))
             }
 
             if ($prependDirectory) {
-                $arr = $arr->map(fn($value) => $directory . DIRECTORY_SEPARATOR . $value);
+                $arr = $arr->mapWithKeys(fn($value) => [$value => $directory . '/' . $value]);
             }
 
             return $arr;
@@ -437,54 +460,93 @@ if (! function_exists('getDirFromObjectClassDir')) {
 if (! function_exists('guess_file_or_directory_path'))
 {
     /**
-     * @param object|string $objectOrClassOrDir
-     * @param string $fileOrFolderToFind
-     * @param bool $shouldGoUp
-     * @param int $maxLevelToGuess
-     * @return string|null
+     * @param object|string $sourceObjectOrClassOrDir
+     * @param Collection|array|string $targetFileOrFolder
+     * @param bool $traverseUp
+     * @param int $maxLevels
+     * @return Collection|array|string|null
      */
-    function guess_file_or_directory_path(object|string $objectOrClassOrDir, string $fileOrFolderToFind, bool $shouldGoUp = false, int $maxLevelToGuess = 3): ?string
+    function guess_file_or_directory_path(object|string $sourceObjectOrClassOrDir, Collection|array|string $targetFileOrFolder, bool $traverseUp = false, int $maxLevels = 3): array|string|Collection|null
     {
-        $dir = get_dir_from_object_class_dir($objectOrClassOrDir);
+        $dir = get_dir_from_object_class_dir($sourceObjectOrClassOrDir);
 
-        if ($shouldGoUp) {
-            for ($level = 0; $level <= $maxLevelToGuess ; $level++)
-            {
-                if (file_exists($temp = ($level ? dirname($dir, $level) : $dir) . DIRECTORY_SEPARATOR . $fileOrFolderToFind))
-                {
-                    return $temp;
+        $targets = collect($targetFileOrFolder);
+
+        $result = collect();
+
+        $addToResult = static function (string $dir, $fileOrFolder, Collection $result) {
+            if ($exists = file_exists($temp = $dir . '/' . $fileOrFolder)) {
+                $result->put($fileOrFolder, $temp);
+            }
+
+            return $exists;
+        };
+
+        // For level 0
+
+        $targets = $targets->filter(function ($value) use ($addToResult, $dir, $result) {
+            return ! $addToResult($dir, $value, $result);
+        });
+
+        if ($targets->count()) {
+
+            // For upward folder traversal
+            if ($traverseUp) {
+                for ($level = 1; $targets->count() && $level <= $maxLevels ; $level++) {
+                    $targets = $targets->filter(function ($value) use ($addToResult, $level, $dir, $result) {
+                        return ! $addToResult(dirname($dir, $level), $value, $result);
+                    });
+                }
+            }
+
+            // For downward folder traversal
+            else {
+                $directories = collect($dir);
+                for ($level = 1; $targets->count() && $level <= $maxLevels; $level++) {
+                    $directories = $directories->mapWithKeys(function ($value) use ($result, $addToResult, &$targets) {
+                        if ($targets->count()) {
+                            $subDirs = collect_files_or_directories($value, true, false, true) ?? collect();
+                            if ($subDirs->count()) {
+                                $targets = $targets->filter(function ($value) use ($addToResult, $subDirs, $result) {
+                                    foreach ($subDirs as $directory) {
+                                        if ($addToResult($directory, $value, $result)) {
+                                            return false;
+                                        }
+                                    }
+                                    return true;
+                                });
+                            }
+                        }
+
+                        return [];
+                    });
                 }
             }
         }
-        else {
-            if (file_exists($temp = $dir . DIRECTORY_SEPARATOR . $fileOrFolderToFind)) {
-                return $temp;
-            }
 
-            if ($maxLevelToGuess >= 0 && $directories = collect_files_or_directories($dir, true, false, true)) {
-                foreach ($directories as $directory) {
-                    if ($found = guess_file_or_directory_path($directory, $fileOrFolderToFind, false, ($maxLevelToGuess - 1))) {
-                        return $found;
-                    }
-                }
-            }
+        if (is_string($targetFileOrFolder)) {
+            return $result->first();
         }
 
-        return null;
+        if (is_array($targetFileOrFolder)) {
+            return $result->toArray();
+        }
+
+        return $result;
     }
 }
 
 if (! function_exists('guessFileOrDirectoryPath')) {
     /**
-     * @param object|string $objectOrClassOrFolder
-     * @param string $fileOrFolderToFind
-     * @param bool $shouldGoUp
-     * @param int $maxLevelToGuess
+     * @param object|string $sourceObjectOrClassOrDir
+     * @param Collection|string[]|string $targetFileOrFolder
+     * @param bool $traverseUp
+     * @param int $maxLevels
      * @return string|null
      */
-    function guessFileOrDirectoryPath(object|string $objectOrClassOrFolder, string $fileOrFolderToFind, bool $shouldGoUp = false, int $maxLevelToGuess = 3): ?string
+    function guessFileOrDirectoryPath(object|string $sourceObjectOrClassOrDir, Collection|array|string $targetFileOrFolder, bool $traverseUp = false, int $maxLevels = 3): ?string
     {
-        return guess_file_or_directory_path($objectOrClassOrFolder, $fileOrFolderToFind, $shouldGoUp, $maxLevelToGuess);
+        return guess_file_or_directory_path($sourceObjectOrClassOrDir, $targetFileOrFolder, $traverseUp, $maxLevels);
     }
 }
 
@@ -492,22 +554,22 @@ if (!function_exists('collect_classes_from_path')) {
     /**
      * @param string $path
      * @param string|null $suffix
-     * @return Collection
+     * @return Collection|null
      */
-    function collect_classes_from_path(string $path, string $suffix = null): Collection
+    function collect_classes_from_path(string $path, string $suffix = null): ?Collection
     {
-        $classPaths = array_keys(ClassMapGenerator::createMap($path));
-
-        $classes = [];
-
-        foreach ($classPaths as $classPath) {
-            $key = (string) Str::of($classPath)->afterLast('\\')->before($suffix ?? '');
-            if ($key) {
-                $classes[$key] = $classPath;
-            }
+        if (! file_exists($path)) {
+            return null;
         }
 
-        return collect($classes);
+        return collect(ClassMapGenerator::createMap($path))
+            ->mapWithKeys(function ($item, $key) use ($suffix) {
+                if ($suffix) {
+                    $item = Str::of($key)->afterLast('\\')->before($suffix)->jsonSerialize();
+                }
+
+                return [$item => $key];
+            });
     }
 }
 

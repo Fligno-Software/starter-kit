@@ -37,14 +37,4 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     {
         $this->bootLaravelFilesAndDomains();
     }
-
-    /**
-     * Register any package services.
-     *
-     * @return void
-     */
-    public function register(): void
-    {
-        $this->registerLaravelFilesAndDomains();
-    }
 }
