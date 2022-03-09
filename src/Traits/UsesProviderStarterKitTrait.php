@@ -2,8 +2,8 @@
 
 namespace Fligno\StarterKit\Traits;
 
-use Fligno\StarterKit\Facades\StarterKit;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use JsonException;
 
@@ -14,7 +14,7 @@ use JsonException;
  */
 trait UsesProviderStarterKitTrait
 {
-    use UsesProviderMorphMapTrait, UsesProviderDynamicRelationshipsTrait, UsesProviderHttpKernelTrait, UsesProviderConsoleKernelTrait;
+    use UsesProviderMorphMapTrait, UsesProviderObserverMapTrait, UsesProviderPolicyMapTrait, UsesProviderRepositoryMapTrait, UsesProviderDynamicRelationshipsTrait, UsesProviderHttpKernelTrait, UsesProviderConsoleKernelTrait;
 
     /**
      * Artisan Commands
@@ -46,8 +46,8 @@ trait UsesProviderStarterKitTrait
         $this->bootLaravelFiles($this->package_directory);
 
         // Load Domains
-        if (($dir = $this->getDomainsDirectory()) && $domainPath = guess_file_or_directory_path($dir, 'Domains')) {
-            $this->bootDomainsFrom($domainPath);
+        if (($dir = $this->getAppDirectory()) && $domains = starterKit()->getDomains($this->package_name, $dir)) {
+            $domains->each(fn($directory, $key) => $this->bootLaravelFiles($directory, $key));
         }
 
         // For Console Kernel
@@ -65,26 +65,6 @@ trait UsesProviderStarterKitTrait
         // Publishing is only necessary when using the CLI.
         if ($this->app->runningInConsole()) {
             $this->bootForConsole();
-        }
-    }
-
-    /**
-     * @return void
-     */
-    public function registerLaravelFilesAndDomains(): void
-    {
-        // Load Helper Files
-        $this->loadHelpersFrom(guess_file_or_directory_path($this->package_directory, 'helpers'));
-
-        // Load Service Providers
-        $this->loadProvidersFrom(guess_file_or_directory_path($this->package_directory, 'Providers'));
-
-        // Load Helpers inside Domains
-        if (($dir = $this->getDomainsDirectory()) && $domainPath = guess_file_or_directory_path($dir, 'Domains')) {
-            collect_files_or_directories($domainPath, true, false, true)?->each(function ($value) {
-                $this->loadHelpersFrom(guess_file_or_directory_path($value, 'helpers'));
-                $this->loadProvidersFrom(guess_file_or_directory_path($value, 'Providers'));
-            });
         }
     }
 
@@ -109,39 +89,79 @@ trait UsesProviderStarterKitTrait
     /**
      * @return string|null
      */
-    protected function getDomainsDirectory(): ?string
+    protected function getAppDirectory(): ?string
     {
         return $this->package_directory;
+    }
+
+    /**
+     * @return Collection
+     */
+    protected function getTargetFilesAndDirectories(): Collection
+    {
+        return starterKit()->getTargetDirectories($this->package_name, function () {
+            return collect(['database/migrations'])
+                ->when($this->areHelpersEnabled(), fn($collection) => $collection->push('helpers'))
+                ->when(! $this->app->routesAreCached() && $this->areRoutesEnabled(), fn($collection) => $collection->push('routes'))
+                ->when($this->areRepositoriesEnabled(), fn($collection) => $collection->push('Repositories'))
+                ->when($this->arePoliciesEnabled(), fn($collection) => $collection->push('Policies'))
+                ->when($this->areObserversEnabled(), fn($collection) => $collection->push('Observers'));
+        });
     }
 
     /***** LOAD FILES & CLASSES *****/
 
     /**
-     * @param object|string|null $objectOrClassOrFolder
-     * @param bool $shouldGoUp
+     * @param object|string|null $sourceObjectOrClassOrDir
+     * @param string|null $domain
+     * @param bool $traverseUp
+     * @param int $maxLevels
      * @return void
      */
-    protected function bootLaravelFiles(object|string $objectOrClassOrFolder = null, bool $shouldGoUp = false): void
+    protected function bootLaravelFiles(object|string $sourceObjectOrClassOrDir = null, string $domain = null, bool $traverseUp = false, int $maxLevels = 3): void
     {
-        if (empty($objectOrClassOrFolder)) {
+        if (empty($sourceObjectOrClassOrDir)) {
             return;
         }
 
-        // Default Load Functions
-        $this->loadMigrationsFrom(guess_file_or_directory_path($objectOrClassOrFolder, 'database/migrations', $shouldGoUp));
+        $targets = $this->getTargetFilesAndDirectories();
 
-        // Load Routes
-        if ($this->isRoutesEnabled() && $path = guess_file_or_directory_path($objectOrClassOrFolder, 'routes', $shouldGoUp)) {
-            collect_files_or_directories($path, false, true, true)?->each(fn($route) => $this->loadRoutesFrom($route));
+        $directories = starterKit()->getTargetDirectoriesPaths($this->package_name, $sourceObjectOrClassOrDir, $targets, $domain, $traverseUp, $maxLevels);
+
+        // Load Migrations
+        if ($path = $directories->get('database/migrations')) {
+            $this->loadMigrationsFrom($path);
         }
 
-        // Custom Load Functions With Folder Guessing
-        $this->loadRepositoriesFrom(guess_file_or_directory_path($objectOrClassOrFolder, 'Repositories', $shouldGoUp));
-        $this->loadPoliciesFrom(guess_file_or_directory_path($objectOrClassOrFolder, 'Policies', $shouldGoUp));
-        $this->loadObserversFrom(guess_file_or_directory_path($objectOrClassOrFolder, 'Observers', $shouldGoUp));
+        // Load Helpers
+        if (($path = $directories->get('helpers')) && $helpers = starterKit()->getHelpers($this->package_name, $path, $domain)) {
+            $this->loadHelpersFrom($helpers);
+        }
+
+        // Load Routes
+        if (($path = $directories->get('routes')) && $routes = starterKit()->getRoutes($this->package_name, $path, $domain)) {
+            $this->loadRouteFilesFrom($routes);
+        }
+
+        // Load Observers
+        if (($path = $directories->get('Observers')) && $observers = starterKit()->getObservers($this->package_name, $path, $this->observer_map, $domain)) {
+            $this->loadObservers($observers);
+        }
+
+        // Load Policies
+        if (($path = $directories->get('Policies')) && $policies = starterKit()->getPolicies($this->package_name, $path, $this->policy_map, $domain)) {
+            $this->loadPolicies($policies);
+        }
+
+        // Load Repositories
+        if (($path = $directories->get('Repositories')) && $repositories = starterKit()->getRepositories($this->package_name, $path, $this->repository_map, $domain)) {
+            $this->loadRepositories($repositories);
+        }
     }
 
     /**
+     * Todo: Study on translation files
+     *
      * Overriding to not cause error in case the path does not exist.
      * Register a translation file namespace.
      *
@@ -157,6 +177,8 @@ trait UsesProviderStarterKitTrait
     }
 
     /**
+     * Todo: Study on view files
+     *
      * Overriding to not cause error in case the path does not exist.
      * Register a view file namespace.
      *
@@ -172,16 +194,28 @@ trait UsesProviderStarterKitTrait
     }
 
     /**
-     * Load the given routes file if routes are not already cached.
-     *
-     * @param  string|null  $path
+     * @param Collection|null $collection
      * @return void
      */
-    protected function loadRoutesFrom($path = null): void
+    protected function loadHelpersFrom(Collection $collection = null): void
     {
-        if (file_exists($path)) {
-            parent::loadRoutesFrom($path);
-        }
+        $collection?->each(function ($helper) {
+            require $helper;
+        });
+    }
+
+    /**
+     * @param Collection|null $collection
+     * @return void
+     */
+    protected function loadRouteFilesFrom(Collection $collection = null): void
+    {
+        $collection?->each(function ($route) {
+            $config = Str::contains($route, 'api') ? $this->getApiRouteConfiguration() : $this->getWebRouteConfiguration();
+            Route::group($config, function () use ($route) {
+                parent::loadRoutesFrom($route);
+            });
+        });
     }
 
     /**
@@ -198,75 +232,6 @@ trait UsesProviderStarterKitTrait
                 parent::loadMigrationsFrom($path);
             }
         });
-    }
-
-    /**
-     * Map the repository files to respective models.
-     *
-     * @param string|null $repositoriesPath
-     * @param string|null $modelsPath
-     * @return void
-     */
-    protected function loadRepositoriesFrom(string $repositoriesPath = null, string $modelsPath = null): void
-    {
-        StarterKit::registerRepositories($repositoriesPath, $modelsPath);
-    }
-
-    /**
-     * Map the policy files to respective models.
-     *
-     * @param string|null $policiesPath
-     * @param string|null $modelsPath
-     * @return void
-     */
-    protected function loadPoliciesFrom(string $policiesPath = null, string $modelsPath = null): void
-    {
-        StarterKit::registerPolicies($policiesPath, $modelsPath);
-    }
-
-    /**
-     * Map the observer files to respective models.
-     *
-     * @param string|null $observersPath
-     * @param string|null $modelsPath
-     * @return void
-     */
-    protected function loadObserversFrom(string $observersPath = null, string $modelsPath = null): void
-    {
-        StarterKit::registerObservers($observersPath, $modelsPath);
-    }
-
-    /**
-     * @param string|null $path
-     * @return void
-     */
-    protected function loadHelpersFrom(string $path = null): void
-    {
-        if ($path && $helpers = collect_files_or_directories($path, false, true, true)) {
-            $helpers->each(function ($value) {
-                include_once $value;
-            });
-        }
-    }
-
-    /**
-     * @param string|null $path
-     * @return void
-     */
-    protected function loadProvidersFrom(string $path = null): void
-    {
-        $path && collect_classes_from_path($path)->each(fn($value) => $this->app->register($value));
-    }
-
-    /**
-     * @param string $path
-     * @return void
-     */
-    protected function bootDomainsFrom(string $path): void
-    {
-        foreach (collect_files_or_directories($path, true, false, true) as $directory) {
-            $this->bootLaravelFiles($directory);
-        }
     }
 
     /***** ABSTRACT METHODS *****/
@@ -309,8 +274,37 @@ trait UsesProviderStarterKitTrait
     /**
      * @return bool
      */
-    public function isRoutesEnabled(): bool
+    public function areHelpersEnabled(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return bool
+     */
+    public function areRoutesEnabled(): bool
     {
         return config('starter-kit.routes_enabled');
+    }
+
+    /**
+     * @return array
+     */
+    public function getApiRouteConfiguration(): array
+    {
+        return collect([
+            'middleware' => config('starter-kit.api_guard'),
+            'prefix' => 'api'
+        ])->toArray();
+    }
+
+    /**
+     * @return array
+     */
+    public function getWebRouteConfiguration(): array
+    {
+        return collect([
+            'middleware' => config('starter-kit.web_guard'),
+        ])->toArray();
     }
 }

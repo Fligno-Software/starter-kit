@@ -2,6 +2,7 @@
 
 namespace Fligno\StarterKit;
 
+use Fligno\StarterKit\Console\Commands\StarterKitClearCacheCommand;
 use Fligno\StarterKit\Exceptions\Handler;
 use Fligno\StarterKit\Macros\ArrMacros;
 use Fligno\StarterKit\Providers\BaseStarterKitServiceProvider as ServiceProvider;
@@ -11,6 +12,10 @@ use ReflectionException;
 
 class StarterKitServiceProvider extends ServiceProvider
 {
+    protected array $commands = [
+        StarterKitClearCacheCommand::class,
+    ];
+
     /**
      * Perform post-registration booting of services.
      *
@@ -37,8 +42,6 @@ class StarterKitServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        parent::register();
-
         $this->mergeConfigFrom(__DIR__.'/../config/starter-kit.php', 'starter-kit');
 
         // Register the service the package provides.
@@ -50,6 +53,8 @@ class StarterKitServiceProvider extends ServiceProvider
         $this->app->bind('extended-response', function ($app) {
             return new ExtendedResponse();
         });
+
+        parent::register();
     }
 
     /**
@@ -90,6 +95,14 @@ class StarterKitServiceProvider extends ServiceProvider
         ], 'starter-kit.views');*/
 
         // Registering package commands.
-        // $this->commands([]);
+         $this->commands($this->commands);
+    }
+
+    /**
+     * @return bool
+     */
+    public function areHelpersEnabled(): bool
+    {
+        return false;
     }
 }
