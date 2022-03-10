@@ -40,7 +40,7 @@ trait UsesProviderRepositoryMapTrait
             if ($model instanceof Collection) {
                 $model = $model->first();
             }
-            if ($model) {
+            if ($model && class_exists($model) && class_exists($repository)) {
                 app()->when($repository)->needs(Builder::class)->give(fn() => call_user_func($model . '::query'));
             }
         });

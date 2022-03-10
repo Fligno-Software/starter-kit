@@ -200,7 +200,7 @@ trait UsesProviderStarterKitTrait
     protected function loadHelpersFrom(Collection $collection = null): void
     {
         $collection?->each(function ($helper) {
-            require $helper;
+            file_exists($helper) && require $helper;
         });
     }
 
@@ -211,10 +211,12 @@ trait UsesProviderStarterKitTrait
     protected function loadRouteFilesFrom(Collection $collection = null): void
     {
         $collection?->each(function ($route) {
-            $config = Str::contains($route, 'api') ? $this->getApiRouteConfiguration() : $this->getWebRouteConfiguration();
-            Route::group($config, function () use ($route) {
-                parent::loadRoutesFrom($route);
-            });
+            if (file_exists($route)) {
+                $config = Str::contains($route, 'api') ? $this->getApiRouteConfiguration() : $this->getWebRouteConfiguration();
+                Route::group($config, function () use ($route) {
+                    parent::loadRoutesFrom($route);
+                });
+            }
         });
     }
 

@@ -41,7 +41,7 @@ trait UsesProviderObserverMapTrait
             if ($model instanceof Collection) {
                 $model = $model->first();
             }
-            if ($model) {
+            if ($model && class_exists($model) && class_exists($observer)) {
                 try {
                     call_user_func($model . '::observe', $observer);
                 }
