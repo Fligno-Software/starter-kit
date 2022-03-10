@@ -55,13 +55,28 @@ class StarterKit
     }
 
     /**
+     * @param array $tags
+     * @param $key
+     * @param Closure $closure
+     * @return array|mixed
+     */
+    private function getCache(array $tags, $key, Closure $closure): mixed
+    {
+        if (method_exists(Cache::getStore(), 'tags')) {
+            return Cache::tags($tags)->rememberForever($key, $closure);
+        }
+
+        return $closure();
+    }
+
+    /**
      * @param string $package_name
      * @param string $directory
      * @return Collection|null
      */
     public function getDomains(string $package_name, string $directory): ?Collection
     {
-        return Cache::tags($this->getTags($package_name))->rememberForever('domains', function () use ($directory) {
+        return $this->getCache($this->getTags($package_name), 'domains', function () use ($directory) {
             $domainPath = guess_file_or_directory_path($directory, 'Domains');
             return collect_files_or_directories($domainPath, true, false, true);
         });
@@ -70,11 +85,11 @@ class StarterKit
     /**
      * @param string $package_name
      * @param Closure $callable
-     * @return Collection
+     * @return Collection|null
      */
-    public function getTargetDirectories(string $package_name, Closure $callable): Collection
+    public function getTargetDirectories(string $package_name, Closure $callable): ?Collection
     {
-        return Cache::tags($this->getTags($package_name))->rememberForever('directories', function () use ($callable) {
+        return $this->getCache($this->getTags($package_name), 'directories', function () use ($callable) {
             return $callable();
         });
     }
@@ -90,7 +105,7 @@ class StarterKit
      */
     public function getTargetDirectoriesPaths(string $package_name, object|string $sourceObjectOrClassOrDir, Collection|array|string $targetFileOrFolder, string $domain = null, bool $traverseUp = false, int $maxLevels = 3): Collection|array|string|null
     {
-        return Cache::tags($this->getTags($package_name, $domain))->rememberForever('paths', function () use ($maxLevels, $traverseUp, $targetFileOrFolder, $sourceObjectOrClassOrDir) {
+        return $this->getCache($this->getTags($package_name, $domain), 'paths', function () use ($maxLevels, $traverseUp, $targetFileOrFolder, $sourceObjectOrClassOrDir) {
             return guess_file_or_directory_path($sourceObjectOrClassOrDir, $targetFileOrFolder, $traverseUp, $maxLevels);
         });
     }
@@ -103,7 +118,7 @@ class StarterKit
      */
     public function getHelpers(string $package_name, string $directory, string $domain = null): ?Collection
     {
-        return Cache::tags($this->getTags($package_name, $domain))->rememberForever('helpers', function () use ($directory) {
+        return $this->getCache($this->getTags($package_name, $domain), 'helpers', function () use ($directory) {
             return collect_files_or_directories($directory, false, true, true);
         });
     }
@@ -116,7 +131,7 @@ class StarterKit
      */
     public function getRoutes(string $package_name, string $directory, string $domain = null): ?Collection
     {
-        return Cache::tags($this->getTags($package_name, $domain))->rememberForever('routes', function () use ($directory) {
+        return $this->getCache($this->getTags($package_name, $domain), 'routes', function () use ($directory) {
             return collect_files_or_directories($directory, false, true, true);
         });
     }
@@ -126,7 +141,7 @@ class StarterKit
      */
     public function getDefaultPossibleModels(): ?Collection
     {
-        return Cache::tags($this->getTags(null))->rememberForever('models', function () {
+        return $this->getCache($this->getTags(null), 'models', function () {
             return collect_classes_from_path(app_path('Models'));
         });
     }
@@ -139,7 +154,7 @@ class StarterKit
      */
     public function getPossibleModels(string $package_name, string $directory, string $domain = null): ?Collection
     {
-        return Cache::tags($this->getTags($package_name, $domain))->rememberForever('models', function () use ($package_name, $directory, $domain) {
+        return $this->getCache($this->getTags($package_name, $domain), 'models', function () use ($package_name, $directory, $domain) {
             $possibleModels = collect();
 
             if ($domain && Str::contains($directory, $domain) && $path = guess_file_or_directory_path(Str::of($directory)->before($domain)->append($domain)->jsonSerialize(), 'Models', false, 1)) {
@@ -208,7 +223,7 @@ class StarterKit
     {
         $type = Str::of($file_type);
 
-        return Cache::tags($this->getTags($package_name, $domain))->rememberForever($type->plural()->snake(), function () use ($map, $type, $domain, $package_name, $directory) {
+        return $this->getCache($this->getTags($package_name, $domain), $type->plural()->snake(), function () use ($map, $type, $domain, $package_name, $directory) {
             if (file_exists($directory)) {
                 $map = collect($map);
                 $classes = collect_classes_from_path($directory, $type->studly())
