@@ -41,7 +41,7 @@ trait UsesProviderPolicyMapTrait
             if ($model instanceof Collection) {
                 $model = $model->first();
             }
-            if ($model) {
+            if ($model && class_exists($model) && class_exists($policy)) {
                 Gate::policy($model, $policy);
             }
         });
