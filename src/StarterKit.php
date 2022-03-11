@@ -40,9 +40,21 @@ class StarterKit
     /**
      * @return bool
      */
+    public function isCacheTaggable(): bool
+    {
+        return method_exists(Cache::getStore(), 'tags');
+    }
+
+    /**
+     * @return bool
+     */
     public function clearCache(): bool
     {
-        return Cache::tags($this->getMainTag())->flush();
+        if ($this->isCacheTaggable()) {
+            return Cache::tags($this->getMainTag())->flush();
+        }
+
+        return false;
     }
 
     /**
@@ -62,7 +74,7 @@ class StarterKit
      */
     private function getCache(array $tags, $key, Closure $closure): mixed
     {
-        if (method_exists(Cache::getStore(), 'tags')) {
+        if ($this->isCacheTaggable()) {
             return Cache::tags($tags)->rememberForever($key, $closure);
         }
 
