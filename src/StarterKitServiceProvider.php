@@ -27,7 +27,7 @@ class StarterKitServiceProvider extends ServiceProvider
         parent::boot();
 
         // Register Custom Exception Handler
-        if (config('boilerplate-generator.override_exception_handler')) {
+        if (config('starter-kit.override_exception_handler')) {
             $this->app->singleton(ExceptionHandler::class, Handler::class);
         }
 
