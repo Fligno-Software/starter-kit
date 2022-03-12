@@ -43,10 +43,10 @@ trait UsesProviderStarterKitTrait
      */
     public function bootLaravelFilesAndDomains(): void
     {
-        $this->bootLaravelFiles($this->package_directory);
+        $this->bootLaravelFiles($this->getBasePath());
 
         // Load Domains
-        if (($dir = $this->getAppDirectory()) && $domains = starterKit()->getDomains($this->package_name, $dir)) {
+        if (($dir = $this->getBasePath()) && $domains = starterKit()->getDomains($this->package_name, $dir)) {
             $domains->each(fn($directory, $key) => $this->bootLaravelFiles($directory, $key));
         }
 
@@ -89,7 +89,7 @@ trait UsesProviderStarterKitTrait
     /**
      * @return string|null
      */
-    protected function getAppDirectory(): ?string
+    protected function getBasePath(): ?string
     {
         return $this->package_directory;
     }
