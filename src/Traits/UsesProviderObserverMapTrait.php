@@ -41,11 +41,11 @@ trait UsesProviderObserverMapTrait
             if ($model instanceof Collection) {
                 $model = $model->first();
             }
-            if ($model && class_exists($model) && class_exists($observer)) {
-                try {
-                    call_user_func($model . '::observe', $observer);
-                }
-                catch (Exception) {}
+            try {
+                call_user_func($model . '::observe', $observer);
+            }
+            catch (Exception) {
+                starterKit()->clearCache();
             }
         });
     }

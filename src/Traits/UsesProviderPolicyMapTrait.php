@@ -2,6 +2,7 @@
 
 namespace Fligno\StarterKit\Traits;
 
+use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 
@@ -41,8 +42,11 @@ trait UsesProviderPolicyMapTrait
             if ($model instanceof Collection) {
                 $model = $model->first();
             }
-            if ($model && class_exists($model) && class_exists($policy)) {
+            try{
                 Gate::policy($model, $policy);
+            }
+            catch (Exception){
+                starterKit()->clearCache();
             }
         });
     }

@@ -2,6 +2,7 @@
 
 namespace Fligno\StarterKit\Traits;
 
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -40,8 +41,11 @@ trait UsesProviderRepositoryMapTrait
             if ($model instanceof Collection) {
                 $model = $model->first();
             }
-            if ($model && class_exists($model) && class_exists($repository)) {
+            try{
                 app()->when($repository)->needs(Builder::class)->give(fn() => call_user_func($model . '::query'));
+            }
+            catch (Exception) {
+                starterKit()->clearCache();
             }
         });
     }
