@@ -35,7 +35,7 @@ class ExtendedResponse
     /**
      * @var bool
      */
-    protected bool $success = TRUE;
+    protected bool $success = true;
 
     /**
      * @var array
@@ -78,6 +78,10 @@ class ExtendedResponse
     {
         $this->code = $code;
 
+        if ($code >= 400) {
+            $this->success = false;
+        }
+
         return $this;
     }
 
@@ -90,7 +94,7 @@ class ExtendedResponse
     public function success(int $code = 200): ExtendedResponse
     {
         $this->code = $code;
-        $this->success = TRUE;
+        $this->success = true;
 
         return $this;
     }
@@ -208,7 +212,7 @@ class ExtendedResponse
     public function data($value): ExtendedResponse
     {
         if ($value instanceof ResourceCollection) {
-            $pagination = $value->response(request())->getData(TRUE);
+            $pagination = $value->response(request())->getData(true);
             $data = $pagination['data'];
             unset($pagination['data']);
 
