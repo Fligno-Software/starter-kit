@@ -7,6 +7,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -23,9 +24,9 @@ use Illuminate\Support\Str;
 class ExtendedResponse
 {
     /**
-     * @var array|AnonymousResourceCollection|Paginator|LengthAwarePaginator|null
+     * @var Collection|AnonymousResourceCollection|LengthAwarePaginator|Paginator|array|null
      */
-    protected array|AnonymousResourceCollection|null|LengthAwarePaginator|Paginator $data = [];
+    protected Collection|AnonymousResourceCollection|LengthAwarePaginator|Paginator|array|null $data = [];
 
     /**
      * @var int
@@ -220,7 +221,6 @@ class ExtendedResponse
             $this->pagination = $pagination;
             $this->data = $data;
         }
-
         else if ($value instanceof Paginator || $value instanceof LengthAwarePaginator) {
             // convert pagination to array
             $pagination = $value->toArray();
@@ -231,7 +231,9 @@ class ExtendedResponse
             $this->pagination = $pagination;
             $this->data = $data;
         }
-
+        else if ($value instanceof Collection) {
+            $this->data = $value->toArray();
+        }
         else {
             $this->data = $value;
         }
