@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'user_model' => env('SK_USER_MODEL', config('auth.providers.users.model')),
     'override_exception_handler' => env('SK_OVERRIDE_EXCEPTION_HANDLER', false),
     'web_guard' => env('SK_WEB_GUARD', []),
     'api_guard' => env('SK_API_GUARD', []),

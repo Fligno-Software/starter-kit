@@ -3,6 +3,7 @@
 namespace Fligno\StarterKit;
 
 use Closure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -253,5 +254,31 @@ class StarterKit
             }
             return null;
         });
+    }
+
+    /***** USER MODEL *****/
+
+    /**
+     * @return string|null
+     */
+    public function getUserModel(): ?string
+    {
+        if (class_exists($model = config('starter-kit.user_model')) && is_eloquent_model($model)) {
+            return $model;
+        }
+
+        return null;
+    }
+
+    /**
+     * @return Builder|null
+     */
+    public function getUserQueryBuilder(): ?Builder
+    {
+        if ($model = $this->getUserModel()) {
+            return call_user_func($model . '::query');
+        }
+
+        return null;
     }
 }
