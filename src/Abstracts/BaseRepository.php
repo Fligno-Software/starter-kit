@@ -2,10 +2,13 @@
 
 namespace Fligno\StarterKit\Abstracts;
 
+use App\Models\User;
 use Fligno\StarterKit\Interfaces\RepositoryInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Client\Response;
+use Illuminate\Http\Request;
 
 /**
  * Abstract Class BaseRepository
@@ -32,27 +35,22 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @return Builder[]|Collection
+     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
+     * @param User|null $user
+     * @return Collection|array
      */
-    public function all(): Collection|array
+    public function all(Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null, User $user = null): Collection|array
     {
         return $this->builder->get();
     }
 
     /**
-     * @param $attributes
-     * @return Builder|Model
+     * @param int|string $id
+     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
+     * @param User|null $user
+     * @return Model|Collection|Builder|array|null
      */
-    public function create($attributes): Model|Builder
-    {
-        return $this->builder->firstOrCreate($attributes);
-    }
-
-    /**
-     * @param $id
-     * @return Builder|Builder[]|Collection|Model|null
-     */
-    public function get($id = null): Model|Collection|Builder|array|null
+    public function get(int|string $id, Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null, User $user = null): Model|Collection|Builder|array|null
     {
         if ($id) {
             return $this->builder->findOrFail($id);
@@ -62,45 +60,51 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param $id
-     * @param $attributes
-     * @return Model|Collection|Builder|array|null
+     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes
+     * @param User|null $user
+     * @return Model|null
      */
-    public function update($id, $attributes): Model|Collection|Builder|array|null
+    public function create(Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes, User $user = null): Model|null
+    {
+        return $this->builder->firstOrCreate($attributes);
+    }
+
+    /**
+     * @param int|string $id
+     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
+     * @param User|null $user
+     * @return Model|null
+     */
+    public function update(int|string $id, Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null, User $user = null): Model|null
     {
         $model = $this->get($id);
         $model->fill($attributes);
-        $this->setRelationships($model, $attributes);
         $model->save();
 
         return $model;
     }
 
     /**
-     * @param $id
-     * @return mixed
+     * @param int|string $id
+     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
+     * @param User|null $user
+     * @return Model|null
      */
-    public function delete($id): mixed
+    public function delete(int|string $id, Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null, User $user = null): Model|null
     {
         return $this->get($id)?->delete();
     }
 
     /**
-     * @param $id
+     * @param int|string $id
+     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
+     * @param User|null $user
+     * @return Model|null
      */
-    public function restore($id): void
+    public function restore(int|string $id, Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null, User $user = null): Model|null
     {
         //Todo: check if a model uses SoftDeletes before using the restore command
-    }
 
-    /**
-     * @param $model
-     * @param array $attributes
-     */
-    protected function setRelationships($model, array $attributes): void
-    {
-        if (method_exists($model, 'setRelationships')) {
-            $model->setRelationships($attributes);
-        }
+        return null;
     }
 }

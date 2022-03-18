@@ -2,6 +2,7 @@
 
 namespace Fligno\StarterKit\Abstracts;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
@@ -32,10 +33,10 @@ abstract class BaseJsonSerializable implements JsonSerializable
     private BaseJsonSerializable|Response|Request|Collection|array $raw_data;
 
     /**
-     * @param BaseJsonSerializable|Response|Request|Collection|array $data
+     * @param BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
      * @param string|null $key
      */
-    public function __construct(BaseJsonSerializable|Response|Request|Collection|array $data = [], ?string $key = null)
+    public function __construct(BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [], ?string $key = null)
     {
         $this->raw_data = $data;
 
@@ -51,6 +52,9 @@ abstract class BaseJsonSerializable implements JsonSerializable
         elseif ($data instanceof self) {
             $data = $this->parseBaseJsonSerializable($data, $key);
         }
+        elseif ($data instanceof Model) {
+            $data = $this->parseModel($data, $key);
+        }
 
         if (is_array($data) && Arr::isAssoc($data)) {
             $this->setFields($data);
@@ -58,11 +62,11 @@ abstract class BaseJsonSerializable implements JsonSerializable
     }
 
     /**
-     * @param BaseJsonSerializable|Response|Request|Collection|array|null $data
+     * @param BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
      * @param string|null $key
      * @return static
      */
-    public static function from(BaseJsonSerializable|Response|Request|Collection|array $data = null, ?string $key = null): static
+    public static function from(BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [], ?string $key = null): static
     {
         return new static($data, $key);
     }
@@ -113,6 +117,16 @@ abstract class BaseJsonSerializable implements JsonSerializable
      * @return array
      */
     public function parseBaseJsonSerializable(BaseJsonSerializable $response, ?string $key = null): array
+    {
+        return $response->toArray();
+    }
+
+    /**
+     * @param Model $response
+     * @param string|null $key
+     * @return array
+     */
+    public function parseModel(Model $response, ?string $key = null): array
     {
         return $response->toArray();
     }
