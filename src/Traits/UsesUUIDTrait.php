@@ -16,9 +16,9 @@ trait UsesUUIDTrait
     /**
      * Generates a UUID during model creation.
      */
-    public static function bootUsesUuid(): void
+    public static function bootUsesUuidTrait(): void
     {
-        static::creating(function (Model $model) {
+        static::creating(static function (Model $model) {
             $model->uuid = Str::uuid();
         });
     }
