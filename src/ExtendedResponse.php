@@ -2,6 +2,7 @@
 
 namespace Fligno\StarterKit;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -24,9 +25,9 @@ use Illuminate\Support\Str;
 class ExtendedResponse
 {
     /**
-     * @var Collection|AnonymousResourceCollection|LengthAwarePaginator|Paginator|array|null
+     * @var Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array|null
      */
-    protected Collection|AnonymousResourceCollection|LengthAwarePaginator|Paginator|array|null $data = [];
+    protected Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array|null $data = [];
 
     /**
      * @var int
@@ -55,10 +56,10 @@ class ExtendedResponse
 
     /**
      * ExtendedResponse constructor.
-     * @param array|AnonymousResourceCollection|LengthAwarePaginator|Paginator|null $data
+     * @param Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array|null $data
      * @param array|string|null $message
      */
-    public function __construct(Paginator|LengthAwarePaginator|AnonymousResourceCollection|array $data = NULL, array|string $message = NULL)
+    public function __construct(Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array $data = NULL, array|string $message = NULL)
     {
         if (empty($data) === FALSE) {
             $this->data($data);
@@ -207,10 +208,10 @@ class ExtendedResponse
     /**
      * Set data
      *
-     * @param $value
+     * @param Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array|null $value
      * @return $this
      */
-    public function data($value): ExtendedResponse
+    public function data(Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array $value = null): ExtendedResponse
     {
         if ($value instanceof ResourceCollection) {
             $pagination = $value->response(request())->getData(true);
@@ -231,7 +232,7 @@ class ExtendedResponse
             $this->pagination = $pagination;
             $this->data = $data;
         }
-        else if ($value instanceof Collection) {
+        else if ($value instanceof Collection || $value instanceof Model) {
             $this->data = $value->toArray();
         }
         else {
