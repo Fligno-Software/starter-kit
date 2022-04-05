@@ -585,6 +585,75 @@ if (!function_exists('collectClassesFromPath')) {
     }
 }
 
+// Validate Base64 String
+
+if (! function_exists('is_valid_base64')) {
+    /**
+     * @param string $string
+     * @return bool
+     */
+    function is_valid_base64(string $string): bool
+    {
+        // Check if there are valid base64 characters
+        if (!preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $string)) {
+            return false;
+        }
+
+        // Decode the string in strict mode and check the results
+        $decoded = base64_decode($string, true);
+        if(false === $decoded) {
+            return false;
+        }
+
+        // Encode the string again
+        if(base64_encode($decoded) !== $string) {
+            return false;
+        }
+
+        return true;
+    }
+}
+
+if (! function_exists('isValidBase64')) {
+    /**
+     * @param string $string
+     * @return bool
+     */
+    function isValidBase64(string $string): bool
+    {
+        return is_valid_base64($string);
+    }
+}
+
+// Validate URL
+
+if (! function_exists('is_valid_url')) {
+    /**
+     * @param string $url
+     * @return bool
+     */
+    function is_valid_url(string $url): bool
+    {
+        $path = parse_url($url, PHP_URL_PATH);
+        $encoded_path = array_map('urlencode', explode('/', $path));
+        $url = str_replace($path, implode('/', $encoded_path), $url);
+
+        return (bool) filter_var($url, FILTER_VALIDATE_URL);
+    }
+}
+
+if (! function_exists('isValidURL')) {
+    /**
+     * @param string $url
+     * @return bool
+     */
+    function isValidURL(string $url): bool
+    {
+        return is_valid_url($url);
+    }
+}
+
+
 // Symfony Process
 
 if (! function_exists('make_process'))
