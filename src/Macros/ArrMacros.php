@@ -18,13 +18,13 @@ class ArrMacros
      */
     public function isFilled(): Closure
     {
-        return static function (array $haystack, string $needle){
+        return static function (array $haystack, string $needle) {
             foreach ($haystack as $key => $value) {
-                if($key === $needle) {
-                    return empty($value) === FALSE;
+                if ($key === $needle) {
+                    return empty($value) === false;
                 }
             }
-            return FALSE;
+            return false;
         };
     }
 
@@ -33,8 +33,8 @@ class ArrMacros
      */
     public function isNotAssoc(): Closure
     {
-        return static function (array $array){
-            return Arr::isAssoc($array) === FALSE;
+        return static function (array $array) {
+            return Arr::isAssoc($array) === false;
         };
     }
 }

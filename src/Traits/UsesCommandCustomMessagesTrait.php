@@ -10,8 +10,8 @@ namespace Fligno\StarterKit\Traits;
 trait UsesCommandCustomMessagesTrait
 {
     /**
-     * @param string $message
-     * @param int|string|null $verbosity
+     * @param  string          $message
+     * @param  int|string|null $verbosity
      * @return void
      */
     public function ongoing(string $message, int|string  $verbosity = null): void
@@ -20,8 +20,8 @@ trait UsesCommandCustomMessagesTrait
     }
 
     /**
-     * @param string $message
-     * @param int|string|null $verbosity
+     * @param  string          $message
+     * @param  int|string|null $verbosity
      * @return void
      */
     public function done(string $message, int|string  $verbosity = null): void
@@ -30,8 +30,8 @@ trait UsesCommandCustomMessagesTrait
     }
 
     /**
-     * @param string $message
-     * @param int|string|null $verbosity
+     * @param  string          $message
+     * @param  int|string|null $verbosity
      * @return void
      */
     public function failed(string $message, int|string  $verbosity = null): void
@@ -40,9 +40,9 @@ trait UsesCommandCustomMessagesTrait
     }
 
     /**
-     * @param string $message
-     * @param string $title
-     * @param int|string|null $verbosity
+     * @param  string          $message
+     * @param  string          $title
+     * @param  int|string|null $verbosity
      * @return void
      */
     public function note(string $message, string $title = 'INFO', int|string  $verbosity = null): void

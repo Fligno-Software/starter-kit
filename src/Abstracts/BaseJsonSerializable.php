@@ -34,25 +34,23 @@ abstract class BaseJsonSerializable implements JsonSerializable
 
     /**
      * @param BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
-     * @param string|null $key
+     * @param string|null                                                       $key
      */
-    public function __construct(BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [], ?string $key = null)
-    {
+    public function __construct(
+        BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [],
+        ?string $key = null
+    ) {
         $this->raw_data = $data;
 
-        if($data instanceof Response) {
+        if ($data instanceof Response) {
             $data = $this->parseResponse($data, $key);
-        }
-        elseif ($data instanceof Request) {
+        } elseif ($data instanceof Request) {
             $data = $this->parseRequest($data, $key);
-        }
-        elseif($data instanceof Collection) {
+        } elseif ($data instanceof Collection) {
             $data = $this->parseCollection($data, $key);
-        }
-        elseif ($data instanceof self) {
+        } elseif ($data instanceof self) {
             $data = $this->parseBaseJsonSerializable($data, $key);
-        }
-        elseif ($data instanceof Model) {
+        } elseif ($data instanceof Model) {
             $data = $this->parseModel($data, $key);
         }
 
@@ -62,25 +60,29 @@ abstract class BaseJsonSerializable implements JsonSerializable
     }
 
     /**
-     * @param BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
-     * @param string|null $key
+     * @param  BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
+     * @param  string|null                                                       $key
      * @return static
      */
-    public static function from(BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [], ?string $key = null): static
-    {
+    public static function from(
+        BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [],
+        ?string $key = null
+    ): static {
         return new static($data, $key);
     }
 
-    /***** PARSE DIFFERENT DATA SOURCE *****/
+    /*****
+     * PARSE DIFFERENT DATA SOURCE
+     *****/
 
     /**
-     * @param Response $response
-     * @param string|null $key
+     * @param  Response    $response
+     * @param  string|null $key
      * @return array
      */
     public function parseResponse(Response $response, ?string $key = null): array
     {
-        if($response->ok() && $array = $response->json($key)) {
+        if ($response->ok() && $array = $response->json($key)) {
             return $array;
         }
 
@@ -88,8 +90,8 @@ abstract class BaseJsonSerializable implements JsonSerializable
     }
 
     /**
-     * @param Request $response
-     * @param string|null $key
+     * @param  Request     $response
+     * @param  string|null $key
      * @return array
      */
     public function parseRequest(Request $response, ?string $key = null): array
@@ -102,8 +104,8 @@ abstract class BaseJsonSerializable implements JsonSerializable
     }
 
     /**
-     * @param Collection $response
-     * @param string|null $key
+     * @param  Collection  $response
+     * @param  string|null $key
      * @return array
      */
     public function parseCollection(Collection $response, ?string $key = null): array
@@ -112,8 +114,8 @@ abstract class BaseJsonSerializable implements JsonSerializable
     }
 
     /**
-     * @param BaseJsonSerializable $response
-     * @param string|null $key
+     * @param  BaseJsonSerializable $response
+     * @param  string|null          $key
      * @return array
      */
     public function parseBaseJsonSerializable(BaseJsonSerializable $response, ?string $key = null): array
@@ -122,8 +124,8 @@ abstract class BaseJsonSerializable implements JsonSerializable
     }
 
     /**
-     * @param Model $response
-     * @param string|null $key
+     * @param  Model       $response
+     * @param  string|null $key
      * @return array
      */
     public function parseModel(Model $response, ?string $key = null): array
@@ -132,17 +134,16 @@ abstract class BaseJsonSerializable implements JsonSerializable
     }
 
     /**
-     * @param array $array
+     * @param  array $array
      * @return static
      */
     protected function setFields(array $array): static
     {
-        foreach (get_class_vars(static::class) as $key=>$value){
-            if(Arr::has($array, $key)) {
-                if(method_exists($this, $method = Str::camel('set' . $key))) {
+        foreach (get_class_vars(static::class) as $key => $value) {
+            if (Arr::has($array, $key)) {
+                if (method_exists($this, $method = Str::camel('set' . $key))) {
                     $this->$method($array[$key]);
-                }
-                else {
+                } else {
                     $this->$key = $array[$key];
                 }
             }
@@ -153,10 +154,11 @@ abstract class BaseJsonSerializable implements JsonSerializable
 
     /**
      * Specify data which should be serialized to JSON
-     * @link https://php.net/manual/en/jsonserializable.jsonserialize.php
+     *
+     * @link   https://php.net/manual/en/jsonserializable.jsonserialize.php
      * @return static data which can be serialized by <b>json_encode</b>,
      * which is a value of any type other than a resource.
-     * @since 5.4
+     * @since  5.4
      */
     #[Pure] public function jsonSerialize(): static
     {
@@ -164,7 +166,7 @@ abstract class BaseJsonSerializable implements JsonSerializable
     }
 
     /**
-     * @param static $object
+     * @param  static $object
      * @return static
      */
     public function performBeforeSerialize(self $object): static
@@ -220,13 +222,13 @@ abstract class BaseJsonSerializable implements JsonSerializable
      * The __toString method allows a class to decide how it will react when it is converted to a string.
      *
      * @return string
-     * @link https://php.net/manual/en/language.oop5.magic.php#language.oop5.magic.tostring
+     * @link   https://php.net/manual/en/language.oop5.magic.php#language.oop5.magic.tostring
      */
     public function __toString(): string
     {
         try {
             return json_encode($this, JSON_THROW_ON_ERROR);
-        } catch (JsonException $e) {
+        } catch (JsonException) {
             return '';
         }
     }
@@ -236,39 +238,45 @@ abstract class BaseJsonSerializable implements JsonSerializable
      */
     public function aliased(): static
     {
-        collect($this->field_aliases)->each(function ($value, $key) {
-            if (isset($this->$key)) {
-                $temp = $this->$key;
-                $this->$value = is_object($temp) ? clone $temp : $temp;
-                unset($this->$key);
+        collect($this->field_aliases)->each(
+            function ($value, $key) {
+                if (isset($this->$key)) {
+                    $temp = $this->$key;
+                    $this->$value = is_object($temp) ? clone $temp : $temp;
+                    unset($this->$key);
+                }
             }
-        });
+        );
 
         return $this;
     }
 
     /**
-     * @param Collection|string[]|string $fields
+     * @param  Collection|string[]|string $fields
      * @return static
      */
     public function only(Collection|array|string $fields): static
     {
-        $this->collect()->except(collect($fields))->each(function ($value, $key){
-            unset($this->$key);
-        });
+        $this->collect()->except(collect($fields))->each(
+            function ($value, $key) {
+                unset($this->$key);
+            }
+        );
 
         return $this;
     }
 
     /**
-     * @param Collection|string[]|string $fields
+     * @param  Collection|string[]|string $fields
      * @return static
      */
     public function except(Collection|array|string $fields): static
     {
-        $this->collect()->only(collect($fields))->each(function ($value, $key){
-            unset($this->$key);
-        });
+        $this->collect()->only(collect($fields))->each(
+            function ($value, $key) {
+                unset($this->$key);
+            }
+        );
 
         return $this;
     }

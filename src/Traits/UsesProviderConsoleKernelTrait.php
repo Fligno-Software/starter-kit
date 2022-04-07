@@ -18,11 +18,13 @@ trait UsesProviderConsoleKernelTrait
     public function bootConsoleKernel(): void
     {
         if ($this instanceof ProviderConsoleKernelInterface) {
-            app()->booted(function () {
-                if (method_exists($this, 'registerToConsoleKernel')) {
-                    $this->registerToConsoleKernel(app(Schedule::class));
+            app()->booted(
+                function () {
+                    if (method_exists($this, 'registerToConsoleKernel')) {
+                        $this->registerToConsoleKernel(app(Schedule::class));
+                    }
                 }
-            });
+            );
         }
     }
 }

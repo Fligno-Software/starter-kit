@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
  * Trait UsesUUIDTrait
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
- * @since 2021-11-19
+ * @since  2021-11-19
  */
 trait UsesUUIDTrait
 {
@@ -18,8 +18,10 @@ trait UsesUUIDTrait
      */
     public static function bootUsesUuidTrait(): void
     {
-        static::creating(static function (Model $model) {
-            $model->uuid = Str::uuid();
-        });
+        static::creating(
+            static function (Model $model) {
+                $model->uuid = Str::uuid();
+            }
+        );
     }
 }

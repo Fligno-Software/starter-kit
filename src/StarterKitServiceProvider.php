@@ -45,14 +45,20 @@ class StarterKitServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/starter-kit.php', 'starter-kit');
 
         // Register the service the package provides.
-        $this->app->singleton('starter-kit', function ($app) {
-            return new StarterKit;
-        });
+        $this->app->singleton(
+            'starter-kit',
+            function ($app) {
+                return new StarterKit;
+            }
+        );
 
         // Register the service the package provides.
-        $this->app->bind('extended-response', function ($app) {
-            return new ExtendedResponse();
-        });
+        $this->app->bind(
+            'extended-response',
+            function ($app) {
+                return new ExtendedResponse();
+            }
+        );
 
         parent::register();
     }
@@ -75,9 +81,12 @@ class StarterKitServiceProvider extends ServiceProvider
     protected function bootForConsole(): void
     {
         // Publishing the configuration file.
-        $this->publishes([
+        $this->publishes(
+            [
             __DIR__.'/../config/starter-kit.php' => config_path('starter-kit.php'),
-        ], 'starter-kit.config');
+            ],
+            'starter-kit.config'
+        );
 
         // Publishing the views.
         /*$this->publishes([
