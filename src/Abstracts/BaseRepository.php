@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
  * Abstract Class BaseRepository
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
- * @since 2021-11-19
+ * @since  2021-11-19
  */
 abstract class BaseRepository implements RepositoryInterface
 {
@@ -35,23 +35,28 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
-     * @param User|null $user
+     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
+     * @param  User|null                                                                             $user
      * @return Collection|array
      */
-    public function all(Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null, User $user = null): Collection|array
-    {
+    public function all(
+        Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null,
+        User $user = null
+    ): Collection|array {
         return $this->builder->get();
     }
 
     /**
-     * @param int|string $id
-     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
-     * @param User|null $user
+     * @param  int|string                                                                            $id
+     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
+     * @param  User|null                                                                             $user
      * @return Model|Collection|Builder|array|null
      */
-    public function get(int|string $id, Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null, User $user = null): Model|Collection|Builder|array|null
-    {
+    public function get(
+        int|string $id,
+        Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null,
+        User $user = null
+    ): Model|Collection|Builder|array|null {
         if ($id) {
             return $this->builder->findOrFail($id);
         }
@@ -60,23 +65,28 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes
-     * @param User|null $user
+     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes
+     * @param  User|null                                                                        $user
      * @return Model|null
      */
-    public function create(Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes, User $user = null): Model|null
-    {
+    public function create(
+        Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes,
+        User $user = null
+    ): Model|null {
         return $this->builder->firstOrCreate($attributes);
     }
 
     /**
-     * @param int|string $id
-     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
-     * @param User|null $user
+     * @param  int|string                                                                            $id
+     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
+     * @param  User|null                                                                             $user
      * @return Model|null
      */
-    public function update(int|string $id, Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null, User $user = null): Model|null
-    {
+    public function update(
+        int|string $id,
+        Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null,
+        User $user = null
+    ): Model|null {
         $model = $this->get($id);
         $model->fill($attributes);
         $model->save();
@@ -85,24 +95,30 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param int|string $id
-     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
-     * @param User|null $user
+     * @param  int|string                                                                            $id
+     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
+     * @param  User|null                                                                             $user
      * @return Model|null
      */
-    public function delete(int|string $id, Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null, User $user = null): Model|null
-    {
+    public function delete(
+        int|string $id,
+        Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null,
+        User $user = null
+    ): Model|null {
         return $this->get($id)?->delete();
     }
 
     /**
-     * @param int|string $id
-     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
-     * @param User|null $user
+     * @param  int|string                                                                            $id
+     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
+     * @param  User|null                                                                             $user
      * @return Model|null
      */
-    public function restore(int|string $id, Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null, User $user = null): Model|null
-    {
+    public function restore(
+        int|string $id,
+        Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes = null,
+        User $user = null
+    ): Model|null {
         //Todo: check if a model uses SoftDeletes before using the restore command
 
         return null;

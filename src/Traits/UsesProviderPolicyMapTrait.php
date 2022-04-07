@@ -15,7 +15,8 @@ trait UsesProviderPolicyMapTrait
 {
     /**
      * Laravel Policy Map
-     * @link https://laravel.com/docs/8.x/authorization#registering-policies
+     *
+     * @link    https://laravel.com/docs/8.x/authorization#registering-policies
      * @example [ UserPolicy::class => User::class ]
      *
      * @var array
@@ -33,21 +34,22 @@ trait UsesProviderPolicyMapTrait
     /**
      * Load Policies
      *
-     * @param Collection|null $policies
+     * @param  Collection|null $policies
      * @return void
      */
     protected function loadPolicies(Collection $policies = null): void
     {
-        $policies?->each(static function ($model, $policy) {
-            if ($model instanceof Collection) {
-                $model = $model->first();
+        $policies?->each(
+            static function ($model, $policy) {
+                if ($model instanceof Collection) {
+                    $model = $model->first();
+                }
+                try {
+                    Gate::policy($model, $policy);
+                } catch (Exception) {
+                    starterKit()->clearCache();
+                }
             }
-            try{
-                Gate::policy($model, $policy);
-            }
-            catch (Exception){
-                starterKit()->clearCache();
-            }
-        });
+        );
     }
 }

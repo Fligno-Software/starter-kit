@@ -15,6 +15,7 @@ trait UsesProviderRepositoryMapTrait
 {
     /**
      * Laravel Repository Map
+     *
      * @example [ UserRepository::class => User::class ]
      *
      * @var array
@@ -32,21 +33,22 @@ trait UsesProviderRepositoryMapTrait
     /**
      * Load Repositories
      *
-     * @param Collection|null $repositories
+     * @param  Collection|null $repositories
      * @return void
      */
     protected function loadRepositories(Collection $repositories = null): void
     {
-        $repositories?->each(static function ($model, $repository) {
-            if ($model instanceof Collection) {
-                $model = $model->first();
+        $repositories?->each(
+            static function ($model, $repository) {
+                if ($model instanceof Collection) {
+                    $model = $model->first();
+                }
+                try {
+                    app()->when($repository)->needs(Builder::class)->give(fn() => call_user_func($model . '::query'));
+                } catch (Exception) {
+                    starterKit()->clearCache();
+                }
             }
-            try{
-                app()->when($repository)->needs(Builder::class)->give(fn() => call_user_func($model . '::query'));
-            }
-            catch (Exception) {
-                starterKit()->clearCache();
-            }
-        });
+        );
     }
 }

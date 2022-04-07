@@ -13,7 +13,7 @@ trait UsesProviderDynamicRelationshipsTrait
 {
     /**
      * @return void
-     * @link https://laravel.com/docs/8.x/eloquent-relationships#dynamic-relationships
+     * @link   https://laravel.com/docs/8.x/eloquent-relationships#dynamic-relationships
      */
     public function bootDynamicRelationships(): void
     {

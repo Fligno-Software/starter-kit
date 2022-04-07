@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
  * Class ExtendedResponse
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
- * @since 2021-11-19
+ * @since  2021-11-19
  *
  * Usage
  *  This is a simple Response Class that allows you to method-chain
@@ -56,16 +56,19 @@ class ExtendedResponse
 
     /**
      * ExtendedResponse constructor.
+     *
      * @param Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array|null $data
-     * @param array|string|null $message
+     * @param array|string|null                                                                      $message
      */
-    public function __construct(Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array $data = NULL, array|string $message = NULL)
-    {
-        if (empty($data) === FALSE) {
+    public function __construct(
+        Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array $data = null,
+        array|string $message = null
+    ) {
+        if (empty($data) === false) {
             $this->data($data);
         }
 
-        if (empty($message) === FALSE) {
+        if (empty($message) === false) {
             $this->message($message);
         }
     }
@@ -73,7 +76,7 @@ class ExtendedResponse
     /**
      * Set status code
      *
-     * @param int $code
+     * @param  int $code
      * @return $this
      */
     public function code(int $code): ExtendedResponse
@@ -90,7 +93,7 @@ class ExtendedResponse
     /**
      * Generic success code
      *
-     * @param int $code
+     * @param  int $code
      * @return $this
      */
     public function success(int $code = 200): ExtendedResponse
@@ -104,13 +107,13 @@ class ExtendedResponse
     /**
      * Generic failure code
      *
-     * @param int $code
+     * @param  int $code
      * @return $this
      */
     public function failed(int $code = 400): ExtendedResponse
     {
         $this->code = $code;
-        $this->success = FALSE;
+        $this->success = false;
 
         return $this;
     }
@@ -125,7 +128,7 @@ class ExtendedResponse
     public function unauthorized(): ExtendedResponse
     {
         $this->code = 401;
-        $this->success = FALSE;
+        $this->success = false;
 
         return $this;
     }
@@ -138,7 +141,7 @@ class ExtendedResponse
     public function forbidden(): ExtendedResponse
     {
         $this->code = 403;
-        $this->success = FALSE;
+        $this->success = false;
 
         return $this;
     }
@@ -151,7 +154,7 @@ class ExtendedResponse
     public function notFound(): ExtendedResponse
     {
         $this->code = 404;
-        $this->success = FALSE;
+        $this->success = false;
 
         return $this;
     }
@@ -159,7 +162,7 @@ class ExtendedResponse
     /**
      * Set a custom slug
      *
-     * @param string $value
+     * @param  string $value
      * @return $this
      */
     public function slug(string $value): ExtendedResponse
@@ -172,15 +175,14 @@ class ExtendedResponse
     /**
      * Set message
      *
-     * @param array|string|null $value
+     * @param  array|string|null $value
      * @return $this
      */
     public function message(array|string|null $value): ExtendedResponse
     {
         if (is_string($value)) {
             $value = [$value];
-        }
-        elseif (is_null($value)) {
+        } elseif (is_null($value)) {
             $value = [];
         }
 
@@ -197,7 +199,7 @@ class ExtendedResponse
     /**
      * Implement a message translator based on slug given
      *
-     * @param $fallback
+     * @param  $fallback
      * @return mixed
      */
     protected function translateMessage($fallback): mixed
@@ -208,11 +210,12 @@ class ExtendedResponse
     /**
      * Set data
      *
-     * @param Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array|null $value
+     * @param  Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array|null $value
      * @return $this
      */
-    public function data(Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array $value = null): ExtendedResponse
-    {
+    public function data(
+        Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array $value = null
+    ): ExtendedResponse {
         if ($value instanceof ResourceCollection) {
             $pagination = $value->response(request())->getData(true);
             $data = $pagination['data'];
@@ -221,8 +224,7 @@ class ExtendedResponse
             // separate them on two different array keys to create uniformity
             $this->pagination = $pagination;
             $this->data = $data;
-        }
-        else if ($value instanceof Paginator || $value instanceof LengthAwarePaginator) {
+        } elseif ($value instanceof Paginator || $value instanceof LengthAwarePaginator) {
             // convert pagination to array
             $pagination = $value->toArray();
             $data = $pagination['data'];
@@ -231,11 +233,9 @@ class ExtendedResponse
             // separate them on two different array keys to create uniformity
             $this->pagination = $pagination;
             $this->data = $data;
-        }
-        else if ($value instanceof Collection || $value instanceof Model) {
+        } elseif ($value instanceof Collection || $value instanceof Model) {
             $this->data = $value->toArray();
-        }
-        else {
+        } else {
             $this->data = $value;
         }
 
@@ -259,13 +259,16 @@ class ExtendedResponse
      */
     protected function generateResponse(): JsonResponse
     {
-        return response()->json([
-            'success'     => $this->success,
-            'code'        => $this->code,
-            'slug'        => $this->slug,
-            'message'     => $this->message,
-            'data'        => $this->data,
-            'pagination'  => $this->pagination,
-        ], $this->code);
+        return response()->json(
+            [
+                'success'     => $this->success,
+                'code'        => $this->code,
+                'slug'        => $this->slug,
+                'message'     => $this->message,
+                'data'        => $this->data,
+                'pagination'  => $this->pagination,
+            ],
+            $this->code
+        );
     }
 }

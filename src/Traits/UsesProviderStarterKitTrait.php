@@ -14,7 +14,13 @@ use JsonException;
  */
 trait UsesProviderStarterKitTrait
 {
-    use UsesProviderMorphMapTrait, UsesProviderObserverMapTrait, UsesProviderPolicyMapTrait, UsesProviderRepositoryMapTrait, UsesProviderDynamicRelationshipsTrait, UsesProviderHttpKernelTrait, UsesProviderConsoleKernelTrait;
+    use UsesProviderMorphMapTrait,
+        UsesProviderObserverMapTrait,
+        UsesProviderPolicyMapTrait,
+        UsesProviderRepositoryMapTrait,
+        UsesProviderDynamicRelationshipsTrait,
+        UsesProviderHttpKernelTrait,
+        UsesProviderConsoleKernelTrait;
 
     /**
      * Artisan Commands
@@ -102,7 +108,10 @@ trait UsesProviderStarterKitTrait
         return starterKit()->getTargetDirectories($this->package_name, function () {
             return collect(['database/migrations'])
                 ->when($this->areHelpersEnabled(), fn($collection) => $collection->push('helpers'))
-                ->when(! $this->app->routesAreCached() && $this->areRoutesEnabled(), fn($collection) => $collection->push('routes'))
+                ->when(
+                    ! $this->app->routesAreCached() && $this->areRoutesEnabled(),
+                    fn($collection) => $collection->push('routes')
+                )
                 ->when($this->areRepositoriesEnabled(), fn($collection) => $collection->push('Repositories'))
                 ->when($this->arePoliciesEnabled(), fn($collection) => $collection->push('Policies'))
                 ->when($this->areObserversEnabled(), fn($collection) => $collection->push('Observers'));
@@ -118,15 +127,26 @@ trait UsesProviderStarterKitTrait
      * @param int $maxLevels
      * @return void
      */
-    protected function bootLaravelFiles(object|string $sourceObjectOrClassOrDir = null, string $domain = null, bool $traverseUp = false, int $maxLevels = 3): void
-    {
+    protected function bootLaravelFiles(
+        object|string $sourceObjectOrClassOrDir = null,
+        string $domain = null,
+        bool $traverseUp = false,
+        int $maxLevels = 3
+    ): void {
         if (empty($sourceObjectOrClassOrDir)) {
             return;
         }
 
         $targets = $this->getTargetFilesAndDirectories();
 
-        $directories = starterKit()->getTargetDirectoriesPaths($this->package_name, $sourceObjectOrClassOrDir, $targets, $domain, $traverseUp, $maxLevels);
+        $directories = starterKit()->getTargetDirectoriesPaths(
+            $this->package_name,
+            $sourceObjectOrClassOrDir,
+            $targets,
+            $domain,
+            $traverseUp,
+            $maxLevels
+        );
 
         // Load Migrations
         if ($path = $directories->get('database/migrations')) {
@@ -134,27 +154,32 @@ trait UsesProviderStarterKitTrait
         }
 
         // Load Helpers
-        if (($path = $directories->get('helpers')) && $helpers = starterKit()->getHelpers($this->package_name, $path, $domain)) {
+        if (($path = $directories->get('helpers')) &&
+            $helpers = starterKit()->getHelpers($this->package_name, $path, $domain)) {
             $this->loadHelpersFrom($helpers);
         }
 
         // Load Routes
-        if (($path = $directories->get('routes')) && $routes = starterKit()->getRoutes($this->package_name, $path, $domain)) {
+        if (($path = $directories->get('routes')) &&
+            $routes = starterKit()->getRoutes($this->package_name, $path, $domain)) {
             $this->loadRouteFilesFrom($routes);
         }
 
         // Load Observers
-        if (($path = $directories->get('Observers')) && $observers = starterKit()->getObservers($this->package_name, $path, $this->observer_map, $domain)) {
+        if (($path = $directories->get('Observers')) &&
+            $observers = starterKit()->getObservers($this->package_name, $path, $this->observer_map, $domain)) {
             $this->loadObservers($observers);
         }
 
         // Load Policies
-        if (($path = $directories->get('Policies')) && $policies = starterKit()->getPolicies($this->package_name, $path, $this->policy_map, $domain)) {
+        if (($path = $directories->get('Policies')) &&
+            $policies = starterKit()->getPolicies($this->package_name, $path, $this->policy_map, $domain)) {
             $this->loadPolicies($policies);
         }
 
         // Load Repositories
-        if (($path = $directories->get('Repositories')) && $repositories = starterKit()->getRepositories($this->package_name, $path, $this->repository_map, $domain)) {
+        if (($path = $directories->get('Repositories')) &&
+            $repositories = starterKit()->getRepositories($this->package_name, $path, $this->repository_map, $domain)) {
             $this->loadRepositories($repositories);
         }
     }
@@ -212,7 +237,9 @@ trait UsesProviderStarterKitTrait
     {
         $collection?->each(function ($route) {
             if (file_exists($route)) {
-                $config = Str::contains($route, 'api') ? $this->getApiRouteConfiguration() : $this->getWebRouteConfiguration();
+                $config = Str::contains($route, 'api') ?
+                    $this->getApiRouteConfiguration() :
+                    $this->getWebRouteConfiguration();
                 Route::group($config, function () use ($route) {
                     parent::loadRoutesFrom($route);
                 });
@@ -264,8 +291,7 @@ trait UsesProviderStarterKitTrait
                 }
 
                 return $collection;
-            }
-            catch (JsonException) {
+            } catch (JsonException) {
                 return null;
             }
         }

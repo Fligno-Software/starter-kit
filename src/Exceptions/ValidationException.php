@@ -11,9 +11,10 @@ use Illuminate\Support\Str;
  * Class ValidationException
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
- * @since 2021-11-09
+ * @since  2021-11-09
  */
-class ValidationException extends BaseException {
+class ValidationException extends BaseException
+{
 
     public function render($request): JsonResponse
     {
