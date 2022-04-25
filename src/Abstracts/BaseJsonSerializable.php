@@ -28,9 +28,9 @@ abstract class BaseJsonSerializable implements JsonSerializable
     protected array $field_aliases = [];
 
     /**
-     * @var BaseJsonSerializable|Response|Request|Collection|array
+     * @var array|BaseJsonSerializable|Collection|Model|Request|Response
      */
-    private BaseJsonSerializable|Response|Request|Collection|array $raw_data;
+    private BaseJsonSerializable|Response|Request|Collection|array|Model $raw_data;
 
     /**
      * @param BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
@@ -130,6 +130,10 @@ abstract class BaseJsonSerializable implements JsonSerializable
      */
     public function parseModel(Model $response, ?string $key = null): array
     {
+        if ($key && $data = $response->$key) {
+            return collect($data)->toArray();
+        }
+
         return $response->toArray();
     }
 
