@@ -21,7 +21,9 @@
         "spatie/laravel-activitylog": "^4.4",
         "laravel/telescope": "^4.8",
         "nuwave/lighthouse": "^5.43",
-        "mll-lab/laravel-graphql-playground": "^2.6"
+        "mll-lab/laravel-graphql-playground": "^2.6",
+        "ext-zlib": "*",
+        "laravel/horizon": "^5.9"
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest",
@@ -52,7 +54,8 @@
         },
         "branch-alias": {
             "dev-master": "1.0.x-dev",
-            "dev-develop": "1.0.x-dev"
+            "dev-develop": "1.0.x-dev",
+            "dev-feature": "1.0.x-dev"
         }
     }
 }
