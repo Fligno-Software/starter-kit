@@ -40,23 +40,7 @@ abstract class BaseJsonSerializable implements JsonSerializable
         BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [],
         ?string $key = null
     ) {
-        $this->raw_data = $data;
-
-        if ($data instanceof Response) {
-            $data = $this->parseResponse($data, $key);
-        } elseif ($data instanceof Request) {
-            $data = $this->parseRequest($data, $key);
-        } elseif ($data instanceof Collection) {
-            $data = $this->parseCollection($data, $key);
-        } elseif ($data instanceof self) {
-            $data = $this->parseBaseJsonSerializable($data, $key);
-        } elseif ($data instanceof Model) {
-            $data = $this->parseModel($data, $key);
-        }
-
-        if (is_array($data) && Arr::isAssoc($data)) {
-            $this->setFields($data);
-        }
+        $this->setRawData($data, $key);
     }
 
     /**
@@ -138,6 +122,32 @@ abstract class BaseJsonSerializable implements JsonSerializable
     }
 
     /**
+     * @param BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
+     * @param string|null $key
+     * @return void
+     */
+    public function mergeDataToFields(
+        BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [],
+        ?string $key = null
+    ): void {
+        if ($data instanceof Response) {
+            $data = $this->parseResponse($data, $key);
+        } elseif ($data instanceof Request) {
+            $data = $this->parseRequest($data, $key);
+        } elseif ($data instanceof Collection) {
+            $data = $this->parseCollection($data, $key);
+        } elseif ($data instanceof self) {
+            $data = $this->parseBaseJsonSerializable($data, $key);
+        } elseif ($data instanceof Model) {
+            $data = $this->parseModel($data, $key);
+        }
+
+        if (is_array($data) && Arr::isAssoc($data)) {
+            $this->setFields($data);
+        }
+    }
+
+    /**
      * @param  array $array
      * @return static
      */
@@ -212,6 +222,19 @@ abstract class BaseJsonSerializable implements JsonSerializable
     public function collectObjectVars(): Collection
     {
         return collect(get_object_vars($this));
+    }
+
+    /**
+     * @param BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
+     * @param string|null $key
+     */
+    private function setRawData(
+        BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [],
+        ?string $key = null
+    ) {
+        $this->raw_data = $data;
+
+        $this->mergeDataToFields($data, $key);
     }
 
     /**
