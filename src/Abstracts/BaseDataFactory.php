@@ -32,19 +32,25 @@ abstract class BaseDataFactory extends BaseJsonSerializable
         ?string $key = null
     ): Model|Builder {
         $this->mergeDataToFields($data, $key);
-        return $this->getBuilder()->make($this->toArray());
+
+        $model = $this->getBuilder()->getModel()->newModelInstance();
+
+        $this->collect()->each(fn($item, $key) => $model->$key = $item);
+
+        return $model;
     }
 
     /**
      * @param BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
      * @param string|null $key
-     * @return Builder|Model
+     * @return Model|Builder|null
      */
     public function create(
         BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [],
         ?string $key = null
-    ): Model|Builder {
-        $this->mergeDataToFields($data, $key);
-        return $this->getBuilder()->create($this->toArray());
+    ): Model|Builder|null {
+        $model = $this->make($data, $key);
+
+        return $model->save() ? $model : null;
     }
 }

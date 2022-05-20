@@ -195,7 +195,7 @@ abstract class BaseJsonSerializable implements JsonSerializable
     {
         try {
             return json_decode($this->__toString(), true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException $e) {
+        } catch (JsonException) {
             return [];
         }
     }

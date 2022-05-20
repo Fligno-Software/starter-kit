@@ -65,18 +65,6 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes
-     * @param  User|null                                                                        $user
-     * @return Model|null
-     */
-    public function create(
-        Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes,
-        User $user = null
-    ): Model|null {
-        return $this->builder->firstOrCreate($attributes);
-    }
-
-    /**
      * @param  int|string                                                                            $id
      * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
      * @param  User|null                                                                             $user
