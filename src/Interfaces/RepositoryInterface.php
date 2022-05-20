@@ -41,16 +41,6 @@ interface RepositoryInterface
     ): Model|Collection|Builder|array|null;
 
     /**
-     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes
-     * @param  User|null                                                                        $user
-     * @return Model|null
-     */
-    public function create(
-        BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes,
-        User $user = null
-    ): Model|null;
-
-    /**
      * @param  int|string                                                                            $id
      * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
      * @param  User|null                                                                             $user
