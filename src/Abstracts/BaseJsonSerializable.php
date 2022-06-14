@@ -9,9 +9,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use JetBrains\PhpStorm\Pure;
 use JsonException;
 use JsonSerializable;
+use ReflectionClass;
+use ReflectionException;
+use Throwable;
 
 /**
  * Class BaseJsonSerializable
@@ -21,143 +23,167 @@ use JsonSerializable;
 abstract class BaseJsonSerializable implements JsonSerializable
 {
     /**
-     * Class field aliases
-     *
-     * @var array
+     * @var mixed
      */
-    protected array $field_aliases = [];
+    protected mixed $original_data;
 
     /**
-     * @var array|BaseJsonSerializable|Collection|Model|Request|Response
+     * @param mixed $data
+     * @param string|null $key
+     * @throws ReflectionException
      */
-    private BaseJsonSerializable|Response|Request|Collection|array|Model $raw_data;
-
-    /**
-     * @param BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
-     * @param string|null                                                       $key
-     */
-    public function __construct(
-        BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [],
-        ?string $key = null
-    ) {
-        $this->setRawData($data, $key);
+    public function __construct(mixed $data = [], ?string $key = null) {
+        $this->setOriginalData($data, $key);
     }
 
     /**
-     * @param  BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
-     * @param  string|null                                                       $key
+     * @param mixed $data
+     * @param string|null $key
      * @return static
+     * @throws ReflectionException
      */
-    public static function from(
-        BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [],
-        ?string $key = null
-    ): static {
+    public static function from(mixed $data = [], ?string $key = null): static {
         return new static($data, $key);
     }
 
-    /*****
-     * PARSE DIFFERENT DATA SOURCE
-     *****/
+    /***** PARSE DIFFERENT DATA SOURCE *****/
 
     /**
-     * @param  Response    $response
-     * @param  string|null $key
+     * @param array $response
+     * @param string|null $key
      * @return array
+     */
+    public function parseArray(array $response, ?string $key = null): array
+    {
+        return $key && isset($response[$key]) ? Arr::wrap($response[$key]) : $response;
+    }
+
+    /**
+     * @param Response $response
+     * @param string|null $key
+     * @return array
+     * @throws ReflectionException
      */
     public function parseResponse(Response $response, ?string $key = null): array
     {
         if ($response->ok() && $array = $response->json($key)) {
-            return $array;
+            return $this->parse($array);
         }
 
         return [];
     }
 
     /**
-     * @param  Request     $response
-     * @param  string|null $key
+     * @param Request $response
+     * @param string|null $key
      * @return array
+     * @throws ReflectionException
      */
     public function parseRequest(Request $response, ?string $key = null): array
     {
-        if ($response instanceof FormRequest) {
-            return  $response->validated();
-        }
+        $response = $response instanceof FormRequest ? $response->validated() : $response->all();
 
-        return $response->all();
+        return $this->parse($response, $key);
     }
 
     /**
-     * @param  Collection  $response
-     * @param  string|null $key
+     * @param Collection $response
+     * @param string|null $key
      * @return array
+     * @throws ReflectionException
      */
     public function parseCollection(Collection $response, ?string $key = null): array
     {
-        return $response->toArray();
+        return $key && $response->has($key) ? $this->parse($response->get($key)) : $response->toArray();
     }
 
     /**
-     * @param  BaseJsonSerializable $response
-     * @param  string|null          $key
+     * @param BaseJsonSerializable $response
+     * @param string|null $key
      * @return array
+     * @throws ReflectionException
      */
     public function parseBaseJsonSerializable(BaseJsonSerializable $response, ?string $key = null): array
     {
-        return $response->toArray();
+        return $this->parse($response->toArray(), $key);
     }
 
     /**
-     * @param  Model       $response
-     * @param  string|null $key
+     * @param Model $response
+     * @param string|null $key
      * @return array
+     * @throws ReflectionException
      */
     public function parseModel(Model $response, ?string $key = null): array
     {
-        if ($key && $data = $response->$key) {
-            return collect($data)->toArray();
-        }
-
-        return $response->toArray();
+        return $key && isset($response->$key) ? $this->parse($response->$key) : $response->toArray();
     }
 
     /**
-     * @param BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
+     * @param mixed $data
      * @param string|null $key
-     * @return void
+     * @return array
+     * @throws ReflectionException
      */
-    public function mergeDataToFields(
-        BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [],
-        ?string $key = null
-    ): void {
-        if ($data instanceof Response) {
-            $data = $this->parseResponse($data, $key);
-        } elseif ($data instanceof Request) {
-            $data = $this->parseRequest($data, $key);
-        } elseif ($data instanceof Collection) {
-            $data = $this->parseCollection($data, $key);
-        } elseif ($data instanceof self) {
-            $data = $this->parseBaseJsonSerializable($data, $key);
-        } elseif ($data instanceof Model) {
-            $data = $this->parseModel($data, $key);
+    public function parse(mixed $data = [], ?string $key = null): array
+    {
+        if (is_array($data)) {
+            return $this->parseArray($data, $key);
         }
 
-        if (is_array($data) && Arr::isAssoc($data)) {
+        if ($data instanceof self) {
+            return $this->parseBaseJsonSerializable($data, $key);
+        }
+
+        if ($data instanceof Response) {
+            return $this->parseResponse($data, $key);
+        }
+
+        if ($data instanceof Request) {
+            return $this->parseRequest($data, $key);
+        }
+
+        if ($data instanceof Collection) {
+            return $this->parseCollection($data, $key);
+        }
+
+        if ($data instanceof Model) {
+            return $this->parseModel($data, $key);
+        }
+
+        if (is_object($data) && ($class = (new ReflectionClass($data))->getShortName()) && method_exists($this, $method = 'parse' . $class)) {
+            return $this->$method($data, $key);
+        }
+
+        return [];
+    }
+
+    /**
+     * @param mixed $data
+     * @param string|null $key
+     * @return void
+     * @throws ReflectionException
+     */
+    public function mergeDataToFields(mixed $data = [], ?string $key = null): void {
+        $data = $this->parse($data, $key);
+
+        if (Arr::isAssoc($data)) {
             $this->setFields($data);
         }
     }
 
     /**
-     * @param  array $array
-     * @return static
+     * @param array $array
+     * @return $this
      */
     protected function setFields(array $array): static
     {
         foreach (get_class_vars(static::class) as $key => $value) {
             if (Arr::has($array, $key)) {
-                if (method_exists($this, $method = Str::camel('set' . $key))) {
+                if (method_exists($this, $method = Str::of($key)->ucfirst()->prepend('set')->camel()->jsonSerialize())) {
                     $this->$method($array[$key]);
-                } else {
+                }
+                else {
                     $this->$key = $array[$key];
                 }
             }
@@ -167,6 +193,28 @@ abstract class BaseJsonSerializable implements JsonSerializable
     }
 
     /**
+     * @param mixed $original_data
+     * @param string|null $key
+     * @throws ReflectionException
+     */
+    public function setOriginalData(mixed $original_data, ?string $key = null): void
+    {
+        $this->original_data = $original_data;
+
+        $this->mergeDataToFields($original_data, $key);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getOriginalData(): mixed
+    {
+        return $this->original_data;
+    }
+
+    /***** OVERRIDDEN FUNCTIONS *****/
+
+    /**
      * Specify data which should be serialized to JSON
      *
      * @link   https://php.net/manual/en/jsonserializable.jsonserialize.php
@@ -174,14 +222,14 @@ abstract class BaseJsonSerializable implements JsonSerializable
      * which is a value of any type other than a resource.
      * @since  5.4
      */
-    #[Pure] public function jsonSerialize(): static
+    public function jsonSerialize(): static
     {
         return $this->performBeforeSerialize($this);
     }
 
     /**
-     * @param  static $object
-     * @return static
+     * @param BaseJsonSerializable $object
+     * @return $this
      */
     public function performBeforeSerialize(self $object): static
     {
@@ -201,51 +249,6 @@ abstract class BaseJsonSerializable implements JsonSerializable
     }
 
     /**
-     * @return Collection
-     */
-    public function collect(): Collection
-    {
-        return collect($this->toArray());
-    }
-
-    /**
-     * @return Collection
-     */
-    public function collectClassVars(): Collection
-    {
-        return collect(get_class_vars(static::class));
-    }
-
-    /**
-     * @return Collection
-     */
-    public function collectObjectVars(): Collection
-    {
-        return collect(get_object_vars($this));
-    }
-
-    /**
-     * @param BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
-     * @param string|null $key
-     */
-    private function setRawData(
-        BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [],
-        ?string $key = null
-    ) {
-        $this->raw_data = $data;
-
-        $this->mergeDataToFields($data, $key);
-    }
-
-    /**
-     * @return array|BaseJsonSerializable|Response|Request|Collection
-     */
-    public function getRawData(): array|Response|Collection|Request|BaseJsonSerializable
-    {
-        return $this->raw_data;
-    }
-
-    /**
      * The __toString method allows a class to decide how it will react when it is converted to a string.
      *
      * @return string
@@ -260,12 +263,30 @@ abstract class BaseJsonSerializable implements JsonSerializable
         }
     }
 
+    /***** MORE FUNCTIONS *****/
+
     /**
-     * @return static
+     * @return Collection
+     */
+    public function collect(): Collection
+    {
+        return collect($this->toArray());
+    }
+
+    /**
+     * @return array
+     */
+    public function getFieldAliases(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return $this
      */
     public function aliased(): static
     {
-        collect($this->field_aliases)->each(
+        collect($this->getFieldAliases())->each(
             function ($value, $key) {
                 if (isset($this->$key)) {
                     $temp = $this->$key;
@@ -309,10 +330,20 @@ abstract class BaseJsonSerializable implements JsonSerializable
     }
 
     /**
-     * @return static
+     * @return $this
+     * @throws ReflectionException
      */
     public function clone(): static
     {
         return self::from($this);
+    }
+
+    /**
+     * @return $this
+     * @throws ReflectionException
+     */
+    public function clean(): static
+    {
+        return self::from($this->getOriginalData());
     }
 }
