@@ -15,7 +15,7 @@ trait HasTaggableCacheTrait
     /**
      * @return string
      */
-    abstract function getMainTag(): string;
+    abstract public function getMainTag(): string;
 
     /**
      * @return bool

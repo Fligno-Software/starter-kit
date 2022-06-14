@@ -24,7 +24,7 @@ class StarterKit
     /**
      * @return string
      */
-    function getMainTag(): string
+    public function getMainTag(): string
     {
         return 'sk';
     }
