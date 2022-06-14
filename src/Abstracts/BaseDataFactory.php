@@ -4,9 +4,8 @@ namespace Fligno\StarterKit\Abstracts;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Client\Response;
-use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Arr;
+use ReflectionException;
 
 /**
  * Class BaseDataFactory
@@ -23,14 +22,13 @@ abstract class BaseDataFactory extends BaseJsonSerializable
     abstract public function getBuilder(): Builder;
 
     /**
-     * @param BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
+     * @param mixed $data
      * @param string|null $key
      * @return Builder|Model
+     * @throws ReflectionException
      */
-    public function make(
-        BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [],
-        ?string $key = null
-    ): Model|Builder {
+    public function make(mixed $data = [], ?string $key = null): Model|Builder
+    {
         $this->mergeDataToFields($data, $key);
 
         $model = $this->getBuilder()->getModel()->newModelInstance();
@@ -43,15 +41,54 @@ abstract class BaseDataFactory extends BaseJsonSerializable
     }
 
     /**
-     * @param BaseJsonSerializable|Response|Request|Collection|Model|array|null $data
+     * @param mixed $data
      * @param string|null $key
      * @return Model|Builder|null
+     * @throws ReflectionException
      */
-    public function create(
-        BaseJsonSerializable|Response|Request|Collection|Model|array|null $data = [],
-        ?string $key = null
-    ): Model|Builder|null {
+    public function create(mixed $data = [], ?string $key = null): Model|Builder|null
+    {
         $model = $this->make($data, $key);
+
+        return $model->save() ? $model : null;
+    }
+
+    /**
+     * @param mixed $attributes
+     * @param mixed $values
+     * @param string|null $attributes_key
+     * @param string|null $values_key
+     * @return Model|Builder|null
+     * @throws ReflectionException
+     */
+    public function firstOrCreate(mixed $attributes = [], ?string $attributes_key = null, mixed $values = [], ?string $values_key = null): Model|Builder|null
+    {
+        $data = $this->parse($attributes, $attributes_key);
+
+        if (Arr::isAssoc($data)) {
+            $data = collect($data)->only($this->collect()->keys());
+        }
+        else {
+            $data = $this->collect()->only($data);
+
+            if (! $data->count()) {
+                $data = $this->collect();
+            }
+        }
+
+        $builder = $this->getBuilder();
+
+        $data->each(function ($item, $key) use ($builder) {
+            $builder->where($key, $item);
+        });
+
+        if ($model = $builder->first()) {
+            return $model;
+        }
+
+        $values = collect($this->parse($values, $values_key));
+
+        $model = $this->make($values);
 
         return $model->save() ? $model : null;
     }
