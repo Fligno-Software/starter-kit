@@ -3,10 +3,13 @@
 namespace Fligno\StarterKit;
 
 use Closure;
+use Fligno\StarterKit\Traits\HasTaggableCacheTrait;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Symfony\Component\Finder\SplFileInfo;
 
 /**
  * Class StarterKit
@@ -16,70 +19,14 @@ use Illuminate\Support\Str;
  */
 class StarterKit
 {
-    protected string $main_tag = 'sk';
-
-    // Setters & Getters
-
-    /**
-     * @param string $main_tag
-     */
-    public function setMainTag(string $main_tag): void
-    {
-        $this->main_tag = $main_tag;
-    }
+    use HasTaggableCacheTrait;
 
     /**
      * @return string
      */
-    public function getMainTag(): string
+    function getMainTag(): string
     {
-        return $this->main_tag;
-    }
-
-    // Methods
-
-    /**
-     * @return bool
-     */
-    public function isCacheTaggable(): bool
-    {
-        return method_exists(Cache::getStore(), 'tags');
-    }
-
-    /**
-     * @return bool
-     */
-    public function clearCache(): bool
-    {
-        if ($this->isCacheTaggable()) {
-            return Cache::tags($this->getMainTag())->flush();
-        }
-
-        return false;
-    }
-
-    /**
-     * @param  string|null ...$tags
-     * @return array
-     */
-    public function getTags(string|null ...$tags): array
-    {
-        return collect($this->getMainTag())->merge($tags)->filter()->toArray();
-    }
-
-    /**
-     * @param  array   $tags
-     * @param  $key
-     * @param  Closure $closure
-     * @return array|mixed
-     */
-    private function getCache(array $tags, $key, Closure $closure): mixed
-    {
-        if ($this->isCacheTaggable()) {
-            return Cache::tags($tags)->rememberForever($key, $closure);
-        }
-
-        return $closure();
+        return 'sk';
     }
 
     /**
@@ -175,7 +122,10 @@ class StarterKit
             $this->getTags($package_name, $domain),
             'routes',
             function () use ($directory) {
-                return collect_files_or_directories($directory, false, true, true);
+                return collect(File::allFiles($directory))->map(fn(SplFileInfo $info) => [
+                    'file' => $info->getFilename(),
+                    'path' => $info->getRealPath(),
+                ]);
             }
         );
     }
@@ -318,7 +268,7 @@ class StarterKit
                 if (file_exists($directory)) {
                     $map = collect($map);
                     $classes = collect_classes_from_path($directory, $type->studly())
-                    ?->mapWithKeys(fn($item, $key) => [$item => $key]);
+                        ?->mapWithKeys(fn($item, $key) => [$item => $key]);
                     $classes = $classes->merge($map->only($classes->keys()->toArray()));
                     $classesForGuessing = $classes->except($map->keys()->toArray());
                     if ($classesForGuessing->count() &&
@@ -338,9 +288,7 @@ class StarterKit
         );
     }
 
-    /*****
-     * USER MODEL
-     *****/
+    /***** USER MODEL *****/
 
     /**
      * @return string|null
@@ -361,6 +309,29 @@ class StarterKit
     {
         if ($model = $this->getUserModel()) {
             return call_user_func($model . '::query');
+        }
+
+        return null;
+    }
+
+    /***** POLYMORPHIC MAP *****/
+
+    /**
+     * @return Collection
+     */
+    public function getMorphMap(): Collection
+    {
+        return collect(Relation::morphMap());
+    }
+
+    /**
+     * @param string $model_name
+     * @return string|null
+     */
+    public function getMorphMapKey(string $model_name): string|null
+    {
+        if (is_eloquent_model($model_name)) {
+            return $this->getMorphMap()->mapWithKeys(fn($item, $key) => [$item => $key])->get($model_name);
         }
 
         return null;

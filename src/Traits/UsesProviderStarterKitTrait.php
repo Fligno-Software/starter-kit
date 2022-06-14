@@ -5,6 +5,7 @@ namespace Fligno\StarterKit\Traits;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+use JetBrains\PhpStorm\ArrayShape;
 use JsonException;
 
 /**
@@ -235,15 +236,64 @@ trait UsesProviderStarterKitTrait
      */
     protected function loadRouteFilesFrom(Collection $collection = null): void
     {
-        $collection?->each(function ($route) {
-            if (file_exists($route)) {
-                $config = Str::contains($route, 'api') ?
-                    $this->getApiRouteConfiguration() :
-                    $this->getWebRouteConfiguration();
-                Route::group($config, function () use ($route) {
-                    parent::loadRoutesFrom($route);
+        if (! $collection || ! $collection->count()) {
+            return;
+        }
+
+        // Filter missing files
+        $collection = $collection
+            ->filter(fn($item) => file_exists($item['path']))
+            ->when($this->shouldPrefixDirectoryOnRoute(), function (Collection $collection) {
+                return $collection->map(function($item){
+                    if ($appendToPrefix = Str::of($item['path'])->after('routes/')->before($item['file'])->jsonSerialize()) {
+                        $item['appendToPrefix'] = $appendToPrefix;
+                    }
+
+                    return $item;
                 });
+            })
+            ->when($this->shouldPrefixFilenameOnRoute(), function (Collection $collection) {
+                return $collection->map(function($item){
+                    if (($appendToPrefix = Str::of($item['file'])->before('.')->jsonSerialize()) &&
+                        ! in_array($appendToPrefix, ['api', 'web', 'console', 'channels'])
+                    ) {
+                        $item['appendToPrefix'] = isset($item['appendToPrefix']) ? $item['appendToPrefix'] . $appendToPrefix : $appendToPrefix;
+                    }
+
+                    return $item;
+                });
+            });
+
+        // Separate api and non-api routes
+
+        $webPaths = collect();
+
+        $apiPaths = $collection->filter(function ($item) use ($webPaths) {
+            $matches = preg_match('/api./', $item['file']);
+
+            if (! $matches) {
+                $webPaths->add($item);
             }
+
+            return $matches;
+        });
+
+        $apiPaths->each(function ($item) {
+            $config = $this->getApiRouteConfiguration($item['appendToPrefix'] ?? null);
+            Route::middleware('api')
+                ->middleware($config['middleware'])
+                ->name($config['name'])
+                ->prefix($config['prefix'])
+                ->group($item['path']);
+        });
+
+        $webPaths->each(function ($item) {
+            $config = $this->getWebRouteConfiguration($item['appendToPrefix'] ?? null);
+            Route::middleware('web')
+                ->middleware($config['middleware'])
+                ->name($config['name'])
+                ->prefix($config['prefix'])
+                ->group($item['path']);
         });
     }
 
@@ -299,6 +349,8 @@ trait UsesProviderStarterKitTrait
         return null;
     }
 
+    /***** HELPER FILES RELATED *****/
+
     /**
      * @return bool
      */
@@ -306,6 +358,8 @@ trait UsesProviderStarterKitTrait
     {
         return true;
     }
+
+    /***** ROUTES RELATED *****/
 
     /**
      * @return bool
@@ -316,23 +370,82 @@ trait UsesProviderStarterKitTrait
     }
 
     /**
-     * @return array
+     * @return bool
      */
-    public function getApiRouteConfiguration(): array
+    public function shouldPrefixFilenameOnRoute(): bool
     {
-        return collect([
-            'middleware' => config('starter-kit.api_guard'),
-            'prefix' => 'api'
-        ])->toArray();
+        return true;
     }
 
     /**
+     * @return bool
+     */
+    public function shouldPrefixDirectoryOnRoute(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @param string|null $appendToPrefix
      * @return array
      */
-    public function getWebRouteConfiguration(): array
+    #[ArrayShape([
+        'middleware' => "string",
+        'prefix' => "string",
+        'name' => "string",
+    ])]
+    public function getApiRouteConfiguration(string $appendToPrefix = null): array
     {
-        return collect([
-            'middleware' => config('starter-kit.web_guard'),
-        ])->toArray();
+        $config = [
+            'middleware' => [],
+            'prefix' => 'api',
+            'name' => null,
+        ];
+
+        if ($middleware = config('starter-kit.api_middleware')) {
+            $config['middleware'] = $middleware;
+        }
+
+        if ($appendToPrefix = trim($appendToPrefix, '/. ')) {
+            $config['prefix'] .= '/' . $appendToPrefix;
+            $config['name'] = preg_replace('/\//', '.', $appendToPrefix);
+            if (strlen($config['name'])) {
+                $config['name'] .= '.';
+            }
+        }
+
+        return $config;
+    }
+
+    /**
+     * @param string|null $appendToPrefix
+     * @return array
+     */
+    #[ArrayShape([
+        'middleware' => "string",
+        'prefix' => "string",
+        'name' => "string",
+    ])]
+    public function getWebRouteConfiguration(string $appendToPrefix = null): array
+    {
+        $config = [
+            'middleware' => [],
+            'prefix' => null,
+            'name' => null,
+        ];
+
+        if ($middleware = config('starter-kit.web_middleware')) {
+            $config['middleware'] = $middleware;
+        }
+
+        if ($appendToPrefix = trim($appendToPrefix, '/. ')) {
+            $config['prefix'] = $appendToPrefix;
+            $config['name'] = preg_replace('/\//', '.', $appendToPrefix);
+            if (strlen($config['name'])) {
+                $config['name'] .= '.';
+            }
+        }
+
+        return $config;
     }
 }
