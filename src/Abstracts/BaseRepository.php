@@ -29,6 +29,14 @@ abstract class BaseRepository implements RepositoryInterface
     /**
      * @return Builder
      */
+    public function getBuilder(): Builder
+    {
+        return $this->builder;
+    }
+
+    /**
+     * @return Builder
+     */
     public function builder(): Builder
     {
         return $this->builder;
@@ -44,6 +52,16 @@ abstract class BaseRepository implements RepositoryInterface
         User $user = null
     ): Collection|array {
         return $this->builder->get();
+    }
+
+    /**
+     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes
+     * @param User|null $user
+     * @return Model|null
+     */
+    public function create(Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes, User $user = null): Model|null
+    {
+        return $this->builder->firstOrCreate($attributes);
     }
 
     /**

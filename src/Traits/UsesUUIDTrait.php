@@ -20,7 +20,7 @@ trait UsesUUIDTrait
     {
         static::creating(
             static function (Model $model) {
-                $model->uuid = Str::uuid();
+                $model->uuid = Str::uuid()->toString();
             }
         );
     }

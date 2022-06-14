@@ -35,7 +35,9 @@ abstract class BaseDataFactory extends BaseJsonSerializable
 
         $model = $this->getBuilder()->getModel()->newModelInstance();
 
-        $this->collect()->each(fn($item, $key) => $model->$key = $item);
+        $this->collect()->each(function ($item, $key) use ($model) {
+            $model->$key = $item;
+        });
 
         return $model;
     }
