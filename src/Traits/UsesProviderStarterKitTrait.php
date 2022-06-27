@@ -15,13 +15,13 @@ use JsonException;
  */
 trait UsesProviderStarterKitTrait
 {
-    use UsesProviderMorphMapTrait,
-        UsesProviderObserverMapTrait,
-        UsesProviderPolicyMapTrait,
-        UsesProviderRepositoryMapTrait,
-        UsesProviderDynamicRelationshipsTrait,
-        UsesProviderHttpKernelTrait,
-        UsesProviderConsoleKernelTrait;
+    use UsesProviderMorphMapTrait;
+    use UsesProviderObserverMapTrait;
+    use UsesProviderPolicyMapTrait;
+    use UsesProviderRepositoryMapTrait;
+    use UsesProviderDynamicRelationshipsTrait;
+    use UsesProviderHttpKernelTrait;
+    use UsesProviderConsoleKernelTrait;
 
     /**
      * Artisan Commands
@@ -54,7 +54,7 @@ trait UsesProviderStarterKitTrait
 
         // Load Domains
         if (($dir = $this->getBasePath()) && $domains = starterKit()->getDomains($this->package_name, $dir)) {
-            $domains->each(fn($directory, $key) => $this->bootLaravelFiles($directory, $key));
+            $domains->each(fn ($directory, $key) => $this->bootLaravelFiles($directory, $key));
         }
 
         // For Console Kernel
@@ -108,14 +108,14 @@ trait UsesProviderStarterKitTrait
     {
         return starterKit()->getTargetDirectories($this->package_name, function () {
             return collect(['database/migrations'])
-                ->when($this->areHelpersEnabled(), fn($collection) => $collection->push('helpers'))
+                ->when($this->areHelpersEnabled(), fn ($collection) => $collection->push('helpers'))
                 ->when(
                     ! $this->app->routesAreCached() && $this->areRoutesEnabled(),
-                    fn($collection) => $collection->push('routes')
+                    fn ($collection) => $collection->push('routes')
                 )
-                ->when($this->areRepositoriesEnabled(), fn($collection) => $collection->push('Repositories'))
-                ->when($this->arePoliciesEnabled(), fn($collection) => $collection->push('Policies'))
-                ->when($this->areObserversEnabled(), fn($collection) => $collection->push('Observers'));
+                ->when($this->areRepositoriesEnabled(), fn ($collection) => $collection->push('Repositories'))
+                ->when($this->arePoliciesEnabled(), fn ($collection) => $collection->push('Policies'))
+                ->when($this->areObserversEnabled(), fn ($collection) => $collection->push('Observers'));
         });
     }
 
@@ -242,22 +242,22 @@ trait UsesProviderStarterKitTrait
 
         // Filter missing files
         $collection = $collection
-            ->filter(fn($item) => file_exists($item['path']))
+            ->filter(fn ($item) => file_exists($item['path']))
             ->when($this->shouldPrefixDirectoryOnRoute(), function (Collection $collection) {
-                return $collection->map(function($item){
+                return $collection->map(function ($item) {
                     if ($appendToPrefix = Str::of($item['path'])->after('routes/')->before($item['file'])->jsonSerialize()) {
-                        $item['appendToPrefix'] = $appendToPrefix;
+                        $item['append_to_prefix'] = $appendToPrefix;
                     }
 
                     return $item;
                 });
             })
             ->when($this->shouldPrefixFilenameOnRoute(), function (Collection $collection) {
-                return $collection->map(function($item){
+                return $collection->map(function ($item) {
                     if (($appendToPrefix = Str::of($item['file'])->before('.')->jsonSerialize()) &&
                         ! in_array($appendToPrefix, ['api', 'web', 'console', 'channels'])
                     ) {
-                        $item['appendToPrefix'] = isset($item['appendToPrefix']) ? $item['appendToPrefix'] . $appendToPrefix : $appendToPrefix;
+                        $item['append_to_prefix'] = isset($item['append_to_prefix']) ? $item['append_to_prefix'] . $appendToPrefix : $appendToPrefix;
                     }
 
                     return $item;
@@ -279,21 +279,13 @@ trait UsesProviderStarterKitTrait
         });
 
         $apiPaths->each(function ($item) {
-            $config = $this->getApiRouteConfiguration($item['appendToPrefix'] ?? null);
-            Route::middleware('api')
-                ->middleware($config['middleware'])
-                ->name($config['name'])
-                ->prefix($config['prefix'])
-                ->group($item['path']);
+            $config = $this->getApiRouteConfiguration($item['append_to_prefix'] ?? null);
+            Route::group($config, $item['path']);
         });
 
         $webPaths->each(function ($item) {
-            $config = $this->getWebRouteConfiguration($item['appendToPrefix'] ?? null);
-            Route::middleware('web')
-                ->middleware($config['middleware'])
-                ->name($config['name'])
-                ->prefix($config['prefix'])
-                ->group($item['path']);
+            $config = $this->getWebRouteConfiguration($item['append_to_prefix'] ?? null);
+            Route::group($config, $item['path']);
         });
     }
 
@@ -396,25 +388,7 @@ trait UsesProviderStarterKitTrait
     ])]
     public function getApiRouteConfiguration(string $appendToPrefix = null): array
     {
-        $config = [
-            'middleware' => [],
-            'prefix' => 'api',
-            'name' => null,
-        ];
-
-        if ($middleware = config('starter-kit.api_middleware')) {
-            $config['middleware'] = $middleware;
-        }
-
-        if ($appendToPrefix = trim($appendToPrefix, '/. ')) {
-            $config['prefix'] .= '/' . $appendToPrefix;
-            $config['name'] = preg_replace('/\//', '.', $appendToPrefix);
-            if (strlen($config['name'])) {
-                $config['name'] .= '.';
-            }
-        }
-
-        return $config;
+        return $this->getRouteConfiguration(true, $appendToPrefix);
     }
 
     /**
@@ -428,18 +402,41 @@ trait UsesProviderStarterKitTrait
     ])]
     public function getWebRouteConfiguration(string $appendToPrefix = null): array
     {
-        $config = [
-            'middleware' => [],
-            'prefix' => null,
-            'name' => null,
-        ];
+        return $this->getRouteConfiguration(false, $appendToPrefix);
+    }
 
-        if ($middleware = config('starter-kit.web_middleware')) {
-            $config['middleware'] = $middleware;
+    /**
+     * @param bool $is_api
+     * @param string|null $appendToPrefix
+     * @return string[]
+     */
+    #[ArrayShape([
+        'middleware' => "string",
+        'prefix' => "string",
+        'name' => "string",
+    ])]
+    public function getRouteConfiguration(bool $is_api, string $appendToPrefix = null): array
+    {
+        $config = $this->getDefaultRouteConfiguration();
+
+        // Prepare middleware
+
+        if ($middleware = $is_api ? config('starter-kit.api_middleware') : config('starter-kit.web_middleware')) {
+            $config['middleware'] = is_string($middleware) ? explode(',', $middleware) : $middleware;
+        }
+
+        if (($middleware_group = $is_api ? 'api' : 'web') && ! in_array($middleware_group, $config['middleware'])) {
+            $config['middleware'][] = $middleware_group;
+        }
+
+        // Prepare prefix and name
+
+        if ($is_api) {
+            $config['prefix'] = 'api';
         }
 
         if ($appendToPrefix = trim($appendToPrefix, '/. ')) {
-            $config['prefix'] = $appendToPrefix;
+            $config['prefix'] = '/' . $appendToPrefix;
             $config['name'] = preg_replace('/\//', '.', $appendToPrefix);
             if (strlen($config['name'])) {
                 $config['name'] .= '.';
@@ -447,5 +444,17 @@ trait UsesProviderStarterKitTrait
         }
 
         return $config;
+    }
+
+    /**
+     * @return array
+     */
+    public function getDefaultRouteConfiguration(): array
+    {
+        return [
+            'middleware' => [],
+            'prefix' => null,
+            'name' => null,
+        ];
     }
 }

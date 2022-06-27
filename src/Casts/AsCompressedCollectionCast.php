@@ -22,8 +22,7 @@ class AsCompressedCollectionCast extends AsCollection
      */
     public static function castUsing(array $arguments): CastsAttributes|string
     {
-        return new class implements CastsAttributes
-        {
+        return new class () implements CastsAttributes {
             public function get($model, $key, $value, $attributes): ?Collection
             {
                 return isset($attributes[$key]) ?

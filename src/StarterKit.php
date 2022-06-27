@@ -122,7 +122,7 @@ class StarterKit
             $this->getTags($package_name, $domain),
             'routes',
             function () use ($directory) {
-                return collect(File::allFiles($directory))->map(fn(SplFileInfo $info) => [
+                return collect(File::allFiles($directory))->map(fn (SplFileInfo $info) => [
                     'file' => $info->getFilename(),
                     'path' => $info->getRealPath(),
                 ]);
@@ -268,7 +268,7 @@ class StarterKit
                 if (file_exists($directory)) {
                     $map = collect($map);
                     $classes = collect_classes_from_path($directory, $type->studly())
-                        ?->mapWithKeys(fn($item, $key) => [$item => $key]);
+                        ?->mapWithKeys(fn ($item, $key) => [$item => $key]);
                     $classes = $classes->merge($map->only($classes->keys()->toArray()));
                     $classesForGuessing = $classes->except($map->keys()->toArray());
                     if ($classesForGuessing->count() &&
@@ -331,7 +331,7 @@ class StarterKit
     public function getMorphMapKey(string $model_name): string|null
     {
         if (is_eloquent_model($model_name)) {
-            return $this->getMorphMap()->mapWithKeys(fn($item, $key) => [$item => $key])->get($model_name);
+            return $this->getMorphMap()->mapWithKeys(fn ($item, $key) => [$item => $key])->get($model_name);
         }
 
         return null;

@@ -1,4 +1,5 @@
 <?php
+
 namespace Fligno\StarterKit\Requests;
 
 use Fligno\StarterKit\Exceptions\UnauthorizedException;

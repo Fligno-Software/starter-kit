@@ -2,13 +2,10 @@
 
 namespace Fligno\StarterKit;
 
-use Illuminate\Database\Eloquent\Model;
+use Fligno\StarterKit\Traits\UsesDataParsingTrait;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Collection;
+use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\Str;
 
 /**
@@ -24,10 +21,12 @@ use Illuminate\Support\Str;
  */
 class ExtendedResponse
 {
+    use UsesDataParsingTrait;
+
     /**
-     * @var Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array|null
+     * @var mixed
      */
-    protected Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array|null $data = [];
+    protected mixed $data = [];
 
     /**
      * @var int
@@ -57,13 +56,11 @@ class ExtendedResponse
     /**
      * ExtendedResponse constructor.
      *
-     * @param Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array|null $data
-     * @param array|string|null                                                                      $message
+     * @param mixed $data
+     * @param array|string|null $message
      */
-    public function __construct(
-        Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array $data = null,
-        array|string $message = null
-    ) {
+    public function __construct(mixed $data = null, array|string $message = null)
+    {
         if (empty($data) === false) {
             $this->data($data);
         }
@@ -210,12 +207,11 @@ class ExtendedResponse
     /**
      * Set data
      *
-     * @param  Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array|null $value
+     * @param  mixed $value
      * @return $this
      */
-    public function data(
-        Paginator|LengthAwarePaginator|AnonymousResourceCollection|Collection|Model|array $value = null
-    ): ExtendedResponse {
+    public function data(mixed $value = null): ExtendedResponse
+    {
         if ($value instanceof ResourceCollection) {
             $pagination = $value->response(request())->getData(true);
             $data = $pagination['data'];
@@ -224,7 +220,7 @@ class ExtendedResponse
             // separate them on two different array keys to create uniformity
             $this->pagination = $pagination;
             $this->data = $data;
-        } elseif ($value instanceof Paginator || $value instanceof LengthAwarePaginator) {
+        } elseif ($value instanceof AbstractPaginator) { // for Paginator and LengthAwarePaginator
             // convert pagination to array
             $pagination = $value->toArray();
             $data = $pagination['data'];
@@ -233,10 +229,8 @@ class ExtendedResponse
             // separate them on two different array keys to create uniformity
             $this->pagination = $pagination;
             $this->data = $data;
-        } elseif ($value instanceof Collection || $value instanceof Model) {
-            $this->data = $value->toArray();
         } else {
-            $this->data = $value;
+            $this->data = $this->parse($value);
         }
 
         return $this;
@@ -259,16 +253,20 @@ class ExtendedResponse
      */
     protected function generateResponse(): JsonResponse
     {
-        return response()->json(
-            [
-                'success'     => $this->success,
-                'code'        => $this->code,
-                'slug'        => $this->slug,
-                'message'     => $this->message,
-                'data'        => $this->data,
-                'pagination'  => $this->pagination,
-            ],
-            $this->code
-        );
+        $data = collect([
+            'success'     => $this->success,
+            'code'        => $this->code,
+            'slug'        => $this->slug,
+            'message'     => $this->message,
+            'pagination'  => $this->pagination,
+        ]);
+
+        if ($this->code >= 400) {
+            $data->put('errors', $this->data);
+        } else {
+            $data->put('data', $this->data);
+        }
+
+        return response()->json($data->toArray(), $this->code);
     }
 }

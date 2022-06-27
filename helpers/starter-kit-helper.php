@@ -395,14 +395,14 @@ if (! function_exists('collect_files_or_directories')) {
         $directory = trim($directory);
 
         if ($directory && ($withDirectories || $withFiles) && $arr = scandir($directory)) {
-            $arr = collect($arr)->filter(fn($value) => ! Str::of($value)->startsWith('.'));
+            $arr = collect($arr)->filter(fn ($value) => ! Str::of($value)->startsWith('.'));
 
             if (! $withFiles) {
-                $arr = $arr->filter(fn($value) => ! is_file($directory . '/' . $value));
+                $arr = $arr->filter(fn ($value) => ! is_file($directory . '/' . $value));
             }
 
             if (! $withDirectories) {
-                $arr = $arr->filter(fn($value) => ! is_dir($directory . '/' . $value));
+                $arr = $arr->filter(fn ($value) => ! is_dir($directory . '/' . $value));
             }
 
             if ($arr->isEmpty()) {
@@ -410,7 +410,7 @@ if (! function_exists('collect_files_or_directories')) {
             }
 
             if ($prependDirectory) {
-                $arr = $arr->mapWithKeys(fn($value) => [$value => $directory . '/' . $value]);
+                $arr = $arr->mapWithKeys(fn ($value) => [$value => $directory . '/' . $value]);
             }
 
             return $arr;
@@ -626,7 +626,7 @@ if (! function_exists('is_valid_base64')) {
     function is_valid_base64(string $string): bool
     {
         // Check if there are valid base64 characters
-        if (!preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $string)) {
+        if (!preg_match('/^[a-zA-Z\d\/\r\n+]*={0,2}$/', $string)) {
             return false;
         }
 
