@@ -3,24 +3,27 @@
 namespace Fligno\StarterKit;
 
 use Fligno\StarterKit\Console\Commands\StarterKitClearCacheCommand;
+use Fligno\StarterKit\Console\Commands\StarterKitGitHooksApplyCommand;
+use Fligno\StarterKit\Console\Commands\StarterKitGitHooksRemoveCommand;
 use Fligno\StarterKit\Exceptions\Handler;
-use Fligno\StarterKit\Macros\ArrMacros;
 use Fligno\StarterKit\Providers\BaseStarterKitServiceProvider as ServiceProvider;
 use Illuminate\Contracts\Debug\ExceptionHandler;
-use Illuminate\Support\Arr;
-use ReflectionException;
 
 class StarterKitServiceProvider extends ServiceProvider
 {
+    /**
+     * @var string[]
+     */
     protected array $commands = [
         StarterKitClearCacheCommand::class,
+        StarterKitGitHooksApplyCommand::class,
+        StarterKitGitHooksRemoveCommand::class,
     ];
 
     /**
      * Perform post-registration booting of services.
      *
      * @return void
-     * @throws ReflectionException
      */
     public function boot(): void
     {
@@ -30,9 +33,6 @@ class StarterKitServiceProvider extends ServiceProvider
         if (config('starter-kit.override_exception_handler')) {
             $this->app->singleton(ExceptionHandler::class, Handler::class);
         }
-
-        // Boot Arr
-        Arr::mixin(new ArrMacros);
     }
 
     /**
@@ -47,15 +47,15 @@ class StarterKitServiceProvider extends ServiceProvider
         // Register the service the package provides.
         $this->app->singleton(
             'starter-kit',
-            function ($app) {
-                return new StarterKit;
+            function () {
+                return new StarterKit();
             }
         );
 
         // Register the service the package provides.
         $this->app->bind(
             'extended-response',
-            function ($app) {
+            function () {
                 return new ExtendedResponse();
             }
         );
@@ -104,7 +104,7 @@ class StarterKitServiceProvider extends ServiceProvider
         ], 'starter-kit.views');*/
 
         // Registering package commands.
-         $this->commands($this->commands);
+        $this->commands($this->commands);
     }
 
     /**

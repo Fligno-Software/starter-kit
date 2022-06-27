@@ -15,7 +15,6 @@ use Illuminate\Support\Str;
  */
 class ValidationException extends BaseException
 {
-
     public function render($request): JsonResponse
     {
         $slug = Str::slug($this->validator->errors()->first(), '_');

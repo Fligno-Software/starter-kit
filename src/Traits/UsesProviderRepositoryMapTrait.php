@@ -44,7 +44,7 @@ trait UsesProviderRepositoryMapTrait
                     $model = $model->first();
                 }
                 try {
-                    app()->when($repository)->needs(Builder::class)->give(fn() => call_user_func($model . '::query'));
+                    app()->when($repository)->needs(Builder::class)->give(fn () => call_user_func($model . '::query'));
                 } catch (Exception) {
                     starterKit()->clearCache();
                 }
