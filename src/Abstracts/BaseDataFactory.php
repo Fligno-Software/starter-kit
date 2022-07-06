@@ -4,7 +4,6 @@ namespace Fligno\StarterKit\Abstracts;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
 
 /**
  * Class BaseDataFactory
@@ -41,9 +40,7 @@ abstract class BaseDataFactory extends BaseJsonSerializable
 
         $model = $this->getBuilder()->getModel()->newModelInstance();
 
-        $this->collect()->each(function ($item, $key) use ($model) {
-            $model->$key = $item;
-        });
+        $this->mergeFieldsToModel($model);
 
         return $model;
     }
@@ -61,46 +58,22 @@ abstract class BaseDataFactory extends BaseJsonSerializable
     }
 
     /**
-     * @param mixed $attributes
-     * @param mixed $values
-     * @param string|null $attributes_key
-     * @param string|null $values_key
+     * @param mixed $data
+     * @param string|null $key
      * @return Model|Builder|null
      */
-    public function firstOrNew(mixed $attributes = [], ?string $attributes_key = null, mixed $values = [], ?string $values_key = null): Model|Builder|null
+    public function firstOrNew(mixed $data = [], ?string $key = null): Model|Builder|null
     {
-        // Normalize attributes to array
-        $attributes = $this->parse($attributes, $attributes_key);
+        $this->mergeDataToFields($data, $key);
 
-        // Get copy of field keys
-        $field_keys = $this->collectClassVars()->keys();
+        $unique_keys = $this->getFieldKeys()->intersect($this->getUniqueKeys());
 
-        // If attributes is non-empty and associative, remove unnecessary keys
-        // If attributes is non-empty but not associative, it means it's just an array of keys
+        $attributes = $this->collect()->only($unique_keys);
 
-        if (Arr::isAssoc($attributes)) {
-            $attributes = collect($attributes)->only($field_keys);
-        } else {
-            // The attributes becomes keys
-            $keys = collect($attributes);
-
-            // Intersect keys with field keys then get unique values
-            $keys = $keys->intersect($field_keys)->unique();
-
-            // The attributes now comes from current object's field values
-            $attributes = $this->collect()->only($keys);
-        }
-
-        // If attributes is still empty, try using unique keys
-        if ($attributes->isEmpty()) {
-            $keys = collect($this->getUniqueKeys())->intersect($field_keys)->unique();
-            $attributes = $this->collect()->only($keys);
-        }
+        $builder = $this->getBuilder();
 
         // If attributes is not empty, check if exists on database
         if ($attributes->isNotEmpty()) {
-            $builder = $this->getBuilder();
-
             $attributes->each(function ($item, $key) use ($builder) {
                 $builder->where($key, $item);
             });
@@ -110,25 +83,55 @@ abstract class BaseDataFactory extends BaseJsonSerializable
             }
         }
 
-        // Merge values to attributes
-        if (($values = $this->parse($values, $values_key)) && Arr::isAssoc($values)) {
-            $attributes = $attributes->merge($values)->only($field_keys);
-        }
+        // If it does not exist on database, make a model
+        $model = $builder->getModel()->newModelInstance();
 
-        return $this->make($attributes);
+        $this->mergeFieldsToModel($model);
+
+        return $model;
     }
 
     /**
-     * @param mixed $attributes
-     * @param mixed $values
-     * @param string|null $attributes_key
-     * @param string|null $values_key
+     * @param mixed $data
+     * @param string|null $key
      * @return Model|Builder|null
      */
-    public function firstOrCreate(mixed $attributes = [], ?string $attributes_key = null, mixed $values = [], ?string $values_key = null): Model|Builder|null
+    public function firstOrCreate(mixed $data = [], ?string $key = null): Model|Builder|null
     {
-        $model = $this->firstOrNew($attributes, $attributes_key, $values, $values_key);
+        $model = $this->firstOrNew($data, $key);
 
         return $model->save() ? $model : null;
+    }
+
+    /**
+     * @param mixed $data
+     * @param string|null $key
+     * @return Model|Builder|null
+     */
+    public function updateOrCreate(mixed $data = [], ?string $key = null): Model|Builder|null
+    {
+        $model = $this->firstOrNew($data, $key);
+
+        // Update instead if model exists
+        if ($model->exists()) {
+            $this->mergeFieldsToModel($model);
+            if ($model->isDirty()) {
+                $model->save();
+            }
+            return $model;
+        }
+
+        return $model->save() ? $model : null;
+    }
+
+    /**
+     * @param Model $model
+     * @return void
+     */
+    public function mergeFieldsToModel(Model $model): void
+    {
+        $this->collect()->each(function ($item, $key) use ($model) {
+            $model->$key = $item;
+        });
     }
 }

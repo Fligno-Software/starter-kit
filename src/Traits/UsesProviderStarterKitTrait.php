@@ -5,7 +5,6 @@ namespace Fligno\StarterKit\Traits;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
-use JetBrains\PhpStorm\ArrayShape;
 use JsonException;
 
 /**
@@ -243,21 +242,21 @@ trait UsesProviderStarterKitTrait
         // Filter missing files
         $collection = $collection
             ->filter(fn ($item) => file_exists($item['path']))
-            ->when($this->shouldPrefixDirectoryOnRoute(), function (Collection $collection) {
+            ->when($this->prefixDirectoryOnRoute(), function (Collection $collection) {
                 return $collection->map(function ($item) {
-                    if ($appendToPrefix = Str::of($item['path'])->after('routes/')->before($item['file'])->jsonSerialize()) {
-                        $item['append_to_prefix'] = $appendToPrefix;
+                    if ($append_to_prefix = Str::of($item['path'])->after('routes/')->before($item['file'])->jsonSerialize()) {
+                        $item['append_to_prefix'] = $append_to_prefix;
                     }
 
                     return $item;
                 });
             })
-            ->when($this->shouldPrefixFilenameOnRoute(), function (Collection $collection) {
+            ->when($this->prefixFilenameOnRoute(), function (Collection $collection) {
                 return $collection->map(function ($item) {
-                    if (($appendToPrefix = Str::of($item['file'])->before('.')->jsonSerialize()) &&
-                        ! in_array($appendToPrefix, ['api', 'web', 'console', 'channels'])
+                    if (($append_to_prefix = Str::of($item['file'])->before('.')->jsonSerialize()) &&
+                        ! in_array($append_to_prefix, ['api', 'web', 'console', 'channels'])
                     ) {
-                        $item['append_to_prefix'] = isset($item['append_to_prefix']) ? $item['append_to_prefix'] . $appendToPrefix : $appendToPrefix;
+                        $item['append_to_prefix'] = isset($item['append_to_prefix']) ? $item['append_to_prefix'] . $append_to_prefix : $append_to_prefix;
                     }
 
                     return $item;
@@ -279,12 +278,12 @@ trait UsesProviderStarterKitTrait
         });
 
         $apiPaths->each(function ($item) {
-            $config = $this->getApiRouteConfiguration($item['append_to_prefix'] ?? null);
+            $config = $this->getRouteApiConfiguration($item['append_to_prefix'] ?? null);
             Route::group($config, $item['path']);
         });
 
         $webPaths->each(function ($item) {
-            $config = $this->getWebRouteConfiguration($item['append_to_prefix'] ?? null);
+            $config = $this->getRouteWebConfiguration($item['append_to_prefix'] ?? null);
             Route::group($config, $item['path']);
         });
     }
@@ -364,97 +363,124 @@ trait UsesProviderStarterKitTrait
     /**
      * @return bool
      */
-    public function shouldPrefixFilenameOnRoute(): bool
+    public function prefixFilenameOnRoute(): bool
     {
-        return true;
+        return false;
     }
 
     /**
      * @return bool
      */
-    public function shouldPrefixDirectoryOnRoute(): bool
+    public function prefixDirectoryOnRoute(): bool
     {
-        return true;
+        return false;
     }
 
     /**
-     * @param string|null $appendToPrefix
+     * @param string|null $append_to_prefix
      * @return array
      */
-    #[ArrayShape([
-        'middleware' => "string",
-        'prefix' => "string",
-        'name' => "string",
-    ])]
-    public function getApiRouteConfiguration(string $appendToPrefix = null): array
+    public function getRouteApiConfiguration(string $append_to_prefix = null): array
     {
-        return $this->getRouteConfiguration(true, $appendToPrefix);
+        return $this->getRouteConfiguration(true, $append_to_prefix);
     }
 
     /**
-     * @param string|null $appendToPrefix
+     * @param string|null $append_to_prefix
      * @return array
      */
-    #[ArrayShape([
-        'middleware' => "string",
-        'prefix' => "string",
-        'name' => "string",
-    ])]
-    public function getWebRouteConfiguration(string $appendToPrefix = null): array
+    public function getRouteWebConfiguration(string $append_to_prefix = null): array
     {
-        return $this->getRouteConfiguration(false, $appendToPrefix);
+        return $this->getRouteConfiguration(false, $append_to_prefix);
     }
 
     /**
      * @param bool $is_api
-     * @param string|null $appendToPrefix
+     * @param string|null $append_to_prefix
      * @return string[]
      */
-    #[ArrayShape([
-        'middleware' => "string",
-        'prefix' => "string",
-        'name' => "string",
-    ])]
-    public function getRouteConfiguration(bool $is_api, string $appendToPrefix = null): array
+    public function getRouteConfiguration(bool $is_api, string $append_to_prefix = null): array
     {
-        $config = $this->getDefaultRouteConfiguration();
+        $config = [
+            'middleware' => $is_api ? $this->getRouteApiMiddleware() : $this->getRouteWebMiddleware(),
+            'prefix' => $this->getRoutePrefix(),
+            'name' => null,
+        ];
+
+        $middleware_group = $is_api ? 'api' : 'web';
 
         // Prepare middleware
 
-        if ($middleware = $is_api ? config('starter-kit.api_middleware') : config('starter-kit.web_middleware')) {
-            $config['middleware'] = is_string($middleware) ? explode(',', $middleware) : $middleware;
+        if ($middleware = $this->getDefaultRouteMiddleware($is_api)) {
+            $config['middleware'] = array_unique(array_merge($config['middleware'], $middleware));
         }
 
-        if (($middleware_group = $is_api ? 'api' : 'web') && ! in_array($middleware_group, $config['middleware'])) {
+        if (! in_array($middleware_group, $config['middleware'])) {
             $config['middleware'][] = $middleware_group;
         }
 
         // Prepare prefix and name
 
         if ($is_api) {
-            $config['prefix'] = 'api';
+            $prefixes[] = 'api';
         }
 
-        if ($appendToPrefix = trim($appendToPrefix, '/. ')) {
-            $config['prefix'] = '/' . $appendToPrefix;
-            $config['name'] = preg_replace('/\//', '.', $appendToPrefix);
-            if (strlen($config['name'])) {
-                $config['name'] .= '.';
-            }
+        $prefixes[] = $config['prefix'];
+
+        if ($append_to_prefix = trim($append_to_prefix, '/. ')) {
+            $prefixes[] = $append_to_prefix;
+        }
+
+        $config['prefix'] = collect($prefixes)->filter()->implode('/');
+
+        if ($config['prefix']) {
+            $config['name'] = Str::of($config['prefix'])
+                ->after('api')
+                ->finish('/')
+                ->ltrim('/')
+                ->replace('/', '.')
+                ->jsonSerialize();
         }
 
         return $config;
     }
 
     /**
+     * @param bool $is_api
      * @return array
      */
-    public function getDefaultRouteConfiguration(): array
+    public function getDefaultRouteMiddleware(bool $is_api): array
     {
-        return [
-            'middleware' => [],
-            'prefix' => null,
-            'name' => null,
-        ];
+        $middleware = $is_api ? config('starter-kit.api_middleware') : config('starter-kit.web_middleware');
+
+        if (is_string($middleware)) {
+            return explode(',', $middleware);
+        }
+
+        return $middleware;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getRoutePrefix(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * @return array
+     */
+    public function getRouteWebMiddleware(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return array
+     */
+    public function getRouteApiMiddleware(): array
+    {
+        return [];
     }
 }

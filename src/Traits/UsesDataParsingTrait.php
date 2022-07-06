@@ -96,23 +96,23 @@ trait UsesDataParsingTrait
             return $this->parseArray($data, $key);
         }
 
-        if ($data instanceof self) {
+        if (is_subclass_of($data, BaseJsonSerializable::class)) {
             return $this->parseBaseJsonSerializable($data, $key);
         }
 
-        if ($data instanceof Response) {
+        if (is_subclass_of($data, Response::class)) {
             return $this->parseResponse($data, $key);
         }
 
-        if ($data instanceof Request) {
+        if (is_subclass_of($data, Request::class)) {
             return $this->parseRequest($data, $key);
         }
 
-        if ($data instanceof Collection) {
+        if (is_subclass_of($data, Collection::class)) {
             return $this->parseCollection($data, $key);
         }
 
-        if ($data instanceof Model) {
+        if (is_subclass_of($data, Model::class)) {
             return $this->parseModel($data, $key);
         }
 
