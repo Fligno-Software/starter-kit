@@ -3,8 +3,8 @@
 return [
     'user_model' => env('SK_USER_MODEL', config('auth.providers.users.model')),
     'override_exception_handler' => env('SK_OVERRIDE_EXCEPTION_HANDLER', false),
-    'web_middleware' => env('SK_WEB_MIDDLEWARE'),
-    'api_middleware' => env('SK_API_MIDDLEWARE'),
+    'web_middleware' => env('SK_WEB_MIDDLEWARE', []),
+    'api_middleware' => env('SK_API_MIDDLEWARE', []),
     'enforce_morph_map' => env('SK_ENFORCE_MORPH_MAP', true),
     'dynamic_relationships_enabled' => env('SK_DYNAMIC_RELATIONSHIP_ENABLED', true),
     'routes_enabled' => env('SK_ROUTES_ENABLED', true),

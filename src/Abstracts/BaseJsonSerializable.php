@@ -5,7 +5,7 @@ namespace Fligno\StarterKit\Abstracts;
 use Fligno\StarterKit\Traits\UsesDataParsingTrait;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use JsonException;
+use JetBrains\PhpStorm\NoReturn;
 use JsonSerializable;
 
 /**
@@ -69,15 +69,15 @@ abstract class BaseJsonSerializable implements JsonSerializable
      */
     protected function setFields(array $array): static
     {
-        foreach (get_class_vars(static::class) as $key => $value) {
-            if (Arr::has($array, $key)) {
-                if (method_exists($this, $method = 'set' . $key)) {
-                    $this->$method($array[$key]);
+        $this->getFieldKeys()->each(function ($value) use ($array) {
+            if (Arr::has($array, $value)) {
+                if (method_exists($this, $method = 'set' . $value)) {
+                    $this->$method($array[$value]);
                 } else {
-                    $this->$key = $array[$key];
+                    $this->$value = $array[$value];
                 }
             }
-        }
+        });
 
         return $this;
     }
@@ -122,6 +122,8 @@ abstract class BaseJsonSerializable implements JsonSerializable
      */
     public function performBeforeSerialize(self $object): static
     {
+        // Do things here...
+
         return $object;
     }
 
@@ -130,11 +132,7 @@ abstract class BaseJsonSerializable implements JsonSerializable
      */
     public function toArray(): array
     {
-        try {
-            return json_decode($this->__toString(), true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException) {
-            return [];
-        }
+        return $this->collect()->toArray();
     }
 
     /**
@@ -145,11 +143,7 @@ abstract class BaseJsonSerializable implements JsonSerializable
      */
     public function __toString(): string
     {
-        try {
-            return json_encode($this, JSON_THROW_ON_ERROR);
-        } catch (JsonException) {
-            return '';
-        }
+        return $this->collect()->toJson(JSON_THROW_ON_ERROR);
     }
 
     /***** MORE FUNCTIONS *****/
@@ -157,23 +151,15 @@ abstract class BaseJsonSerializable implements JsonSerializable
     /**
      * @return Collection
      */
+    public function getFieldKeys(): Collection
+    {
+        return collect(get_class_vars(static::class))->except('original_data')->keys();
+    }
+
+    /**
+     * @return Collection
+     */
     public function collect(): Collection
-    {
-        return collect($this->toArray());
-    }
-
-    /**
-     * @return Collection
-     */
-    public function collectClassVars(): Collection
-    {
-        return collect(get_class_vars(static::class))->except('original_data');
-    }
-
-    /**
-     * @return Collection
-     */
-    public function collectObjectVars(): Collection
     {
         return collect(get_object_vars($this))->except('original_data');
     }
@@ -240,5 +226,14 @@ abstract class BaseJsonSerializable implements JsonSerializable
     public function clean(): static
     {
         return self::from($this->getOriginalData());
+    }
+
+    /**
+     * @return void
+     */
+    #[NoReturn]
+    public function dd(): void
+    {
+        dd($this, $this->getFieldKeys(), $this->collect());
     }
 }
