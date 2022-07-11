@@ -451,13 +451,7 @@ trait UsesProviderStarterKitTrait
      */
     public function getDefaultRouteMiddleware(bool $is_api): array
     {
-        $middleware = $is_api ? config('starter-kit.api_middleware') : config('starter-kit.web_middleware');
-
-        if (is_string($middleware)) {
-            return explode(',', $middleware);
-        }
-
-        return $middleware;
+        return starterKit()->getRouteMiddleware($is_api);
     }
 
     /**

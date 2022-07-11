@@ -336,4 +336,21 @@ class StarterKit
 
         return null;
     }
+
+    /***** ROUTE MIDDLEWARES *****/
+
+    /**
+     * @param bool $is_api
+     * @return array
+     */
+    public function getRouteMiddleware(bool $is_api): array
+    {
+        $middleware = $is_api ? config('starter-kit.api_middleware') : config('starter-kit.web_middleware');
+
+        if (is_string($middleware)) {
+            return explode(',', $middleware);
+        }
+
+        return $middleware;
+    }
 }
