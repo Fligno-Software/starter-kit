@@ -18,9 +18,11 @@ trait UsesUUIDTrait
      */
     public static function bootUsesUuidTrait(): void
     {
-        static::creating(
+        static::saving(
             static function (Model $model) {
-                $model->uuid = Str::uuid()->toString();
+                if (! isset($model->uuid)) {
+                    $model->uuid = Str::uuid()->toString();
+                }
             }
         );
     }
