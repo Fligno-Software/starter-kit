@@ -30,6 +30,16 @@ abstract class BaseDataFactory extends BaseJsonSerializable
     }
 
     /**
+     * This is to avoid merging incorrect fields to Eloquent model. This is used on `mergeFieldsToModel()`.
+     *
+     * @return array
+     */
+    public function getExceptKeys(): array
+    {
+        return [];
+    }
+
+    /**
      * @param mixed $data
      * @param string|null $key
      * @return Builder|Model
@@ -130,7 +140,9 @@ abstract class BaseDataFactory extends BaseJsonSerializable
      */
     public function mergeFieldsToModel(Model $model): void
     {
-        $this->collect()->each(function ($item, $key) use ($model) {
+        $except_keys = $this->getFieldKeys()->intersect($this->getExceptKeys());
+
+        $this->collect()->except($except_keys)->each(function ($item, $key) use ($model) {
             $model->$key = $item;
         });
     }
