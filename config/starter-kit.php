@@ -12,4 +12,6 @@ return [
     'policies_enabled' => env('SK_POLICIES_ENABLED', true),
     'observers_enabled' => env('SK_OBSERVERS_ENABLED', true),
     'verify_ssl' => env('SK_VERIFY_SSL', true),
+    'sentry_enabled' => env('SK_SENTRY_ENABLED', false),
+    'sentry_test_api_enabled' => env('SK_SENTRY_TEST_API_ENABLED', false),
 ];

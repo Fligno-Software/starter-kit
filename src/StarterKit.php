@@ -7,6 +7,7 @@ use Fligno\StarterKit\Traits\HasTaggableCacheTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Symfony\Component\Finder\SplFileInfo;
@@ -352,5 +353,31 @@ class StarterKit
         }
 
         return $middleware;
+    }
+
+    /***** OTHER METHODS *****/
+
+    /**
+     * @return bool
+     */
+    public function shouldOverrideExceptionHandler(): bool
+    {
+        return config('starter-kit.override_exception_handler');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSentryEnabled(): bool
+    {
+        return config('starter-kit.sentry_enabled');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSentryTestApiEnabled(): bool
+    {
+        return ! App::isProduction() && config('starter-kit.sentry_test_api_enabled');
     }
 }

@@ -30,7 +30,7 @@ class StarterKitServiceProvider extends ServiceProvider
         parent::boot();
 
         // Register Custom Exception Handler
-        if (config('starter-kit.override_exception_handler')) {
+        if (starterKit()->shouldOverrideExceptionHandler()) {
             $this->app->singleton(ExceptionHandler::class, Handler::class);
         }
     }
@@ -113,5 +113,22 @@ class StarterKitServiceProvider extends ServiceProvider
     public function areHelpersEnabled(): bool
     {
         return false;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getRoutePrefix(): ?string
+    {
+        return 'starter-kit';
+    }
+
+    /**
+     * @param bool $is_api
+     * @return array
+     */
+    public function getDefaultRouteMiddleware(bool $is_api): array
+    {
+        return [];
     }
 }
