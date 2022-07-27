@@ -21,7 +21,8 @@
         "ext-zlib": "*",
         "brainmaestro/composer-git-hooks": "^2.8",
         "laravel/pint": "^1.0",
-        "sentry/sentry-laravel": "^2.13"
+        "sentry/sentry-laravel": "^2.13",
+        "hammerstone/fast-paginate": "^0.1.7"
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest",
