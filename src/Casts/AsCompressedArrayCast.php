@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class AsCompressedArrayCast
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
+ *
  * @since 2022-05-04
  */
 class AsCompressedArrayCast implements CastsAttributes
@@ -16,10 +17,10 @@ class AsCompressedArrayCast implements CastsAttributes
     /**
      * Cast the given value.
      *
-     * @param Model $model
-     * @param string $key
-     * @param mixed $value
-     * @param array $attributes
+     * @param  Model  $model
+     * @param  string  $key
+     * @param  mixed  $value
+     * @param  array  $attributes
      * @return array|null
      */
     public function get($model, string $key, $value, array $attributes): array|null

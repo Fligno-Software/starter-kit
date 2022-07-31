@@ -2,15 +2,16 @@
 
 namespace Fligno\StarterKit\Exceptions;
 
-use Illuminate\Support\Arr;
-use Illuminate\Validation\ValidationException as BaseException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException as BaseException;
 
 /**
  * Class ValidationException
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
+ *
  * @since  2021-11-09
  */
 class ValidationException extends BaseException

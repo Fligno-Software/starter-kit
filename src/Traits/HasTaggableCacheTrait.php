@@ -48,10 +48,10 @@ trait HasTaggableCacheTrait
     }
 
     /**
-     * @param string[] $tags
-     * @param string $key
-     * @param Closure $closure
-     * @param bool $rehydrate
+     * @param  string[]  $tags
+     * @param  string  $key
+     * @param  Closure  $closure
+     * @param  bool  $rehydrate
      * @return mixed
      */
     private function getCache(array $tags, string $key, Closure $closure, bool $rehydrate = false): mixed
@@ -60,6 +60,7 @@ trait HasTaggableCacheTrait
             if ($rehydrate) {
                 $this->forgetCache($tags, $key);
             }
+
             return Cache::tags($tags)->rememberForever($key, $closure);
         }
 
@@ -67,8 +68,8 @@ trait HasTaggableCacheTrait
     }
 
     /**
-     * @param string $key
-     * @param string[] $tags
+     * @param  string  $key
+     * @param  string[]  $tags
      * @return bool
      */
     public function forgetCache(array $tags, string $key): bool
@@ -81,8 +82,8 @@ trait HasTaggableCacheTrait
     }
 
     /**
-     * @param string $class
-     * @param string $base_class
+     * @param  string  $class
+     * @param  string  $base_class
      * @return void
      */
     public function validateClass(string &$class, string $base_class): void
@@ -92,7 +93,7 @@ trait HasTaggableCacheTrait
         $class = get_class($object);
 
         if (! is_subclass_of($object, $base_class)) {
-            throw new RuntimeException('Invalid ' . $base_class . ' class: ' . $class);
+            throw new RuntimeException('Invalid '.$base_class.' class: '.$class);
         }
     }
 }

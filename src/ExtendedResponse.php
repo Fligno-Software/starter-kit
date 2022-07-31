@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
  * Class ExtendedResponse
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
+ *
  * @since  2021-11-19
  *
  * Usage
@@ -56,8 +57,8 @@ class ExtendedResponse
     /**
      * ExtendedResponse constructor.
      *
-     * @param mixed $data
-     * @param array|string|null $message
+     * @param  mixed  $data
+     * @param  array|string|null  $message
      */
     public function __construct(mixed $data = null, array|string $message = null)
     {
@@ -73,7 +74,7 @@ class ExtendedResponse
     /**
      * Set status code
      *
-     * @param  int $code
+     * @param  int  $code
      * @return $this
      */
     public function code(int $code): ExtendedResponse
@@ -90,7 +91,7 @@ class ExtendedResponse
     /**
      * Generic success code
      *
-     * @param  int $code
+     * @param  int  $code
      * @return $this
      */
     public function success(int $code = 200): ExtendedResponse
@@ -104,7 +105,7 @@ class ExtendedResponse
     /**
      * Generic failure code
      *
-     * @param  int $code
+     * @param  int  $code
      * @return $this
      */
     public function failed(int $code = 400): ExtendedResponse
@@ -114,7 +115,6 @@ class ExtendedResponse
 
         return $this;
     }
-
 
     /**
      * Lacks authentication method
@@ -159,7 +159,7 @@ class ExtendedResponse
     /**
      * Set a custom slug
      *
-     * @param  string $value
+     * @param  string  $value
      * @return $this
      */
     public function slug(string $value): ExtendedResponse
@@ -172,7 +172,7 @@ class ExtendedResponse
     /**
      * Set message
      *
-     * @param  array|string|null $value
+     * @param  array|string|null  $value
      * @return $this
      */
     public function message(array|string|null $value): ExtendedResponse
@@ -196,7 +196,7 @@ class ExtendedResponse
     /**
      * Implement a message translator based on slug given
      *
-     * @param  $fallback
+     * @param    $fallback
      * @return mixed
      */
     protected function translateMessage($fallback): mixed
@@ -207,7 +207,7 @@ class ExtendedResponse
     /**
      * Set data
      *
-     * @param  mixed $value
+     * @param  mixed  $value
      * @return $this
      */
     public function data(mixed $value = null): ExtendedResponse
@@ -254,11 +254,11 @@ class ExtendedResponse
     protected function generateResponse(): JsonResponse
     {
         $data = collect([
-            'success'     => $this->success,
-            'code'        => $this->code,
-            'slug'        => $this->slug,
-            'message'     => $this->message,
-            'pagination'  => $this->pagination,
+            'success' => $this->success,
+            'code' => $this->code,
+            'slug' => $this->slug,
+            'message' => $this->message,
+            'pagination' => $this->pagination,
         ]);
 
         if ($this->code >= 400) {

@@ -36,10 +36,10 @@ class StarterKitGitHooksApplyCommand extends Command
 
         // Append git hooks to composer.json
         $contents['extra']['hooks'] = [
-            "pre-commit" => [
-                "echo committing as $(git config user.name)",
-                "./vendor/bin/pint",
-                "git add ."
+            'pre-commit' => [
+                'echo committing as $(git config user.name)',
+                './vendor/bin/pint',
+                'git add .',
             ],
         ];
 
@@ -92,7 +92,7 @@ class StarterKitGitHooksApplyCommand extends Command
     }
 
     /**
-     * @param array $contents
+     * @param  array  $contents
      * @return void
      */
     public function saveContentsToComposerJson(array $contents): void
@@ -105,7 +105,7 @@ class StarterKitGitHooksApplyCommand extends Command
 
         $process = make_process([
             base_path('vendor/bin/cghooks'),
-            'update'
+            'update',
         ]);
 
         $process->setTimeout(30000)->run();

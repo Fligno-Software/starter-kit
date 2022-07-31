@@ -16,6 +16,7 @@ trait UsesProviderObserverMapTrait
      * Laravel Observer Map
      *
      * @link    https://laravel.com/docs/8.x/eloquent#observers
+     *
      * @example [ UserObserver::class => User::class ]
      *
      * @var array
@@ -33,7 +34,7 @@ trait UsesProviderObserverMapTrait
     /**
      * Load Observers
      *
-     * @param  Collection|null $observers
+     * @param  Collection|null  $observers
      * @return void
      */
     protected function loadObservers(Collection $observers = null): void
@@ -44,7 +45,7 @@ trait UsesProviderObserverMapTrait
                     $model = $model->first();
                 }
                 try {
-                    call_user_func($model . '::observe', $observer);
+                    call_user_func($model.'::observe', $observer);
                 } catch (Exception) {
                     starterKit()->clearCache();
                 }

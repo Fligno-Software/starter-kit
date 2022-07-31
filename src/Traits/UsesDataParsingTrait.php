@@ -20,8 +20,8 @@ use ReflectionException;
 trait UsesDataParsingTrait
 {
     /**
-     * @param array $response
-     * @param string|null $key
+     * @param  array  $response
+     * @param  string|null  $key
      * @return array
      */
     public function parseArray(array $response, ?string $key = null): array
@@ -30,8 +30,8 @@ trait UsesDataParsingTrait
     }
 
     /**
-     * @param Response $response
-     * @param string|null $key
+     * @param  Response  $response
+     * @param  string|null  $key
      * @return array
      */
     public function parseResponse(Response $response, ?string $key = null): array
@@ -44,8 +44,8 @@ trait UsesDataParsingTrait
     }
 
     /**
-     * @param Request $response
-     * @param string|null $key
+     * @param  Request  $response
+     * @param  string|null  $key
      * @return array
      */
     public function parseRequest(Request $response, ?string $key = null): array
@@ -56,8 +56,8 @@ trait UsesDataParsingTrait
     }
 
     /**
-     * @param Collection $response
-     * @param string|null $key
+     * @param  Collection  $response
+     * @param  string|null  $key
      * @return array
      */
     public function parseCollection(Collection $response, ?string $key = null): array
@@ -66,8 +66,8 @@ trait UsesDataParsingTrait
     }
 
     /**
-     * @param BaseJsonSerializable $response
-     * @param string|null $key
+     * @param  BaseJsonSerializable  $response
+     * @param  string|null  $key
      * @return array
      */
     public function parseBaseJsonSerializable(BaseJsonSerializable $response, ?string $key = null): array
@@ -76,8 +76,8 @@ trait UsesDataParsingTrait
     }
 
     /**
-     * @param Model $response
-     * @param string|null $key
+     * @param  Model  $response
+     * @param  string|null  $key
      * @return array
      */
     public function parseModel(Model $response, ?string $key = null): array
@@ -86,8 +86,8 @@ trait UsesDataParsingTrait
     }
 
     /**
-     * @param mixed $data
-     * @param string|null $key
+     * @param  mixed  $data
+     * @param  string|null  $key
      * @return array
      */
     public function parse(mixed $data = [], ?string $key = null): array
@@ -117,7 +117,7 @@ trait UsesDataParsingTrait
         }
 
         try {
-            if (is_object($data) && ($class = (new ReflectionClass($data))->getShortName()) && method_exists($this, $method = 'parse' . $class)) {
+            if (is_object($data) && ($class = (new ReflectionClass($data))->getShortName()) && method_exists($this, $method = 'parse'.$class)) {
                 return $this->$method($data, $key);
             }
         } catch (ReflectionException) {

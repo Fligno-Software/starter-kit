@@ -13,6 +13,7 @@ trait UsesProviderMorphMapTrait
      * Polymorphism Morph Map
      *
      * @link    https://laravel.com/docs/8.x/eloquent-relationships#custom-polymorphic-types
+     *
      * @example [ 'user' => User::class ]
      *
      * @var array

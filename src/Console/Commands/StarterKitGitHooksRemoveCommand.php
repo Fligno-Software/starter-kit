@@ -36,7 +36,7 @@ class StarterKitGitHooksRemoveCommand extends StarterKitGitHooksApplyCommand
 
         collect([
             'extra' => 'hooks',
-            'scripts' => 'cghooks'
+            'scripts' => 'cghooks',
         ])->each(function ($subkey, $key) use (&$contents) {
             if ($subkey === 'hooks') {
                 collect($contents[$key][$subkey])->each(function ($item, $hook) use (&$contents, $key, $subkey) {

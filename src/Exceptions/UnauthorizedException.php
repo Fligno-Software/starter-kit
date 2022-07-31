@@ -10,12 +10,13 @@ use JetBrains\PhpStorm\Pure;
  * Class UnauthorizedException
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
+ *
  * @since  2021-11-09
  */
 class UnauthorizedException extends Exception
 {
     #[Pure]
-    public function __construct($message = "")
+    public function __construct($message = '')
     {
         parent::__construct($message, null);
     }

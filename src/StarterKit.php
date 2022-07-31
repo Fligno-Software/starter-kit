@@ -16,6 +16,7 @@ use Symfony\Component\Finder\SplFileInfo;
  * Class StarterKit
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
+ *
  * @since 2021-11-25
  */
 class StarterKit
@@ -31,8 +32,8 @@ class StarterKit
     }
 
     /**
-     * @param  string $package_name
-     * @param  string $directory
+     * @param  string  $package_name
+     * @param  string  $directory
      * @return Collection|null
      */
     public function getDomains(string $package_name, string $directory): ?Collection
@@ -42,6 +43,7 @@ class StarterKit
             'domains',
             function () use ($directory) {
                 $domainPath = guess_file_or_directory_path($directory, 'Domains');
+
                 return collect_files_or_directories($domainPath, true, false, true);
             }
         );
@@ -49,7 +51,7 @@ class StarterKit
 
     /**
      * @param  string  $package_name
-     * @param  Closure $callable
+     * @param  Closure  $callable
      * @return Collection|null
      */
     public function getTargetDirectories(string $package_name, Closure $callable): ?Collection
@@ -64,12 +66,12 @@ class StarterKit
     }
 
     /**
-     * @param  string                  $package_name
-     * @param  object|string           $sourceObjectOrClassOrDir
-     * @param  Collection|array|string $targetFileOrFolder
-     * @param  string|null             $domain
-     * @param  bool                    $traverseUp
-     * @param  int                     $maxLevels
+     * @param  string  $package_name
+     * @param  object|string  $sourceObjectOrClassOrDir
+     * @param  Collection|array|string  $targetFileOrFolder
+     * @param  string|null  $domain
+     * @param  bool  $traverseUp
+     * @param  int  $maxLevels
      * @return Collection|array|string|null
      */
     public function getTargetDirectoriesPaths(
@@ -95,9 +97,9 @@ class StarterKit
     }
 
     /**
-     * @param  string      $package_name
-     * @param  string      $directory
-     * @param  string|null $domain
+     * @param  string  $package_name
+     * @param  string  $directory
+     * @param  string|null  $domain
      * @return Collection|null
      */
     public function getHelpers(string $package_name, string $directory, string $domain = null): ?Collection
@@ -112,9 +114,9 @@ class StarterKit
     }
 
     /**
-     * @param  string      $package_name
-     * @param  string      $directory
-     * @param  string|null $domain
+     * @param  string  $package_name
+     * @param  string  $directory
+     * @param  string|null  $domain
      * @return Collection|null
      */
     public function getRoutes(string $package_name, string $directory, string $domain = null): ?Collection
@@ -146,9 +148,9 @@ class StarterKit
     }
 
     /**
-     * @param  string      $package_name
-     * @param  string      $directory
-     * @param  string|null $domain
+     * @param  string  $package_name
+     * @param  string  $directory
+     * @param  string|null  $domain
      * @return Collection|null
      */
     public function getPossibleModels(string $package_name, string $directory, string $domain = null): ?Collection
@@ -186,6 +188,7 @@ class StarterKit
                     ->mapWithKeys(
                         function ($item) {
                             $key = Str::of($item)->afterLast('\\')->jsonSerialize();
+
                             return [$item => $key];
                         }
                     )->mapToGroups(
@@ -198,10 +201,10 @@ class StarterKit
     }
 
     /**
-     * @param  string      $package_name
-     * @param  string      $directory
-     * @param  array       $policy_map
-     * @param  string|null $domain
+     * @param  string  $package_name
+     * @param  string  $directory
+     * @param  array  $policy_map
+     * @param  string|null  $domain
      * @return Collection|null
      */
     public function getPolicies(
@@ -214,10 +217,10 @@ class StarterKit
     }
 
     /**
-     * @param  string      $package_name
-     * @param  string      $directory
-     * @param  array       $observer_map
-     * @param  string|null $domain
+     * @param  string  $package_name
+     * @param  string  $directory
+     * @param  array  $observer_map
+     * @param  string|null  $domain
      * @return Collection|null
      */
     public function getObservers(
@@ -230,10 +233,10 @@ class StarterKit
     }
 
     /**
-     * @param  string      $package_name
-     * @param  string      $directory
-     * @param  array       $repository_map
-     * @param  string|null $domain
+     * @param  string  $package_name
+     * @param  string  $directory
+     * @param  array  $repository_map
+     * @param  string|null  $domain
      * @return Collection|null
      */
     public function getRepositories(
@@ -246,11 +249,11 @@ class StarterKit
     }
 
     /**
-     * @param  string           $file_type
-     * @param  string           $package_name
-     * @param  string           $directory
-     * @param  Collection|array $map
-     * @param  string|null      $domain
+     * @param  string  $file_type
+     * @param  string  $package_name
+     * @param  string  $directory
+     * @param  Collection|array  $map
+     * @param  string|null  $domain
      * @return Collection|null
      */
     private function getModelRelatedMap(
@@ -284,6 +287,7 @@ class StarterKit
 
                     return $classes;
                 }
+
                 return null;
             }
         );
@@ -309,7 +313,7 @@ class StarterKit
     public function getUserQueryBuilder(): ?Builder
     {
         if ($model = $this->getUserModel()) {
-            return call_user_func($model . '::query');
+            return call_user_func($model.'::query');
         }
 
         return null;
@@ -326,7 +330,7 @@ class StarterKit
     }
 
     /**
-     * @param string $model_name
+     * @param  string  $model_name
      * @return string|null
      */
     public function getMorphMapKey(string $model_name): string|null
@@ -341,7 +345,7 @@ class StarterKit
     /***** ROUTE MIDDLEWARES *****/
 
     /**
-     * @param bool $is_api
+     * @param  bool  $is_api
      * @return array
      */
     public function getRouteMiddleware(bool $is_api): array
