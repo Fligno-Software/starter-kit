@@ -2,6 +2,7 @@
 
 /**
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
+ *
  * @since  2021-11-09
  */
 
@@ -59,7 +60,7 @@ if (! function_exists('customResponse')) {
 
 if (! function_exists('array_filter_recursive')) {
     /**
-     * @param  array $arr
+     * @param  array  $arr
      * @param  bool  $accept_boolean
      * @param  bool  $accept_null
      * @param  bool  $accept_0
@@ -74,7 +75,7 @@ if (! function_exists('array_filter_recursive')) {
         $result = [];
         foreach ($arr as $key => $value) {
             if (($accept_boolean && is_bool($value)) ||
-                ($accept_0 && is_numeric($value) && (int)$value === 0) ||
+                ($accept_0 && is_numeric($value) && (int) $value === 0) ||
                 empty($value) === false ||
                 ($accept_null && is_null($value))
             ) {
@@ -92,7 +93,7 @@ if (! function_exists('array_filter_recursive')) {
 
 if (! function_exists('arrayFilterRecursive')) {
     /**
-     * @param  array $arr
+     * @param  array  $arr
      * @param  bool  $accept_boolean
      * @param  bool  $accept_null
      * @param  bool  $accept_0
@@ -111,7 +112,7 @@ if (! function_exists('arrayFilterRecursive')) {
 if (! function_exists('is_request_instance')) {
 
     /**
-     * @param  $request
+     * @param    $request
      * @return bool
      */
     function is_request_instance($request): bool
@@ -123,7 +124,7 @@ if (! function_exists('is_request_instance')) {
 if (! function_exists('isRequestInstance')) {
 
     /**
-     * @param  $request
+     * @param    $request
      * @return bool
      */
     #[Pure] function isRequestInstance($request): bool
@@ -136,9 +137,9 @@ if (! function_exists('request_or_array_has')) {
     /**
      * Check if the Request or associative array has a specific key.
      *
-     * @param  array|Request $request
-     * @param  string        $key
-     * @param  bool|null     $is_exact
+     * @param  array|Request  $request
+     * @param  string  $key
+     * @param  bool|null  $is_exact
      * @return bool
      */
     function request_or_array_has(array|Request $request, string $key = '', ?bool $is_exact = true): bool
@@ -148,7 +149,7 @@ if (! function_exists('request_or_array_has')) {
                 return Arr::has($request, $key);
             }
 
-            return (bool)preg_grep("/$key/", array_keys($request));
+            return (bool) preg_grep("/$key/", array_keys($request));
         }
 
         if (is_subclass_of($request, Request::class)) {
@@ -156,7 +157,7 @@ if (! function_exists('request_or_array_has')) {
                 return $request->has($key);
             }
 
-            return (bool)preg_grep("/$key/", $request->keys());
+            return (bool) preg_grep("/$key/", $request->keys());
         }
 
         return false;
@@ -167,9 +168,9 @@ if (! function_exists('requestOrArrayHas')) {
     /**
      * Check if the Request or associative array has a specific key.
      *
-     * @param  array|Request $request
-     * @param  string        $key
-     * @param  bool|null     $is_exact
+     * @param  array|Request  $request
+     * @param  string  $key
+     * @param  bool|null  $is_exact
      * @return bool
      */
     function requestOrArrayHas(array|Request $request, string $key = '', ?bool $is_exact = true): bool
@@ -182,9 +183,9 @@ if (! function_exists('request_or_array_get')) {
     /**
      * Get a value from Request or associative array using a string key.
      *
-     * @param  array|Request $request
-     * @param  string        $key
-     * @param  mixed|null    $default
+     * @param  array|Request  $request
+     * @param  string  $key
+     * @param  mixed|null  $default
      * @return mixed
      */
     function request_or_array_get(array|Request $request, string $key, mixed $default = null): mixed
@@ -205,9 +206,9 @@ if (! function_exists('requestOrArrayGet')) {
     /**
      * Get a value from Request or associative array using a string key.
      *
-     * @param  array|Request $request
-     * @param  string        $key
-     * @param  mixed|null    $default
+     * @param  array|Request  $request
+     * @param  string  $key
+     * @param  mixed|null  $default
      * @return mixed
      */
     function requestOrArrayGet(array|Request $request, string $key, mixed $default = null): mixed
@@ -220,8 +221,8 @@ if (! function_exists('is_request_or_array_filled')) {
     /**
      * Check if a key exists and is not empty on a Request or associative array.
      *
-     * @param  array|Request $request
-     * @param  string        $key
+     * @param  array|Request  $request
+     * @param  string  $key
      * @return bool
      */
     function is_request_or_array_filled(array|Request $request, string $key): bool
@@ -242,8 +243,8 @@ if (! function_exists('isRequestOrArrayFilled')) {
     /**
      * Check if a key exists and is not empty on a Request or associative array.
      *
-     * @param  array|Request $request
-     * @param  string        $key
+     * @param  array|Request  $request
+     * @param  string  $key
      * @return bool
      */
     function isRequestOrArrayFilled(array|Request $request, string $key): bool
@@ -256,7 +257,7 @@ if (! function_exists('is_eloquent_model')) {
     /**
      * Determine if the class using the trait is a subclass of Eloquent Model.
      *
-     * @param  mixed $object_or_class
+     * @param  mixed  $object_or_class
      * @return bool
      */
     function is_eloquent_model(mixed $object_or_class): bool
@@ -269,7 +270,7 @@ if (! function_exists('isEloquentModel')) {
     /**
      * Determine if the class using the trait is a subclass of Eloquent Model.
      *
-     * @param  mixed $object_or_class
+     * @param  mixed  $object_or_class
      * @return bool
      */
     #[Pure] function isEloquentModel(mixed $object_or_class): bool
@@ -280,7 +281,7 @@ if (! function_exists('isEloquentModel')) {
 
 if (! function_exists('get_class_name_from_object')) {
     /**
-     * @param  mixed $object_or_class
+     * @param  mixed  $object_or_class
      * @return mixed
      */
     function get_class_name_from_object(mixed $object_or_class): mixed
@@ -291,7 +292,7 @@ if (! function_exists('get_class_name_from_object')) {
 
 if (! function_exists('getClassNameFromObject')) {
     /**
-     * @param  mixed $object_or_class
+     * @param  mixed  $object_or_class
      * @return mixed
      */
     #[Pure] function getClassNameFromObject(mixed $object_or_class): mixed
@@ -302,14 +303,14 @@ if (! function_exists('getClassNameFromObject')) {
 
 /**
  * COLLECTION-RELATED
-**/
-
+ **/
 if (! function_exists('collection_decode')) {
     /**
      * Decode a string to a Collection instance.
      *
-     * @param  string|null $collection
+     * @param  string|null  $collection
      * @return Collection|string|null
+     *
      * @throws JsonException
      */
     function collection_decode(?string $collection): string|Collection|null
@@ -330,8 +331,9 @@ if (! function_exists('collectionDecode')) {
     /**
      * Decode a string to a Collection instance.
      *
-     * @param  string|null $collection
+     * @param  string|null  $collection
      * @return Collection|string|null
+     *
      * @throws JsonException
      */
     function collectionDecode(?string $collection): string|Collection|null
@@ -344,8 +346,9 @@ if (! function_exists('collection_encode')) {
     /**
      * Decode a string to a Collection instance.
      *
-     * @param  Collection|null $collection
+     * @param  Collection|null  $collection
      * @return false|Collection|string|null
+     *
      * @throws JsonException
      */
     function collection_encode(?Collection $collection): bool|string|Collection|null
@@ -366,8 +369,9 @@ if (! function_exists('collectionEncode')) {
     /**
      * Decode a string to a Collection instance.
      *
-     * @param  Collection|null $collection
+     * @param  Collection|null  $collection
      * @return false|Collection|string|null
+     *
      * @throws JsonException
      */
     function collectionEncode(?Collection $collection): bool|string|Collection|null
@@ -380,10 +384,10 @@ if (! function_exists('collectionEncode')) {
 
 if (! function_exists('collect_files_or_directories')) {
     /**
-     * @param  string|null $directory
-     * @param  bool        $withDirectories
-     * @param  bool        $withFiles
-     * @param  bool        $prependDirectory
+     * @param  string|null  $directory
+     * @param  bool  $withDirectories
+     * @param  bool  $withFiles
+     * @param  bool  $prependDirectory
      * @return Collection|null
      */
     function collect_files_or_directories(
@@ -398,11 +402,11 @@ if (! function_exists('collect_files_or_directories')) {
             $arr = collect($arr)->filter(fn ($value) => ! Str::of($value)->startsWith('.'));
 
             if (! $withFiles) {
-                $arr = $arr->filter(fn ($value) => ! is_file($directory . '/' . $value));
+                $arr = $arr->filter(fn ($value) => ! is_file($directory.'/'.$value));
             }
 
             if (! $withDirectories) {
-                $arr = $arr->filter(fn ($value) => ! is_dir($directory . '/' . $value));
+                $arr = $arr->filter(fn ($value) => ! is_dir($directory.'/'.$value));
             }
 
             if ($arr->isEmpty()) {
@@ -410,7 +414,7 @@ if (! function_exists('collect_files_or_directories')) {
             }
 
             if ($prependDirectory) {
-                $arr = $arr->mapWithKeys(fn ($value) => [$value => $directory . '/' . $value]);
+                $arr = $arr->mapWithKeys(fn ($value) => [$value => $directory.'/'.$value]);
             }
 
             return $arr;
@@ -422,10 +426,10 @@ if (! function_exists('collect_files_or_directories')) {
 
 if (! function_exists('collectFilesOrDirectories')) {
     /**
-     * @param  string|null $directory
-     * @param  bool        $withDirectories
-     * @param  bool        $withFiles
-     * @param  bool        $prependDirectory
+     * @param  string|null  $directory
+     * @param  bool  $withDirectories
+     * @param  bool  $withFiles
+     * @param  bool  $prependDirectory
      * @return Collection|null
      */
     function collectFilesOrDirectories(
@@ -440,7 +444,7 @@ if (! function_exists('collectFilesOrDirectories')) {
 
 if (! function_exists('get_dir_from_object_class_dir')) {
     /**
-     * @param  object|string $objectOrClassOrDir
+     * @param  object|string  $objectOrClassOrDir
      * @return false|object|string
      */
     function get_dir_from_object_class_dir(object|string $objectOrClassOrDir): object|bool|string
@@ -466,7 +470,7 @@ if (! function_exists('get_dir_from_object_class_dir')) {
 
 if (! function_exists('getDirFromObjectClassDir')) {
     /**
-     * @param  object|string $objectOrClassOrDir
+     * @param  object|string  $objectOrClassOrDir
      * @return false|object|string
      */
     function getDirFromObjectClassDir(object|string $objectOrClassOrDir): object|bool|string
@@ -477,10 +481,10 @@ if (! function_exists('getDirFromObjectClassDir')) {
 
 if (! function_exists('guess_file_or_directory_path')) {
     /**
-     * @param  object|string           $sourceObjectOrClassOrDir
-     * @param  Collection|array|string $targetFileOrFolder
-     * @param  bool                    $traverseUp
-     * @param  int                     $maxLevels
+     * @param  object|string  $sourceObjectOrClassOrDir
+     * @param  Collection|array|string  $targetFileOrFolder
+     * @param  bool  $traverseUp
+     * @param  int  $maxLevels
      * @return Collection|array|string|null
      */
     function guess_file_or_directory_path(
@@ -496,7 +500,7 @@ if (! function_exists('guess_file_or_directory_path')) {
         $result = collect();
 
         $addToResult = static function (string $dir, $fileOrFolder, Collection $result) {
-            if ($exists = file_exists($temp = $dir . '/' . $fileOrFolder)) {
+            if ($exists = file_exists($temp = $dir.'/'.$fileOrFolder)) {
                 $result->put($fileOrFolder, $temp);
             }
 
@@ -536,6 +540,7 @@ if (! function_exists('guess_file_or_directory_path')) {
                                                     return false;
                                                 }
                                             }
+
                                             return true;
                                         }
                                     );
@@ -563,10 +568,10 @@ if (! function_exists('guess_file_or_directory_path')) {
 
 if (! function_exists('guessFileOrDirectoryPath')) {
     /**
-     * @param  object|string              $sourceObjectOrClassOrDir
-     * @param  Collection|string[]|string $targetFileOrFolder
-     * @param  bool                       $traverseUp
-     * @param  int                        $maxLevels
+     * @param  object|string  $sourceObjectOrClassOrDir
+     * @param  Collection|string[]|string  $targetFileOrFolder
+     * @param  bool  $traverseUp
+     * @param  int  $maxLevels
      * @return string|null
      */
     function guessFileOrDirectoryPath(
@@ -579,10 +584,10 @@ if (! function_exists('guessFileOrDirectoryPath')) {
     }
 }
 
-if (!function_exists('collect_classes_from_path')) {
+if (! function_exists('collect_classes_from_path')) {
     /**
-     * @param  string      $path
-     * @param  string|null $suffix
+     * @param  string  $path
+     * @param  string|null  $suffix
      * @return Collection|null
      */
     function collect_classes_from_path(string $path, string $suffix = null): ?Collection
@@ -604,10 +609,10 @@ if (!function_exists('collect_classes_from_path')) {
     }
 }
 
-if (!function_exists('collectClassesFromPath')) {
+if (! function_exists('collectClassesFromPath')) {
     /**
-     * @param  string      $path
-     * @param  string|null $suffix
+     * @param  string  $path
+     * @param  string|null  $suffix
      * @return Collection
      */
     function collectClassesFromPath(string $path, string $suffix = null): Collection
@@ -620,13 +625,13 @@ if (!function_exists('collectClassesFromPath')) {
 
 if (! function_exists('is_valid_base64')) {
     /**
-     * @param  string $string
+     * @param  string  $string
      * @return bool
      */
     function is_valid_base64(string $string): bool
     {
         // Check if there are valid base64 characters
-        if (!preg_match('/^[a-zA-Z\d\/\r\n+]*={0,2}$/', $string)) {
+        if (! preg_match('/^[a-zA-Z\d\/\r\n+]*={0,2}$/', $string)) {
             return false;
         }
 
@@ -647,7 +652,7 @@ if (! function_exists('is_valid_base64')) {
 
 if (! function_exists('isValidBase64')) {
     /**
-     * @param  string $string
+     * @param  string  $string
      * @return bool
      */
     function isValidBase64(string $string): bool
@@ -660,7 +665,7 @@ if (! function_exists('isValidBase64')) {
 
 if (! function_exists('is_valid_url')) {
     /**
-     * @param  string $url
+     * @param  string  $url
      * @return bool
      */
     function is_valid_url(string $url): bool
@@ -675,7 +680,7 @@ if (! function_exists('is_valid_url')) {
 
 if (! function_exists('isValidURL')) {
     /**
-     * @param  string $url
+     * @param  string  $url
      * @return bool
      */
     function isValidURL(string $url): bool
@@ -684,13 +689,12 @@ if (! function_exists('isValidURL')) {
     }
 }
 
-
 // Symfony Process
 
 if (! function_exists('make_process')) {
     /**
-     * @param  Collection|array $arguments
-     * @param  string|null      $workingDirectory
+     * @param  Collection|array  $arguments
+     * @param  string|null  $workingDirectory
      * @return Process
      */
     function make_process(Collection|array $arguments, string $workingDirectory = null): Process
@@ -709,8 +713,8 @@ if (! function_exists('make_process')) {
 
 if (! function_exists('makeProcess')) {
     /**
-     * @param  Collection|array $arguments
-     * @param  string|null      $workingDirectory
+     * @param  Collection|array  $arguments
+     * @param  string|null  $workingDirectory
      * @return Process
      */
     function makeProcess(Collection|array $arguments, string $workingDirectory = null): Process
@@ -725,8 +729,8 @@ if (! function_exists('enforce_morph_map')) {
     /**
      * Define the morph map for polymorphic relations and require all morphed models to be explicitly mapped.
      *
-     * @param array $map
-     * @param bool  $merge
+     * @param  array  $map
+     * @param  bool  $merge
      */
     function enforce_morph_map(array $map, bool $merge = true): void
     {
@@ -738,8 +742,8 @@ if (! function_exists('enforceMorphMap')) {
     /**
      * Define the morph map for polymorphic relations and require all morphed models to be explicitly mapped.
      *
-     * @param array $map
-     * @param bool  $merge
+     * @param  array  $map
+     * @param  bool  $merge
      */
     function enforceMorphMap(array $map, bool $merge = true): void
     {
@@ -751,8 +755,8 @@ if (! function_exists('enforceMorphMap')) {
 
 if (! function_exists('class_uses_trait')) {
     /**
-     * @param  object|string $class
-     * @param  string        $trait
+     * @param  object|string  $class
+     * @param  string  $trait
      * @return bool
      */
     function class_uses_trait(object|string $class, string $trait): bool
@@ -763,8 +767,8 @@ if (! function_exists('class_uses_trait')) {
 
 if (! function_exists('classUsesTrait')) {
     /**
-     * @param  object|string $class
-     * @param  string        $trait
+     * @param  object|string  $class
+     * @param  string  $trait
      * @return bool
      */
     function classUsesTrait(object|string $class, string $trait): bool

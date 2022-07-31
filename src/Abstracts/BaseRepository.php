@@ -14,12 +14,13 @@ use Illuminate\Http\Request;
  * Abstract Class BaseRepository
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
+ *
  * @since  2021-11-19
  */
 abstract class BaseRepository implements RepositoryInterface
 {
     /**
-     * @param Builder $builder
+     * @param  Builder  $builder
      */
     public function __construct(protected Builder $builder)
     {
@@ -43,8 +44,8 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
-     * @param  User|null                                                                             $user
+     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null  $attributes
+     * @param  User|null  $user
      * @return Collection|array
      */
     public function all(
@@ -55,8 +56,8 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes
-     * @param User|null $user
+     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array  $attributes
+     * @param  User|null  $user
      * @return Model|null
      */
     public function create(Model|array|Response|\Illuminate\Support\Collection|Request|BaseJsonSerializable $attributes, User $user = null): Model|null
@@ -65,9 +66,9 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param  int|string                                                                            $id
-     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
-     * @param  User|null                                                                             $user
+     * @param  int|string  $id
+     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null  $attributes
+     * @param  User|null  $user
      * @return Model|Collection|Builder|array|null
      */
     public function get(
@@ -83,9 +84,9 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param  int|string                                                                            $id
-     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
-     * @param  User|null                                                                             $user
+     * @param  int|string  $id
+     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null  $attributes
+     * @param  User|null  $user
      * @return Model|null
      */
     public function update(
@@ -101,9 +102,9 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param  int|string                                                                            $id
-     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
-     * @param  User|null                                                                             $user
+     * @param  int|string  $id
+     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null  $attributes
+     * @param  User|null  $user
      * @return Model|null
      */
     public function delete(
@@ -115,9 +116,9 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param  int|string                                                                            $id
-     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null $attributes
-     * @param  User|null                                                                             $user
+     * @param  int|string  $id
+     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null  $attributes
+     * @param  User|null  $user
      * @return Model|null
      */
     public function restore(

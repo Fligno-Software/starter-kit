@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
  * Trait UsesUUIDTrait
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
+ *
  * @since  2021-11-19
  */
 trait UsesUUIDTrait

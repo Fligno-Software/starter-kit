@@ -23,8 +23,8 @@ class ModelDisablingScope implements Scope
     /**
      * Apply the scope to a given Eloquent query builder.
      *
-     * @param Builder $builder
-     * @param Model $model
+     * @param  Builder  $builder
+     * @param  Model  $model
      * @return void
      */
     public function apply(Builder $builder, Model $model): void
@@ -35,7 +35,7 @@ class ModelDisablingScope implements Scope
     /**
      * Extend the query builder with the needed functions.
      *
-     * @param Builder $builder
+     * @param  Builder  $builder
      * @return void
      */
     public function extend(Builder $builder): void
@@ -48,7 +48,7 @@ class ModelDisablingScope implements Scope
     /**
      * Get the "disabled at" column for the builder.
      *
-     * @param Builder $builder
+     * @param  Builder  $builder
      * @return string
      */
     protected function getDisabledAtColumn(Builder $builder): string
@@ -63,7 +63,7 @@ class ModelDisablingScope implements Scope
     /**
      * Add the enable extension to the builder.
      *
-     * @param Builder $builder
+     * @param  Builder  $builder
      * @return void
      */
     protected function addEnable(Builder $builder): void
@@ -78,7 +78,7 @@ class ModelDisablingScope implements Scope
     /**
      * Add to disable extension to the builder.
      *
-     * @param Builder $builder
+     * @param  Builder  $builder
      * @return void
      */
     protected function addDisable(Builder $builder): void
@@ -95,7 +95,7 @@ class ModelDisablingScope implements Scope
     /**
      * Add the with-disabled extension to the builder.
      *
-     * @param Builder $builder
+     * @param  Builder  $builder
      * @return void
      */
     protected function addWithDisabled(Builder $builder): void
@@ -112,7 +112,7 @@ class ModelDisablingScope implements Scope
     /**
      * Add the without-disabled extension to the builder.
      *
-     * @param Builder $builder
+     * @param  Builder  $builder
      * @return void
      */
     protected function addWithoutDisabled(Builder $builder): void
@@ -131,7 +131,7 @@ class ModelDisablingScope implements Scope
     /**
      * Add the only-disabled extension to the builder.
      *
-     * @param Builder $builder
+     * @param  Builder  $builder
      * @return void
      */
     protected function addOnlyDisabled(Builder $builder): void

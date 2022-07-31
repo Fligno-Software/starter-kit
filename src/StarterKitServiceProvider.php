@@ -83,7 +83,7 @@ class StarterKitServiceProvider extends ServiceProvider
         // Publishing the configuration file.
         $this->publishes(
             [
-            __DIR__.'/../config/starter-kit.php' => config_path('starter-kit.php'),
+                __DIR__.'/../config/starter-kit.php' => config_path('starter-kit.php'),
             ],
             'starter-kit.config'
         );
@@ -124,7 +124,7 @@ class StarterKitServiceProvider extends ServiceProvider
     }
 
     /**
-     * @param bool $is_api
+     * @param  bool  $is_api
      * @return array
      */
     public function getDefaultRouteMiddleware(bool $is_api): array

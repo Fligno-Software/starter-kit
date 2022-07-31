@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static Collection|null getObservers(string $package_name, string $directory, array $observer_map, string $domain = null)
  * @method static Collection|null getRepositories(string $package_name, string $directory, array $repository_map, string $domain = null)
  * @method static Collection|null getModelRelatedMap(string $file_type, string $package_name, string $directory, Collection|array $map, string $domain = null)
+ *
  * @see    \Fligno\StarterKit\StarterKit
  */
 class StarterKit extends Facade

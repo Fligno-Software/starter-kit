@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
  * Class MustBeSnakeCase
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
+ *
  * @since  2021-11-19
  */
 class MustBeSnakeCase implements Rule
@@ -26,7 +27,7 @@ class MustBeSnakeCase implements Rule
     /**
      * Determine if the validation rule passes.
      *
-     * @param  string $attribute
+     * @param  string  $attribute
      * @param  mixed  $value
      * @return bool
      */

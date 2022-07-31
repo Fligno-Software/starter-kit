@@ -2,10 +2,10 @@
 
 namespace Fligno\StarterKit\Exceptions;
 
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -15,6 +15,7 @@ use Throwable;
  * Class Handler
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
+ *
  * @since  2021-11-09
  *
  * Extended the render() and unauthenticated() errors to output a unified format based on ExtendedResponse
@@ -57,9 +58,10 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * @param  Request   $request
-     * @param  Throwable $e
+     * @param  Request  $request
+     * @param  Throwable  $e
      * @return Response|JsonResponse|\Symfony\Component\HttpFoundation\Response
+     *
      * @throws Throwable
      */
     public function render($request, Throwable $e): Response|JsonResponse|\Symfony\Component\HttpFoundation\Response
@@ -87,8 +89,8 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * @param  Request                 $request
-     * @param  AuthenticationException $exception
+     * @param  Request  $request
+     * @param  AuthenticationException  $exception
      * @return JsonResponse|\Symfony\Component\HttpFoundation\Response
      */
     public function unauthenticated(

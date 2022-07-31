@@ -121,10 +121,10 @@ trait UsesProviderStarterKitTrait
     /***** LOAD FILES & CLASSES *****/
 
     /**
-     * @param object|string|null $sourceObjectOrClassOrDir
-     * @param string|null $domain
-     * @param bool $traverseUp
-     * @param int $maxLevels
+     * @param  object|string|null  $sourceObjectOrClassOrDir
+     * @param  string|null  $domain
+     * @param  bool  $traverseUp
+     * @param  int  $maxLevels
      * @return void
      */
     protected function bootLaravelFiles(
@@ -219,7 +219,7 @@ trait UsesProviderStarterKitTrait
     }
 
     /**
-     * @param Collection|null $collection
+     * @param  Collection|null  $collection
      * @return void
      */
     protected function loadHelpersFrom(Collection $collection = null): void
@@ -230,7 +230,7 @@ trait UsesProviderStarterKitTrait
     }
 
     /**
-     * @param Collection|null $collection
+     * @param  Collection|null  $collection
      * @return void
      */
     protected function loadRouteFilesFrom(Collection $collection = null): void
@@ -256,7 +256,7 @@ trait UsesProviderStarterKitTrait
                     if (($append_to_prefix = Str::of($item['file'])->before('.')->jsonSerialize()) &&
                         ! in_array($append_to_prefix, ['api', 'web', 'console', 'channels'])
                     ) {
-                        $item['append_to_prefix'] = isset($item['append_to_prefix']) ? $item['append_to_prefix'] . $append_to_prefix : $append_to_prefix;
+                        $item['append_to_prefix'] = isset($item['append_to_prefix']) ? $item['append_to_prefix'].$append_to_prefix : $append_to_prefix;
                     }
 
                     return $item;
@@ -318,7 +318,7 @@ trait UsesProviderStarterKitTrait
     /**
      * Get composer.json contents
      *
-     * @param string|null $key
+     * @param  string|null  $key
      * @return Collection|mixed|null
      */
     public function getComposerJson(?string $key): mixed
@@ -377,7 +377,7 @@ trait UsesProviderStarterKitTrait
     }
 
     /**
-     * @param string|null $append_to_prefix
+     * @param  string|null  $append_to_prefix
      * @return array
      */
     public function getRouteApiConfiguration(string $append_to_prefix = null): array
@@ -386,7 +386,7 @@ trait UsesProviderStarterKitTrait
     }
 
     /**
-     * @param string|null $append_to_prefix
+     * @param  string|null  $append_to_prefix
      * @return array
      */
     public function getRouteWebConfiguration(string $append_to_prefix = null): array
@@ -395,8 +395,8 @@ trait UsesProviderStarterKitTrait
     }
 
     /**
-     * @param bool $is_api
-     * @param string|null $append_to_prefix
+     * @param  bool  $is_api
+     * @param  string|null  $append_to_prefix
      * @return string[]
      */
     public function getRouteConfiguration(bool $is_api, string $append_to_prefix = null): array
@@ -446,7 +446,7 @@ trait UsesProviderStarterKitTrait
     }
 
     /**
-     * @param bool $is_api
+     * @param  bool  $is_api
      * @return array
      */
     public function getDefaultRouteMiddleware(bool $is_api): array

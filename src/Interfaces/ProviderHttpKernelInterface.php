@@ -12,7 +12,7 @@ use Illuminate\Routing\Router;
 interface ProviderHttpKernelInterface
 {
     /**
-     * @param  Router $router
+     * @param  Router  $router
      * @return void
      */
     public function registerToHttpKernel(Router $router): void;

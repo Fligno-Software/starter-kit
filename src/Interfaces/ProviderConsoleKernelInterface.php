@@ -12,7 +12,7 @@ use Illuminate\Console\Scheduling\Schedule;
 interface ProviderConsoleKernelInterface
 {
     /**
-     * @param  Schedule $schedule
+     * @param  Schedule  $schedule
      * @return void
      */
     public function registerToConsoleKernel(Schedule $schedule): void;

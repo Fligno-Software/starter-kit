@@ -17,6 +17,7 @@ trait UsesProviderPolicyMapTrait
      * Laravel Policy Map
      *
      * @link    https://laravel.com/docs/8.x/authorization#registering-policies
+     *
      * @example [ UserPolicy::class => User::class ]
      *
      * @var array
@@ -34,7 +35,7 @@ trait UsesProviderPolicyMapTrait
     /**
      * Load Policies
      *
-     * @param  Collection|null $policies
+     * @param  Collection|null  $policies
      * @return void
      */
     protected function loadPolicies(Collection $policies = null): void

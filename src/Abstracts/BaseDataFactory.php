@@ -9,12 +9,14 @@ use Illuminate\Database\Eloquent\Model;
  * Class BaseDataFactory
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
+ *
  * @since 2022-05-04
  */
 abstract class BaseDataFactory extends BaseJsonSerializable
 {
     /**
      * @return Builder
+     *
      * @example User::query()
      */
     abstract public function getBuilder(): Builder;
@@ -40,8 +42,8 @@ abstract class BaseDataFactory extends BaseJsonSerializable
     }
 
     /**
-     * @param mixed $data
-     * @param string|null $key
+     * @param  mixed  $data
+     * @param  string|null  $key
      * @return Builder|Model
      */
     public function make(mixed $data = [], ?string $key = null): Model|Builder
@@ -56,8 +58,8 @@ abstract class BaseDataFactory extends BaseJsonSerializable
     }
 
     /**
-     * @param mixed $data
-     * @param string|null $key
+     * @param  mixed  $data
+     * @param  string|null  $key
      * @return Model|Builder|null
      */
     public function create(mixed $data = [], ?string $key = null): Model|Builder|null
@@ -68,8 +70,8 @@ abstract class BaseDataFactory extends BaseJsonSerializable
     }
 
     /**
-     * @param mixed $data
-     * @param string|null $key
+     * @param  mixed  $data
+     * @param  string|null  $key
      * @return Model|Builder|null
      */
     public function firstOrNew(mixed $data = [], ?string $key = null): Model|Builder|null
@@ -102,8 +104,8 @@ abstract class BaseDataFactory extends BaseJsonSerializable
     }
 
     /**
-     * @param mixed $data
-     * @param string|null $key
+     * @param  mixed  $data
+     * @param  string|null  $key
      * @return Model|Builder|null
      */
     public function firstOrCreate(mixed $data = [], ?string $key = null): Model|Builder|null
@@ -114,8 +116,8 @@ abstract class BaseDataFactory extends BaseJsonSerializable
     }
 
     /**
-     * @param mixed $data
-     * @param string|null $key
+     * @param  mixed  $data
+     * @param  string|null  $key
      * @return Model|Builder|null
      */
     public function updateOrCreate(mixed $data = [], ?string $key = null): Model|Builder|null
@@ -128,6 +130,7 @@ abstract class BaseDataFactory extends BaseJsonSerializable
             if ($model->isDirty()) {
                 $model->save();
             }
+
             return $model;
         }
 
@@ -135,7 +138,7 @@ abstract class BaseDataFactory extends BaseJsonSerializable
     }
 
     /**
-     * @param Model $model
+     * @param  Model  $model
      * @return void
      */
     public function mergeFieldsToModel(Model $model): void

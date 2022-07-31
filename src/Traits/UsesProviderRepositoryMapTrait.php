@@ -33,7 +33,7 @@ trait UsesProviderRepositoryMapTrait
     /**
      * Load Repositories
      *
-     * @param  Collection|null $repositories
+     * @param  Collection|null  $repositories
      * @return void
      */
     protected function loadRepositories(Collection $repositories = null): void
@@ -44,7 +44,7 @@ trait UsesProviderRepositoryMapTrait
                     $model = $model->first();
                 }
                 try {
-                    app()->when($repository)->needs(Builder::class)->give(fn () => call_user_func($model . '::query'));
+                    app()->when($repository)->needs(Builder::class)->give(fn () => call_user_func($model.'::query'));
                 } catch (Exception) {
                     starterKit()->clearCache();
                 }
