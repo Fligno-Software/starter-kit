@@ -38,17 +38,16 @@ trait UsesProviderRepositoryMapTrait
      */
     protected function loadRepositories(Collection $repositories = null): void
     {
-        $repositories?->each(
-            static function ($model, $repository) {
-                if ($model instanceof Collection) {
-                    $model = $model->first();
-                }
-                try {
-                    app()->when($repository)->needs(Builder::class)->give(fn () => call_user_func($model.'::query'));
-                } catch (Exception) {
-                    starterKit()->clearCache();
-                }
+        $repositories?->each(function ($model, $repository) {
+            if ($model instanceof Collection) {
+                $model = $model->first();
             }
+            try {
+                app()->when($repository)->needs(Builder::class)->give(fn () => call_user_func($model.'::query'));
+            } catch (Exception) {
+                starterKit()->clearCache();
+            }
+        }
         );
     }
 }

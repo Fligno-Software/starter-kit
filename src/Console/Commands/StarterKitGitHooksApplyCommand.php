@@ -2,6 +2,7 @@
 
 namespace Fligno\StarterKit\Console\Commands;
 
+use Fligno\StarterKit\Traits\UsesCommandCustomMessagesTrait;
 use Illuminate\Console\Command;
 
 /**
@@ -11,6 +12,8 @@ use Illuminate\Console\Command;
  */
 class StarterKitGitHooksApplyCommand extends Command
 {
+    use UsesCommandCustomMessagesTrait;
+
     /**
      * The name and signature of the console command.
      *
@@ -32,16 +35,14 @@ class StarterKitGitHooksApplyCommand extends Command
      */
     public function handle(): int
     {
-        $contents = $this->getContentsFromComposerJson();
+        $this->ongoing('Applying Git Hooks...');
+
+        if (! $contents = $this->getContentsFromComposerJson()) {
+            return self::FAILURE;
+        }
 
         // Append git hooks to composer.json
-        $contents['extra']['hooks'] = [
-            'pre-commit' => [
-                'echo committing as $(git config user.name)',
-                './vendor/bin/pint',
-                'git add .',
-            ],
-        ];
+        $contents['extra']['hooks'] = starterKit()->getGitHooks();
 
         $contents['scripts']['cghooks'] = './vendor/bin/cghooks';
 
@@ -67,6 +68,8 @@ class StarterKitGitHooksApplyCommand extends Command
 
         $this->saveContentsToComposerJson($contents);
 
+        $this->done('Applied Git Hooks.');
+
         return self::SUCCESS;
     }
 
@@ -79,16 +82,17 @@ class StarterKitGitHooksApplyCommand extends Command
     }
 
     /**
-     * @return array
+     * @return array|null
      */
-    public function getContentsFromComposerJson(): array
+    public function getContentsFromComposerJson(): ?array
     {
-        // Get contents from composer.json
-        $path = $this->getComposerJsonPath();
-        $contents = file_get_contents($path);
+        if ($contents = getContentsFromComposerJson()) {
+            return $contents->toArray();
+        } else {
+            $this->failed('Failed to load contents from composer.json file.');
 
-        // Decode string to associative array
-        return json_decode($contents, true);
+            return null;
+        }
     }
 
     /**

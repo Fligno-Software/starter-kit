@@ -5,6 +5,7 @@ namespace Fligno\StarterKit\Traits;
 use Closure;
 use Illuminate\Support\Facades\Cache;
 use RuntimeException;
+use Throwable;
 
 /**
  * Trait HasTaggableCacheTrait
@@ -23,7 +24,11 @@ trait HasTaggableCacheTrait
      */
     public function isCacheTaggable(): bool
     {
-        return method_exists(Cache::getStore(), 'tags');
+        try {
+            return method_exists(Cache::getStore(), 'tags');
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     /**

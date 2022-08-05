@@ -2,6 +2,8 @@
 
 namespace Fligno\StarterKit\Console\Commands;
 
+use Fligno\StarterKit\Traits\UsesCommandCustomMessagesTrait;
+
 /**
  * Class StarterKitGitHooksRemoveCommand
  *
@@ -9,6 +11,8 @@ namespace Fligno\StarterKit\Console\Commands;
  */
 class StarterKitGitHooksRemoveCommand extends StarterKitGitHooksApplyCommand
 {
+    use UsesCommandCustomMessagesTrait;
+
     /**
      * The name and signature of the console command.
      *
@@ -30,7 +34,11 @@ class StarterKitGitHooksRemoveCommand extends StarterKitGitHooksApplyCommand
      */
     public function handle(): int
     {
-        $contents = $this->getContentsFromComposerJson();
+        $this->ongoing('Removing Git Hooks...');
+
+        if (! $contents = $this->getContentsFromComposerJson()) {
+            return self::FAILURE;
+        }
 
         // Unset hooks on composer.json
 
@@ -66,6 +74,8 @@ class StarterKitGitHooksRemoveCommand extends StarterKitGitHooksApplyCommand
         });
 
         $this->saveContentsToComposerJson($contents);
+
+        $this->done('Removed Git Hooks.');
 
         return self::SUCCESS;
     }
