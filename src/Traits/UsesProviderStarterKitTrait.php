@@ -5,7 +5,6 @@ namespace Fligno\StarterKit\Traits;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
-use JsonException;
 
 /**
  * Trait UsesProviderStarterKitTrait
@@ -49,11 +48,13 @@ trait UsesProviderStarterKitTrait
      */
     public function bootLaravelFilesAndDomains(): void
     {
-        $this->bootLaravelFiles($this->getBasePath());
+        $dir = $this->getBasePath();
+
+        $this->bootLaravelFiles($dir);
 
         // Load Domains
-        if (($dir = $this->getBasePath()) && $domains = starterKit()->getDomains($this->package_name, $dir)) {
-            $domains->each(fn ($directory, $key) => $this->bootLaravelFiles($directory, $key));
+        if ($domains = starterKit()->getDomains($this->package_name)) {
+            $domains->each(fn ($path, $domain) => $this->bootLaravelFiles($path, $domain));
         }
 
         // For Console Kernel
@@ -105,48 +106,29 @@ trait UsesProviderStarterKitTrait
      */
     protected function getTargetFilesAndDirectories(): Collection
     {
-        return starterKit()->getTargetDirectories($this->package_name, function () {
-            return collect(['database/migrations'])
-                ->when($this->areHelpersEnabled(), fn ($collection) => $collection->push('helpers'))
-                ->when(
-                    ! $this->app->routesAreCached() && $this->areRoutesEnabled(),
-                    fn ($collection) => $collection->push('routes')
-                )
-                ->when($this->areRepositoriesEnabled(), fn ($collection) => $collection->push('Repositories'))
-                ->when($this->arePoliciesEnabled(), fn ($collection) => $collection->push('Policies'))
-                ->when($this->areObserversEnabled(), fn ($collection) => $collection->push('Observers'));
-        });
+        return collect(['database/migrations'])
+            ->when($this->areHelpersEnabled(), fn ($collection) => $collection->push('helpers'))
+            ->when(
+                ! $this->app->routesAreCached() && $this->areRoutesEnabled(),
+                fn ($collection) => $collection->push('routes')
+            )
+            ->when($this->areRepositoriesEnabled(), fn ($collection) => $collection->push('Repositories'))
+            ->when($this->arePoliciesEnabled(), fn ($collection) => $collection->push('Policies'))
+            ->when($this->areObserversEnabled(), fn ($collection) => $collection->push('Observers'));
     }
 
     /***** LOAD FILES & CLASSES *****/
 
     /**
-     * @param  object|string|null  $sourceObjectOrClassOrDir
+     * @param  object|string  $source_dir
      * @param  string|null  $domain
-     * @param  bool  $traverseUp
-     * @param  int  $maxLevels
      * @return void
      */
-    protected function bootLaravelFiles(
-        object|string $sourceObjectOrClassOrDir = null,
-        string $domain = null,
-        bool $traverseUp = false,
-        int $maxLevels = 3
-    ): void {
-        if (empty($sourceObjectOrClassOrDir)) {
-            return;
-        }
+    protected function bootLaravelFiles(object|string $source_dir, string $domain = null): void
+    {
+        starterKit()->addToPaths($this->package_name, $source_dir, $domain);
 
-        $targets = $this->getTargetFilesAndDirectories();
-
-        $directories = starterKit()->getTargetDirectoriesPaths(
-            $this->package_name,
-            $sourceObjectOrClassOrDir,
-            $targets,
-            $domain,
-            $traverseUp,
-            $maxLevels
-        );
+        $directories = starterKit()->getPathsOnly($this->package_name, $domain, $this->getTargetFilesAndDirectories()->toArray());
 
         // Load Migrations
         if ($path = $directories->get('database/migrations')) {
@@ -154,33 +136,28 @@ trait UsesProviderStarterKitTrait
         }
 
         // Load Helpers
-        if (($path = $directories->get('helpers')) &&
-            $helpers = starterKit()->getHelpers($this->package_name, $path, $domain)) {
-            $this->loadHelpersFrom($helpers);
+        if ($directories->has('helpers')) {
+            $this->loadHelpersFrom(starterKit()->getHelpers($this->package_name, $domain));
         }
 
         // Load Routes
-        if (($path = $directories->get('routes')) &&
-            $routes = starterKit()->getRoutes($this->package_name, $path, $domain)) {
-            $this->loadRouteFilesFrom($routes);
+        if ($directories->has('routes')) {
+            $this->loadRouteFilesFrom(starterKit()->getRoutes($this->package_name, $domain));
         }
 
         // Load Observers
-        if (($path = $directories->get('Observers')) &&
-            $observers = starterKit()->getObservers($this->package_name, $path, $this->observer_map, $domain)) {
-            $this->loadObservers($observers);
+        if ($directories->has('Observers')) {
+            $this->loadObservers(starterKit()->getObservers($this->package_name, $domain, $this->observer_map));
         }
 
         // Load Policies
-        if (($path = $directories->get('Policies')) &&
-            $policies = starterKit()->getPolicies($this->package_name, $path, $this->policy_map, $domain)) {
-            $this->loadPolicies($policies);
+        if ($directories->has('Policies')) {
+            $this->loadPolicies(starterKit()->getPolicies($this->package_name, $domain, $this->policy_map));
         }
 
         // Load Repositories
-        if (($path = $directories->get('Repositories')) &&
-            $repositories = starterKit()->getRepositories($this->package_name, $path, $this->repository_map, $domain)) {
-            $this->loadRepositories($repositories);
+        if ($directories->has('Repositories')) {
+            $this->loadRepositories(starterKit()->getRepositories($this->package_name, $domain, $this->repository_map));
         }
     }
 
@@ -323,21 +300,15 @@ trait UsesProviderStarterKitTrait
      */
     public function getComposerJson(?string $key): mixed
     {
-        if ($path = guess_file_or_directory_path($this->provider_directory, 'composer.json', true)) {
-            try {
-                $collection = collect(json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR));
+        $path = guess_file_or_directory_path($this->provider_directory, 'composer.json', true);
 
-                if ($key) {
-                    return $collection->get($key);
-                }
+        $collection = getContentsFromComposerJson($path);
 
-                return $collection;
-            } catch (JsonException) {
-                return null;
-            }
+        if ($collection && $key) {
+            return $collection->get($key);
         }
 
-        return null;
+        return $collection;
     }
 
     /***** HELPER FILES RELATED *****/
