@@ -2,9 +2,7 @@
 
 namespace Fligno\StarterKit\Exceptions;
 
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -66,23 +64,8 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $e): Response|JsonResponse|\Symfony\Component\HttpFoundation\Response
     {
-        if ($e instanceof ModelNotFoundException) {
-            // return your custom response
-            return customResponse()
-                ->data([])
-                ->message('The identifier you are querying does not exist')
-                ->slug('no_query_result')
-                ->failed(404)
-                ->generate();
-        }
-
-        if ($e instanceof AuthorizationException) {
-            return customResponse()
-                ->data([])
-                ->message('You do not have right to access this resource')
-                ->slug('forbidden_request')
-                ->failed(403)
-                ->generate();
+        if ($closure = starterKit()->getExceptionRenders($e)) {
+            return $closure($e);
         }
 
         return parent::render($request, $e);
@@ -99,7 +82,7 @@ class Handler extends ExceptionHandler
     ): JsonResponse|\Symfony\Component\HttpFoundation\Response {
         return customResponse()
             ->data([])
-            ->message('You do not have valid authentication token')
+            ->message('You do not have a valid authentication token.')
             ->slug('missing_bearer_token')
             ->failed(401)
             ->generate();

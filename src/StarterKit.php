@@ -2,6 +2,7 @@
 
 namespace Fligno\StarterKit;
 
+use Closure;
 use Fligno\StarterKit\Traits\HasTaggableCacheTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -27,6 +28,11 @@ class StarterKit
      * @var array
      */
     protected array $paths = [];
+
+    /**
+     * @var array
+     */
+    protected array $exception_renders = [];
 
     /**
      * @return string
@@ -75,9 +81,9 @@ class StarterKit
      * @param  string  $package_name
      * @param  string  $source_dir
      * @param  string|null  $domain
-     * @return void
+     * @return bool
      */
-    public function addToPaths(string $package_name, string $source_dir, string $domain = null): void
+    public function addToPaths(string $package_name, string $source_dir, string $domain = null): bool
     {
         [$vendor, $package] = explode('/', $package_name);
 
@@ -85,7 +91,7 @@ class StarterKit
 
         // Check whether already exists
         if ((! $domain && isset($paths[$vendor][$package])) || ($domain && isset($paths[$vendor][$package]['domains'][$domain]))) {
-            return;
+            return false;
         }
 
         $targets = $this->getFilesFromPaths($source_dir);
@@ -101,6 +107,8 @@ class StarterKit
         $this->paths = $paths;
 
         $this->getPaths(rehydrate: true);
+
+        return true;
     }
 
     /**
@@ -321,6 +329,41 @@ class StarterKit
     public function getRepositories(string $package_name, string $domain = null, array $repository_map = []): ?Collection
     {
         return $this->getModelRelatedFiles('Repositories', $package_name, $domain, $repository_map);
+    }
+
+    /***** EXCEPTION RELATED *****/
+
+    /**
+     * @param  string|object|null  $exception_class
+     * @return Collection|Closure|callable
+     */
+    public function getExceptionRenders(string|object $exception_class = null): Collection|Closure|callable
+    {
+        $result = collect($this->exception_renders);
+
+        if ($exception_class) {
+            return $result->get(get_class_name_from_object($exception_class));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param  string  $exception_class
+     * @param  Closure|callable  $closure
+     * @param  bool  $override
+     * @return bool
+     */
+    public function addExceptionRender(string $exception_class, Closure|callable $closure, bool $override = false): bool
+    {
+        // Check whether already exists
+        if ($this->getExceptionRenders()->has($exception_class) && ! $override) {
+            return false;
+        }
+
+        $this->exception_renders[$exception_class] = $closure;
+
+        return true;
     }
 
     /***** USER MODEL *****/
