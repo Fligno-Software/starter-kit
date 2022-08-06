@@ -8,7 +8,10 @@ use Fligno\StarterKit\Console\Commands\StarterKitGitHooksPublishCommand;
 use Fligno\StarterKit\Console\Commands\StarterKitGitHooksRemoveCommand;
 use Fligno\StarterKit\Exceptions\Handler;
 use Fligno\StarterKit\Providers\BaseStarterKitServiceProvider as ServiceProvider;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Throwable;
 
 class StarterKitServiceProvider extends ServiceProvider
 {
@@ -35,6 +38,24 @@ class StarterKitServiceProvider extends ServiceProvider
         if (starterKit()->shouldOverrideExceptionHandler()) {
             $this->app->singleton(ExceptionHandler::class, Handler::class);
         }
+
+        starterKit()->addExceptionRender(ModelNotFoundException::class, function (Throwable $e) {
+            return customResponse()
+                ->data([])
+                ->message('The identifier you are querying does not exist.')
+                ->slug('no_query_result')
+                ->failed(404)
+                ->generate();
+        });
+
+        starterKit()->addExceptionRender(AuthorizationException::class, function (Throwable $e) {
+            return customResponse()
+                ->data([])
+                ->message('You do not have right to access this resource.')
+                ->slug('forbidden_request')
+                ->failed(403)
+                ->generate();
+        });
     }
 
     /**
