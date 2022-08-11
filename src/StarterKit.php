@@ -81,13 +81,16 @@ class StarterKit
      * @param  string  $package_name
      * @param  string  $source_dir
      * @param  string|null  $domain
+     * @param  array|null  $paths
      * @return bool
      */
-    public function addToPaths(string $package_name, string $source_dir, string $domain = null): bool
+    public function addToPaths(string $package_name, string $source_dir, string $domain = null, array &$paths = null): bool
     {
         [$vendor, $package] = explode('/', $package_name);
 
-        $paths = $this->getPaths()->toArray();
+        if (! $paths) {
+            $paths = $this->getPaths()->toArray();
+        }
 
         // Check whether already exists
         if ((! $domain && isset($paths[$vendor][$package])) || ($domain && isset($paths[$vendor][$package]['domains'][$domain]))) {
@@ -96,17 +99,23 @@ class StarterKit
 
         $targets = $this->getFilesFromPaths($source_dir);
 
+        // Look for Domains
+        if ($domains_path = guess_file_or_directory_path($source_dir, 'Domains')) {
+            collect_files_or_directories($domains_path, true, false, true)
+                ->each(function ($directory, $domain) use ($package_name, &$paths) {
+                    $this->addToPaths($package_name, $directory, $domain, $paths);
+                });
+        }
+
         if ($domain) {
             $paths[$vendor][$package]['domains'][$domain]['path'] = $source_dir;
             $paths[$vendor][$package]['domains'][$domain]['directories'] = $targets;
         } else {
             $paths[$vendor][$package]['path'] = $source_dir;
             $paths[$vendor][$package]['directories'] = $targets;
+            $this->paths = $paths;
+            $this->getPaths(rehydrate: true);
         }
-
-        $this->paths = $paths;
-
-        $this->getPaths(rehydrate: true);
 
         return true;
     }
