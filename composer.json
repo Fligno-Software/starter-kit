@@ -7,6 +7,11 @@
             "name": "James Carlo Luchavez",
             "email": "jamescarlo.luchavez@fligno.com",
             "homepage": "https://www.linkedin.com/in/jsluchavez/"
+        },
+        {
+            "name": "Fligno",
+            "email": "apps@fligno.com",
+            "homepage": "https://fligno.com/"
         }
     ],
     "homepage": "https://github.com/fligno/starter-kit",
