@@ -24,10 +24,10 @@
         "laravel/telescope": "^4.8",
         "laravel/horizon": "^5.9",
         "ext-zlib": "*",
-        "brainmaestro/composer-git-hooks": "^2.8",
         "laravel/pint": "^1.0",
         "sentry/sentry-laravel": "^2.13",
-        "hammerstone/fast-paginate": "^0.1.7"
+        "hammerstone/fast-paginate": "^0.1.7",
+        "brainmaestro/composer-git-hooks": "*"
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest",
