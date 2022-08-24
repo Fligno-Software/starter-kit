@@ -344,9 +344,9 @@ class StarterKit
 
     /**
      * @param  string|object|null  $exception_class
-     * @return Collection|Closure|callable
+     * @return Collection|Closure|callable|null
      */
-    public function getExceptionRenders(string|object $exception_class = null): Collection|Closure|callable
+    public function getExceptionRenders(string|object $exception_class = null): Collection|Closure|callable|null
     {
         $result = collect($this->exception_renders);
 
