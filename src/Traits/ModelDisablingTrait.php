@@ -57,4 +57,12 @@ trait ModelDisablingTrait
     {
         return $this->qualifyColumn($this->getDisabledAtColumn());
     }
+
+    /**
+     * @return bool
+     */
+    public function getIsEnabledAttribute(): bool
+    {
+        return is_null($this->getDisabledAtColumn());
+    }
 }
