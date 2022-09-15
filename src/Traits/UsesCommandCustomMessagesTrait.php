@@ -10,13 +10,14 @@ namespace Fligno\StarterKit\Traits;
 trait UsesCommandCustomMessagesTrait
 {
     /**
-     * @param  string  $message
-     * @param  int|string|null  $verbosity
+     * @param string $message
+     * @param bool $prepend_ellipsis
+     * @param int|string|null $verbosity
      * @return void
      */
-    public function ongoing(string $message, int|string $verbosity = null): void
+    public function ongoing(string $message, bool $prepend_ellipsis = true, int|string $verbosity = null): void
     {
-        $this->note($message, 'ONGOING', $verbosity);
+        $this->note($message . ($prepend_ellipsis ? '...' : null), 'ONGOING', $verbosity);
     }
 
     /**

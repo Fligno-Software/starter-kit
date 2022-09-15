@@ -205,11 +205,15 @@ class StarterKit
     }
 
     /**
-     * @param  string  $package_name
+     * @param string|null $package_name
      * @return Collection|null
      */
-    public function getDomains(string $package_name): ?Collection
+    public function getDomains(string $package_name = null): ?Collection
     {
+        if (is_null($package_name)) {
+            $package_name = 'laravel/laravel';
+        }
+
         return $this->getFromPaths($package_name, null, 'domains')?->map(fn ($value) => $value['path']);
     }
 
