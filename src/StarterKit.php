@@ -34,6 +34,22 @@ class StarterKit
      */
     protected array $exception_renders = [];
 
+    /***** FOLDER NAMES OF LARAVEL FILES *****/
+
+    public const CONFIG_DIR = 'config';
+    public const MIGRATIONS_DIR = 'database/migrations';
+    public const HELPERS_DIR = 'helpers';
+    public const LANG_DIR = 'resources/lang';
+    public const VIEWS_DIR = 'resources/views';
+    public const TESTS_DIR = 'tests';
+    public const ROUTES_DIR = 'routes';
+    public const MODELS_DIR = 'Models';
+    public const REPOSITORIES_DIR = 'Repositories';
+    public const POLICIES_DIR = 'Policies';
+    public const OBSERVERS_DIR = 'Observers';
+
+    public const DOMAINS_DIR = 'Domains';
+
     /**
      * @return string
      */
@@ -100,7 +116,7 @@ class StarterKit
         $targets = $this->getFilesFromPaths($source_dir);
 
         // Look for Domains
-        if ($domains_path = guess_file_or_directory_path($source_dir, 'Domains')) {
+        if ($domains_path = guess_file_or_directory_path($source_dir, self::DOMAINS_DIR)) {
             collect_files_or_directories($domains_path, true, false, true)
                 ->each(function ($directory, $domain) use ($package_name, &$paths) {
                     $this->addToPaths($package_name, $directory, $domain, $paths);
@@ -126,14 +142,17 @@ class StarterKit
     public function getTargetDirectories(): Collection
     {
         return collect([
-            'database/migrations',
-            'helpers',
-            'routes',
-            'Repositories',
-            'Policies',
-            'Observers',
-            'Models',
-            'tests',
+            self::CONFIG_DIR,
+            self::MIGRATIONS_DIR,
+            self::HELPERS_DIR,
+            self::LANG_DIR,
+            self::VIEWS_DIR,
+            self::TESTS_DIR,
+            self::ROUTES_DIR,
+            self::MODELS_DIR,
+            self::REPOSITORIES_DIR,
+            self::POLICIES_DIR,
+            self::OBSERVERS_DIR,
         ]);
     }
 
@@ -146,16 +165,27 @@ class StarterKit
         return guess_file_or_directory_path($source_dir, $this->getTargetDirectories())
             ->mapWithKeys(function ($path, $directory) {
                 $files = match ($directory) {
-                    'helpers' => collect_files_or_directories($path, false, true, true)->toArray(),
-                    'Models' => collect_classes_from_path($path)
+                    self::MODELS_DIR => collect_classes_from_path($path)
                         ->mapWithKeys(fn ($model) => [
-                            $model => Str::of($model)->afterLast('\\')->jsonSerialize(), // App/Models/User => User
+                            // App/Models/User => User
+                            $model => Str::of($model)->afterLast('\\')->jsonSerialize(),
                         ])->toArray(),
-                    'Repositories', 'Policies', 'Observers' => collect_classes_from_path($path, Str::of($directory)->singular()->studly()->jsonSerialize())->toArray(),
-                    'routes' => collect(File::allFiles($path))->map(fn (SplFileInfo $info) => [
+
+                    self::REPOSITORIES_DIR,
+                    self::POLICIES_DIR,
+                    self::OBSERVERS_DIR => collect_classes_from_path($path, Str::of($directory)
+                        ->singular()
+                        ->studly()
+                        ->jsonSerialize()
+                    )->toArray(),
+
+                    self::CONFIG_DIR,
+                    self::HELPERS_DIR,
+                    self::ROUTES_DIR => collect(File::allFiles($path))->map(fn (SplFileInfo $info) => [
                         'file' => $info->getFilename(),
                         'path' => $info->getRealPath(),
                     ]),
+
                     default => null
                 };
 
@@ -235,6 +265,16 @@ class StarterKit
     public function getRoutes(string $package_name, string $domain = null): ?Collection
     {
         return $this->getFromPaths($package_name, $domain, 'directories.routes.files');
+    }
+
+    /**
+     * @param string $package_name
+     * @param string|null $domain
+     * @return string|null
+     */
+    public function getTranslations(string $package_name, string $domain = null): ?string
+    {
+        return $this->getFromPaths($package_name, $domain, 'directories.resources/lang')->get('path');
     }
 
     /**

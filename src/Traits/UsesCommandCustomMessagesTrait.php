@@ -2,6 +2,8 @@
 
 namespace Fligno\StarterKit\Traits;
 
+use Illuminate\Support\Str;
+
 /**
  * Trait UsesCommandCustomMessagesTrait
  *
@@ -37,7 +39,7 @@ trait UsesCommandCustomMessagesTrait
      */
     public function failed(string $message, int|string $verbosity = null): void
     {
-        $this->error('<fg=white;bg=red>[ ERROR ]</> '.$message, $verbosity);
+        $this->error(Str::finish('<fg=white;bg=red>[ ERROR ]</> '.$message, '.'), $verbosity);
     }
 
     /**
@@ -47,7 +49,7 @@ trait UsesCommandCustomMessagesTrait
      */
     public function warning(string $message, int|string $verbosity = null): void
     {
-        $this->warn('<fg=white;bg=yellow>[ WARNING ]</> '.$message, $verbosity);
+        $this->warn(Str::finish('<fg=white;bg=yellow>[ WARNING ]</> '.$message, '.'), $verbosity);
     }
 
     /**
@@ -58,6 +60,6 @@ trait UsesCommandCustomMessagesTrait
      */
     public function note(string $message, string $title = 'INFO', int|string $verbosity = null): void
     {
-        $this->info('<fg=white;bg=green>[ '.$title.' ]</> '.$message, $verbosity);
+        $this->info(Str::finish('<fg=white;bg=green>[ '.$title.' ]</> '.$message, '.'), $verbosity);
     }
 }

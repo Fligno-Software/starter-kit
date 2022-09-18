@@ -22,19 +22,24 @@ use Symfony\Component\Process\Process;
 
 if (! function_exists('starterKit')) {
     /**
-     * @return StarterKit
+     * @return StarterKit|null
      */
-    function starterKit(): StarterKit
+    function starterKit(): StarterKit|null
     {
-        return resolve('starter-kit');
+        try {
+            return resolve('starter-kit');
+        }
+        catch (Throwable) {
+            return null;
+        }
     }
 }
 
 if (! function_exists('starter_kit')) {
     /**
-     * @return StarterKit
+     * @return StarterKit|null
      */
-    function starter_kit(): StarterKit
+    function starter_kit(): StarterKit|null
     {
         return starterKit();
     }
@@ -792,8 +797,7 @@ if (! function_exists('get_contents_from_composer_json')) {
      */
     function get_contents_from_composer_json(string $path = null): Collection|null
     {
-        // Get composer.json from root if not supplied
-        $path ??= base_path('composer.json');
+        $path = qualify_composer_json($path);
 
         // Get contents from composer.json
         if (! ($contents = file_get_contents($path))) {
@@ -813,5 +817,42 @@ if (! function_exists('getContentsFromComposerJson')) {
     function getContentsFromComposerJson(string $path = null): Collection|null
     {
         return get_contents_from_composer_json($path);
+    }
+}
+
+if (! function_exists('qualify_composer_json')) {
+    /**
+     * @param string|null $path
+     * @return string
+     */
+    function qualify_composer_json(string $path = null): string
+    {
+        if ($path && Str::endsWith($path, 'composer.json') && file_exists($path)) {
+            return $path;
+        }
+
+        $file_name = 'composer.json';
+
+        if ($path) {
+            return Str::of($path)
+                ->replace('\\', '/')
+                ->replace($file_name, '')
+                ->trim('/')
+                ->append('/' . $file_name)
+                ->jsonSerialize();
+        }
+
+        return base_path('composer.json');
+    }
+}
+
+if (! function_exists('qualifyComposerJson')) {
+    /**
+     * @param string|null $path
+     * @return string
+     */
+    function qualifyComposerJson(string $path = null): string
+    {
+        return qualify_composer_json($path);
     }
 }

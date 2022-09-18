@@ -36,12 +36,22 @@ trait UsesProviderStarterKitTrait
     /**
      * @var string|null
      */
-    protected ?string $package_directory = null;
+    protected ?string $package_path = null;
+
+    /**
+     * @var string|null
+     */
+    protected ?string $package_dir = null;
 
     /**
      * @var string|null
      */
     protected ?string $package_name = null;
+
+    /**
+     * @var string|null
+     */
+    protected ?string $vendor_name = null;
 
     /**
      * @return void
@@ -53,7 +63,7 @@ trait UsesProviderStarterKitTrait
         $this->bootLaravelFiles($dir);
 
         // Load Domains
-        if ($domains = starterKit()->getDomains($this->package_name)) {
+        if ($domains = starterKit()->getDomains($this->package_dir)) {
             $domains->each(fn ($path, $domain) => $this->bootLaravelFiles($path, $domain));
         }
 
@@ -84,12 +94,13 @@ trait UsesProviderStarterKitTrait
     {
         $this->provider_directory = get_dir_from_object_class_dir($this);
 
-        $this->package_name = $this->getComposerJson('name');
+        $this->package_dir = $this->getComposerJson('name');
 
         $temp = Str::of($this->provider_directory);
 
-        if ($this->package_name) {
-            $this->package_directory = $temp->before($temp->after($this->package_name))->jsonSerialize();
+        if ($this->package_dir) {
+            $this->package_path = $temp->before($temp->after($this->package_dir))->jsonSerialize();
+            [$this->vendor_name, $this->package_name] = explode('/', $this->package_dir);
         }
     }
 
@@ -98,7 +109,7 @@ trait UsesProviderStarterKitTrait
      */
     protected function getBasePath(): ?string
     {
-        return $this->package_directory;
+        return $this->package_path;
     }
 
     /**
@@ -106,8 +117,9 @@ trait UsesProviderStarterKitTrait
      */
     protected function getTargetFilesAndDirectories(): Collection
     {
-        return collect(['database/migrations'])
-            ->when($this->areHelpersEnabled(), fn ($collection) => $collection->push('helpers'))
+        $diff = collect()
+            ->when(! $this->areHelpersEnabled(), fn (Collection $collection) => $collection->push('helpers'))
+            ->when($this->areTranslationsEnabled(), fn ($collection) => $collection->push('translations'))
             ->when(
                 ! $this->app->routesAreCached() && $this->areRoutesEnabled(),
                 fn ($collection) => $collection->push('routes')
@@ -115,6 +127,8 @@ trait UsesProviderStarterKitTrait
             ->when($this->areRepositoriesEnabled(), fn ($collection) => $collection->push('Repositories'))
             ->when($this->arePoliciesEnabled(), fn ($collection) => $collection->push('Policies'))
             ->when($this->areObserversEnabled(), fn ($collection) => $collection->push('Observers'));
+
+        return starterKit()->getTargetDirectories()->diff($diff);
     }
 
     /***** LOAD FILES & CLASSES *****/
@@ -126,44 +140,47 @@ trait UsesProviderStarterKitTrait
      */
     protected function bootLaravelFiles(object|string $source_dir, string $domain = null): void
     {
-        starterKit()->addToPaths($this->package_name, $source_dir, $domain);
+        starterKit()->addToPaths($this->package_dir, $source_dir, $domain);
 
-        $directories = starterKit()->getPathsOnly($this->package_name, $domain, $this->getTargetFilesAndDirectories()->toArray());
+        $directories = starterKit()->getPathsOnly($this->package_dir, $domain, $this->getTargetFilesAndDirectories()->toArray());
 
         // Load Migrations
-        if ($path = $directories->get('database/migrations')) {
+        if ($path = $directories?->get('database/migrations')) {
             $this->loadMigrationsFrom($path);
         }
 
         // Load Helpers
-        if ($directories->has('helpers')) {
-            $this->loadHelpersFrom(starterKit()->getHelpers($this->package_name, $domain));
+        if ($directories?->has('helpers')) {
+            $this->loadHelpersFrom(starterKit()->getHelpers($this->package_dir, $domain));
+        }
+
+        // Load Translations
+        if ($directories?->has('resources/lang')) {
+            $this->loadTranslationsFrom(starterKit()->getTranslations($this->package_dir, $domain), $this->package_name);
         }
 
         // Load Routes
-        if ($directories->has('routes')) {
-            $this->loadRouteFilesFrom(starterKit()->getRoutes($this->package_name, $domain));
+        if ($directories?->has('routes')) {
+            $this->loadRouteFilesFrom(starterKit()->getRoutes($this->package_dir, $domain));
         }
 
         // Load Observers
-        if ($directories->has('Observers')) {
-            $this->loadObservers(starterKit()->getObservers($this->package_name, $domain, $this->observer_map));
+        if ($directories?->has('Observers')) {
+            $this->loadObservers(starterKit()->getObservers($this->package_dir, $domain, $this->observer_map));
         }
 
         // Load Policies
-        if ($directories->has('Policies')) {
-            $this->loadPolicies(starterKit()->getPolicies($this->package_name, $domain, $this->policy_map));
+        if ($directories?->has('Policies')) {
+            $this->loadPolicies(starterKit()->getPolicies($this->package_dir, $domain, $this->policy_map));
         }
 
         // Load Repositories
-        if ($directories->has('Repositories')) {
-            $this->loadRepositories(starterKit()->getRepositories($this->package_name, $domain, $this->repository_map));
+        if ($directories?->has('Repositories')) {
+            $this->loadRepositories(starterKit()->getRepositories($this->package_dir, $domain, $this->repository_map));
         }
     }
 
     /**
-     * Todo: Study on translation files
-     *
      * Overriding to not cause error in case the path does not exist.
      * Register a translation file namespace.
      *
@@ -202,7 +219,7 @@ trait UsesProviderStarterKitTrait
     protected function loadHelpersFrom(Collection $collection = null): void
     {
         $collection?->each(function ($helper) {
-            file_exists($helper) && require $helper;
+            file_exists($helper['path']) && require $helper['path'];
         });
     }
 
@@ -298,17 +315,18 @@ trait UsesProviderStarterKitTrait
      * @param  string|null  $key
      * @return Collection|mixed|null
      */
-    public function getComposerJson(?string $key): mixed
+    public function getComposerJson(string $key = null): mixed
     {
+        // from this Provider class, traverse up and find the composer.json file
         $path = guess_file_or_directory_path($this->provider_directory, 'composer.json', true);
 
         $collection = getContentsFromComposerJson($path);
 
-        if ($collection && $key) {
-            return $collection->get($key);
+        if ($collection) {
+            return $key ? $collection->get($key) : $collection;
         }
 
-        return $collection;
+        return null;
     }
 
     /***** HELPER FILES RELATED *****/
@@ -327,6 +345,16 @@ trait UsesProviderStarterKitTrait
      * @return bool
      */
     public function areRoutesEnabled(): bool
+    {
+        return config('starter-kit.routes_enabled');
+    }
+
+    /***** ROUTES RELATED *****/
+
+    /**
+     * @return bool
+     */
+    public function areTranslationsEnabled(): bool
     {
         return config('starter-kit.routes_enabled');
     }
