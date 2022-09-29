@@ -12,14 +12,14 @@ use Illuminate\Support\Str;
 trait UsesCommandCustomMessagesTrait
 {
     /**
-     * @param string $message
-     * @param bool $prepend_ellipsis
-     * @param int|string|null $verbosity
+     * @param  string  $message
+     * @param  bool  $prepend_ellipsis
+     * @param  int|string|null  $verbosity
      * @return void
      */
     public function ongoing(string $message, bool $prepend_ellipsis = true, int|string $verbosity = null): void
     {
-        $this->note($message . ($prepend_ellipsis ? '...' : null), 'ONGOING', $verbosity);
+        $this->note($message.($prepend_ellipsis ? '...' : null), 'ONGOING', $verbosity);
     }
 
     /**

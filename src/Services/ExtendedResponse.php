@@ -1,6 +1,6 @@
 <?php
 
-namespace Fligno\StarterKit;
+namespace Fligno\StarterKit\Services;
 
 use Fligno\StarterKit\Traits\UsesDataParsingTrait;
 use Illuminate\Http\JsonResponse;

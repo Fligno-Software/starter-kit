@@ -25,7 +25,7 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     {
         parent::__construct($app);
 
-        $this->setProviderStarterKitFields();
+        $this->instantiatePackageDomain();
     }
 
     /**
@@ -35,6 +35,32 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->bootLaravelFilesAndDomains();
+        // Boot Laravel Files
+        $this->package_domain->bootLaravelFiles();
+
+        // For Console Kernel
+        $this->bootConsoleKernel();
+
+        // For Http Kernel
+        $this->bootHttpKernel();
+
+        // For Dynamic Relationships
+        $this->bootDynamicRelationships();
+
+        // Publishing is only necessary when using the CLI.
+        if ($this->app->runningInConsole()) {
+            $this->bootForConsole();
+        }
+    }
+
+    /**
+     * Register any application services.
+     *
+     * @return void
+     */
+    public function register(): void
+    {
+        // Register Laravel Files
+        $this->package_domain->registerLaravelFiles();
     }
 }

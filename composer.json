@@ -50,7 +50,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Fligno\\StarterKit\\StarterKitServiceProvider"
+                "Fligno\\StarterKit\\Providers\\StarterKitServiceProvider"
             ],
             "aliases": {
                 "StarterKit": "Fligno\\StarterKit\\Facades\\StarterKit"

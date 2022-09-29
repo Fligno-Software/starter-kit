@@ -1,6 +1,6 @@
 <?php
 
-namespace Fligno\StarterKit;
+namespace Fligno\StarterKit\Services;
 
 use Closure;
 use Fligno\StarterKit\Traits\HasTaggableCacheTrait;
@@ -37,18 +37,28 @@ class StarterKit
     /***** FOLDER NAMES OF LARAVEL FILES *****/
 
     public const CONFIG_DIR = 'config';
+
     public const MIGRATIONS_DIR = 'database/migrations';
+
     public const HELPERS_DIR = 'helpers';
+
     public const LANG_DIR = 'resources/lang';
+
     public const VIEWS_DIR = 'resources/views';
+
     public const TESTS_DIR = 'tests';
+
     public const ROUTES_DIR = 'routes';
+
     public const MODELS_DIR = 'Models';
+
     public const REPOSITORIES_DIR = 'Repositories';
+
     public const POLICIES_DIR = 'Policies';
+
     public const OBSERVERS_DIR = 'Observers';
 
-    public const DOMAINS_DIR = 'Domains';
+    public const DOMAINS_DIR = 'domains';
 
     /**
      * @return string
@@ -183,7 +193,8 @@ class StarterKit
                     self::HELPERS_DIR,
                     self::ROUTES_DIR => collect(File::allFiles($path))->map(fn (SplFileInfo $info) => [
                         'file' => $info->getFilename(),
-                        'path' => $info->getRealPath(),
+                        'path' => Str::replace('\\', '/', $info->getRealPath()),
+                        'name' => $info->getFilenameWithoutExtension(),
                     ]),
 
                     default => null
@@ -218,24 +229,24 @@ class StarterKit
     /**
      * @param  string  $package_name
      * @param  string|null  $domain
-     * @param  array  $except
+     * @param  array  $only
      * @return Collection|null
      */
-    public function getPathsOnly(string $package_name, string $domain = null, array $except = []): ?Collection
+    public function getPathsOnly(string $package_name, string $domain = null, array $only = []): ?Collection
     {
         $tags = $this->getTags($package_name, $domain);
         $key = 'paths';
 
-        return $this->getCache($tags, $key, function () use ($package_name, $domain, $except) {
+        $result = $this->getCache($tags, $key, function () use ($package_name, $domain, $only) {
             return $this->getFromPaths($package_name, $domain, 'directories')
-                    ?->map(fn ($item) => $item['path'])
-                    ->only($except);
-        }
-        );
+                    ?->map(fn ($item) => $item['path']);
+        });
+
+        return $result?->only($only);
     }
 
     /**
-     * @param string|null $package_name
+     * @param  string|null  $package_name
      * @return Collection|null
      */
     public function getDomains(string $package_name = null): ?Collection
@@ -252,9 +263,29 @@ class StarterKit
      * @param  string|null  $domain
      * @return Collection|null
      */
+    public function getConfigs(string $package_name, string $domain = null): ?Collection
+    {
+        return $this->getFromPaths($package_name, $domain, 'directories.' . self::CONFIG_DIR . '.files');
+    }
+
+    /**
+     * @param string $package_name
+     * @param string|null $domain
+     * @return Collection|null
+     */
+    public function getMigrationsPath(string $package_name, string $domain = null): ?Collection
+    {
+        return $this->getFromPaths($package_name, $domain, 'directories.' . self::MIGRATIONS_DIR . '.path');
+    }
+
+    /**
+     * @param  string  $package_name
+     * @param  string|null  $domain
+     * @return Collection|null
+     */
     public function getHelpers(string $package_name, string $domain = null): ?Collection
     {
-        return $this->getFromPaths($package_name, $domain, 'directories.helpers.files');
+        return $this->getFromPaths($package_name, $domain, 'directories.' . self::HELPERS_DIR. '.files');
     }
 
     /**
@@ -264,17 +295,17 @@ class StarterKit
      */
     public function getRoutes(string $package_name, string $domain = null): ?Collection
     {
-        return $this->getFromPaths($package_name, $domain, 'directories.routes.files');
+        return $this->getFromPaths($package_name, $domain, 'directories.' . self::ROUTES_DIR . '.files');
     }
 
     /**
-     * @param string $package_name
-     * @param string|null $domain
+     * @param  string  $package_name
+     * @param  string|null  $domain
      * @return string|null
      */
     public function getTranslations(string $package_name, string $domain = null): ?string
     {
-        return $this->getFromPaths($package_name, $domain, 'directories.resources/lang')->get('path');
+        return $this->getFromPaths($package_name, $domain, 'directories.' . self::LANG_DIR)->get('path');
     }
 
     /**
@@ -284,7 +315,7 @@ class StarterKit
      */
     public function getModels(string $package_name, string $domain = null): ?Collection
     {
-        return $this->getFromPaths($package_name, $domain, 'directories.Models.files');
+        return $this->getFromPaths($package_name, $domain, 'directories.' . self::MODELS_DIR . '.files');
     }
 
     /**
@@ -485,15 +516,7 @@ class StarterKit
         return $middleware;
     }
 
-    /***** OTHER METHODS *****/
-
-    /**
-     * @return bool
-     */
-    public function shouldOverrideExceptionHandler(): bool
-    {
-        return config('starter-kit.override_exception_handler');
-    }
+    /***** SENTRY RELATED *****/
 
     /**
      * @return bool
@@ -519,5 +542,23 @@ class StarterKit
     public function getGitHooks(): array
     {
         return config('git-hooks');
+    }
+
+    /***** OTHER METHODS *****/
+
+    /**
+     * @return bool
+     */
+    public function shouldOverrideExceptionHandler(): bool
+    {
+        return config('starter-kit.override_exception_handler');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isMorphMapEnforced(): bool
+    {
+        return config('starter-kit.enforce_morph_map');
     }
 }

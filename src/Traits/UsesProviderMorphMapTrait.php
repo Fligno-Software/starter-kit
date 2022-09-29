@@ -21,20 +21,29 @@ trait UsesProviderMorphMapTrait
     protected array $morph_map = [];
 
     /**
-     * @return bool
+     * @return array
      */
-    public function isMorphMapEnabled(): bool
+    public function getMorphMap(): array
     {
-        return config('starter-kit.enforce_morph_map');
+        return $this->morph_map;
     }
 
     /**
-     * @return void
+     * @param array $morph_map
      */
-    public function bootMorphMap(): void
+    public function setMorphMap(array $morph_map): void
     {
-        if ($this->isMorphMapEnabled()) {
-            enforceMorphMap($this->morph_map);
-        }
+        $this->morph_map = $morph_map;
+    }
+
+    /**
+     * @param array $morph_map
+     * @return UsesProviderMorphMapTrait
+     */
+    public function morphMap(array $morph_map): static
+    {
+        $this->setMorphMap($morph_map);
+
+        return $this;
     }
 }

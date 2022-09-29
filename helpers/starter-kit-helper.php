@@ -7,41 +7,51 @@
  */
 
 use Composer\Autoload\ClassMapGenerator;
-use Fligno\StarterKit\ExtendedResponse;
-use Fligno\StarterKit\StarterKit;
+use Fligno\StarterKit\Services\ExtendedResponse;
+use Fligno\StarterKit\Services\PackageDomain;
+use Fligno\StarterKit\Services\StarterKit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use JetBrains\PhpStorm\Pure;
 use Symfony\Component\Process\Process;
+use Illuminate\Support\Env;
+use Illuminate\Support\Stringable;
 
 /***** STARTER-KIT SERVICE *****/
 
 if (! function_exists('starterKit')) {
     /**
-     * @return StarterKit|null
+     * @return StarterKit
      */
-    function starterKit(): StarterKit|null
+    function starterKit(): StarterKit
     {
-        try {
-            return resolve('starter-kit');
-        }
-        catch (Throwable) {
-            return null;
-        }
+        return resolve('starter-kit');
     }
 }
 
 if (! function_exists('starter_kit')) {
     /**
-     * @return StarterKit|null
+     * @return StarterKit
      */
-    function starter_kit(): StarterKit|null
+    function starter_kit(): StarterKit
     {
         return starterKit();
+    }
+}
+
+if (! function_exists('callAfterResolvingStarterKit')) {
+    /**
+     * @param Closure|null $callable $callable
+     */
+    function callAfterResolvingStarterKit(Closure|null $callable): void
+    {
+        callAfterResolvingService('starter-kit', $callable);
     }
 }
 
@@ -67,7 +77,68 @@ if (! function_exists('customResponse')) {
     }
 }
 
+/***** PACKAGE DOMAIN SERVICE *****/
+
+if (! function_exists('packageDomain'))
+{
+    /**
+     * @param ServiceProvider $provider
+     * @return PackageDomain|null
+     */
+    function packageDomain(ServiceProvider $provider): PackageDomain|null
+    {
+        try {
+            return resolve('package-domain', [
+                'provider' => $provider
+            ]);
+        }
+        catch (Throwable) {
+            return null;
+        }
+    }
+}
+
+if (! function_exists('package_domain'))
+{
+    /**
+     * @param ServiceProvider $provider
+     * @return PackageDomain|null
+     */
+    function package_domain(ServiceProvider $provider): PackageDomain|null
+    {
+        return packageDomain($provider);
+    }
+}
+
+if (! function_exists('callAfterResolvingPackageDomain')) {
+    /**
+     * @param Closure|null $callable $callable
+     */
+    function callAfterResolvingPackageDomain(ServiceProvider $provider, Closure|null $callable): void
+    {
+        callAfterResolvingService('package-domain', $callable, ['provider' => $provider]);
+    }
+}
+
 /***** OTHERS *****/
+
+if (! function_exists('callAfterResolvingService')) {
+    /**
+     * @param Closure|string $abstract
+     * @param Closure|null $callback
+     * @param array $parameters
+     */
+    function callAfterResolvingService(Closure|string $abstract, Closure|null $callback, array $parameters = []): void
+    {
+        $app = app();
+
+        $app->afterResolving($abstract, $callback);
+
+        if ($app->resolved($abstract)) {
+            $callback(resolve($abstract, $parameters), $app);
+        }
+    }
+}
 
 if (! function_exists('array_filter_recursive')) {
     /**
@@ -121,7 +192,6 @@ if (! function_exists('arrayFilterRecursive')) {
 }
 
 if (! function_exists('is_request_instance')) {
-
     /**
      * @param    $request
      * @return bool
@@ -133,7 +203,6 @@ if (! function_exists('is_request_instance')) {
 }
 
 if (! function_exists('isRequestInstance')) {
-
     /**
      * @param    $request
      * @return bool
@@ -822,7 +891,7 @@ if (! function_exists('getContentsFromComposerJson')) {
 
 if (! function_exists('qualify_composer_json')) {
     /**
-     * @param string|null $path
+     * @param  string|null  $path
      * @return string
      */
     function qualify_composer_json(string $path = null): string
@@ -838,7 +907,7 @@ if (! function_exists('qualify_composer_json')) {
                 ->replace('\\', '/')
                 ->replace($file_name, '')
                 ->trim('/')
-                ->append('/' . $file_name)
+                ->append('/'.$file_name)
                 ->jsonSerialize();
         }
 
@@ -848,7 +917,7 @@ if (! function_exists('qualify_composer_json')) {
 
 if (! function_exists('qualifyComposerJson')) {
     /**
-     * @param string|null $path
+     * @param  string|null  $path
      * @return string
      */
     function qualifyComposerJson(string $path = null): string
@@ -856,3 +925,109 @@ if (! function_exists('qualifyComposerJson')) {
         return qualify_composer_json($path);
     }
 }
+
+/***** ENV FILE RELATED *****/
+
+if (! function_exists('set_contents_to_env')) {
+    /**
+     * @param Collection|array $contents
+     * @param string|null $title
+     * @param bool $override
+     * @return bool
+     */
+    function set_contents_to_env(Collection|array $contents, string $title = null, bool $override = false): bool
+    {
+        // Get contents from composer.json
+        $path = App::environmentFilePath();
+
+        if (App::configurationIsCached() || ! file_exists($path) || ! ($env = file_get_contents($path))) {
+            return false;
+        }
+
+        $copy_env = $env;
+
+        $repository = Env::getRepository();
+
+        $contents = collect($contents)
+            ->mapWithKeys(function ($item, $key) {
+                $key = Str::of($key)->lower()->snake()->upper()->jsonSerialize();
+                return [$key => $item];
+            })
+            ->filter(function ($item, $key) use ($override, &$env, $repository) {
+                // remove if already exists and has the same value
+                if ($repository->has($key) && (! $override || $repository->get($key) == $item)) {
+                    return false;
+                }
+                // remove if already exists and value replacement happened
+                $result = preg_replace('/^'.$key.'="?.*"?/m', get_combined_key_value($key, $item), $env);
+                if ($replaced = ($result && $env !== $result)) {
+                    $env = $result;
+                }
+                return ! $replaced;
+            });
+
+        if ($contents->count()) {
+            $title = Str::of($title);
+            $addon = $contents
+                ->map(fn($item, $key) => get_combined_key_value($key, $item).PHP_EOL)
+                ->values()
+                ->when(
+                    $title->isNotEmpty(),
+                    fn(Collection $collection) => $collection->prepend($title
+                        ->headline()
+                        ->start('# ')
+                        ->append(PHP_EOL)
+                        ->jsonSerialize()
+                    )
+                )
+                ->implode(null);
+
+            $env = Str::of($env)->append(PHP_EOL, $addon)->jsonSerialize();
+        }
+
+        return $env !== $copy_env && ! file_put_contents($path, $env) === false;
+    }
+}
+
+if (! function_exists('setContentsToEnv')) {
+    /**
+     * @param Collection|array $contents
+     * @param string|null $title
+     * @param bool $override
+     * @return bool
+     */
+    function setContentsToEnv(Collection|array $contents, string $title = null, bool $override = false): bool
+    {
+        return set_contents_to_env($contents, $title, $override);
+    }
+}
+
+if (! function_exists('get_combined_key_value')) {
+    /**
+     * @param string $key
+     * @param string $value
+     * @return string
+     */
+    function get_combined_key_value(string $key, string $value): string
+    {
+        return Str::of($value)
+            ->whenContains(
+                ' ', fn(Stringable $str) => $str->append('"')->prepend('"')
+            )
+            ->prepend($key.'=')
+            ->jsonSerialize();
+    }
+}
+
+if (! function_exists('getCombinedKeyValue')) {
+    /**
+     * @param string $key
+     * @param string $value
+     * @return string
+     */
+    function getCombinedKeyValue(string $key, string $value): string
+    {
+        return get_combined_key_value($key, $value);
+    }
+}
+

@@ -33,24 +33,29 @@ trait UsesProviderPolicyMapTrait
     }
 
     /**
-     * Load Policies
-     *
-     * @param  Collection|null  $policies
-     * @return void
+     * @return array
      */
-    protected function loadPolicies(Collection $policies = null): void
+    public function getPolicyMap(): array
     {
-        $policies?->each(
-            static function ($model, $policy) {
-                if ($model instanceof Collection) {
-                    $model = $model->first();
-                }
-                try {
-                    Gate::policy($model, $policy);
-                } catch (Exception) {
-                    starterKit()->clearCache();
-                }
-            }
-        );
+        return $this->policy_map;
+    }
+
+    /**
+     * @param array $policy_map
+     */
+    public function setPolicyMap(array $policy_map): void
+    {
+        $this->policy_map = $policy_map;
+    }
+
+    /**
+     * @param array $policy_map
+     * @return $this
+     */
+    public function policyMap(array $policy_map): static
+    {
+        $this->setPolicyMap($policy_map);
+
+        return $this;
     }
 }

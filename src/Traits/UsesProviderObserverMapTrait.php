@@ -4,6 +4,7 @@ namespace Fligno\StarterKit\Traits;
 
 use Exception;
 use Illuminate\Support\Collection;
+use Throwable;
 
 /**
  * Trait UsesProviderObserverMapTrait
@@ -32,24 +33,29 @@ trait UsesProviderObserverMapTrait
     }
 
     /**
-     * Load Observers
-     *
-     * @param  Collection|null  $observers
-     * @return void
+     * @return array
      */
-    protected function loadObservers(Collection $observers = null): void
+    public function getObserverMap(): array
     {
-        $observers?->each(
-            static function ($model, $observer) {
-                if ($model instanceof Collection) {
-                    $model = $model->first();
-                }
-                try {
-                    call_user_func($model.'::observe', $observer);
-                } catch (Exception) {
-                    starterKit()->clearCache();
-                }
-            }
-        );
+        return $this->observer_map;
+    }
+
+    /**
+     * @param array $observer_map
+     */
+    public function setObserverMap(array $observer_map): void
+    {
+        $this->observer_map = $observer_map;
+    }
+
+    /**
+     * @param array $observer_map
+     * @return $this
+     */
+    public function observerMap(array $observer_map): static
+    {
+        $this->setObserverMap($observer_map);
+
+        return $this;
     }
 }
