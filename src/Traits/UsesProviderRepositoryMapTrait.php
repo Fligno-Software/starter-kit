@@ -2,10 +2,6 @@
 
 namespace Fligno\StarterKit\Traits;
 
-use Exception;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
-
 /**
  * Trait UsesProviderRepositoryMapTrait
  *
@@ -27,7 +23,7 @@ trait UsesProviderRepositoryMapTrait
      */
     public function areRepositoriesEnabled(): bool
     {
-        return config('starter-kit.repositories_enabled');
+        return config('starter-kit.repositories_enabled', true);
     }
 
     /**
@@ -39,7 +35,7 @@ trait UsesProviderRepositoryMapTrait
     }
 
     /**
-     * @param array $repository_map
+     * @param  array  $repository_map
      */
     public function setRepositoryMap(array $repository_map): void
     {
@@ -47,7 +43,7 @@ trait UsesProviderRepositoryMapTrait
     }
 
     /**
-     * @param array $repository_map
+     * @param  array  $repository_map
      * @return $this
      */
     public function repositoryMap(array $repository_map): static

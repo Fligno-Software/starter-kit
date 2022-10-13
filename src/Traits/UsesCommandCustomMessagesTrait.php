@@ -19,7 +19,8 @@ trait UsesCommandCustomMessagesTrait
      */
     public function ongoing(string $message, bool $prepend_ellipsis = true, int|string $verbosity = null): void
     {
-        $this->note($message.($prepend_ellipsis ? '...' : null), 'ONGOING', $verbosity);
+        $message = $message.($prepend_ellipsis ? '...' : null);
+        $this->note($message, 'ONGOING', $verbosity);
     }
 
     /**

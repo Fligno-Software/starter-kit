@@ -7,7 +7,7 @@
  */
 
 use Composer\Autoload\ClassMapGenerator;
-use Fligno\StarterKit\Services\ExtendedResponse;
+use Fligno\StarterKit\Services\CustomResponse;
 use Fligno\StarterKit\Services\PackageDomain;
 use Fligno\StarterKit\Services\StarterKit;
 use Illuminate\Database\Eloquent\Model;
@@ -15,31 +15,35 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Env;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Support\Stringable;
 use JetBrains\PhpStorm\Pure;
 use Symfony\Component\Process\Process;
-use Illuminate\Support\Env;
-use Illuminate\Support\Stringable;
 
 /***** STARTER-KIT SERVICE *****/
 
 if (! function_exists('starterKit')) {
     /**
-     * @return StarterKit
+     * @return StarterKit|null
      */
-    function starterKit(): StarterKit
+    function starterKit(): StarterKit|null
     {
-        return resolve('starter-kit');
+        try {
+            return resolve('starter-kit');
+        } catch (Throwable) {
+            return null;
+        }
     }
 }
 
 if (! function_exists('starter_kit')) {
     /**
-     * @return StarterKit
+     * @return StarterKit|null
      */
-    function starter_kit(): StarterKit
+    function starter_kit(): StarterKit|null
     {
         return starterKit();
     }
@@ -47,7 +51,7 @@ if (! function_exists('starter_kit')) {
 
 if (! function_exists('callAfterResolvingStarterKit')) {
     /**
-     * @param Closure|null $callable $callable
+     * @param  Closure|null  $callable $callable
      */
     function callAfterResolvingStarterKit(Closure|null $callable): void
     {
@@ -59,19 +63,19 @@ if (! function_exists('callAfterResolvingStarterKit')) {
 
 if (! function_exists('custom_response')) {
     /**
-     * @return ExtendedResponse
+     * @return CustomResponse
      */
-    function custom_response(): ExtendedResponse
+    function custom_response(): CustomResponse
     {
-        return resolve('extended-response');
+        return resolve('custom-response');
     }
 }
 
 if (! function_exists('customResponse')) {
     /**
-     * @return ExtendedResponse
+     * @return CustomResponse
      */
-    function customResponse(): ExtendedResponse
+    function customResponse(): CustomResponse
     {
         return custom_response();
     }
@@ -79,29 +83,26 @@ if (! function_exists('customResponse')) {
 
 /***** PACKAGE DOMAIN SERVICE *****/
 
-if (! function_exists('packageDomain'))
-{
+if (! function_exists('packageDomain')) {
     /**
-     * @param ServiceProvider $provider
+     * @param  ServiceProvider  $provider
      * @return PackageDomain|null
      */
     function packageDomain(ServiceProvider $provider): PackageDomain|null
     {
         try {
             return resolve('package-domain', [
-                'provider' => $provider
+                'provider' => $provider,
             ]);
-        }
-        catch (Throwable) {
+        } catch (Throwable) {
             return null;
         }
     }
 }
 
-if (! function_exists('package_domain'))
-{
+if (! function_exists('package_domain')) {
     /**
-     * @param ServiceProvider $provider
+     * @param  ServiceProvider  $provider
      * @return PackageDomain|null
      */
     function package_domain(ServiceProvider $provider): PackageDomain|null
@@ -112,7 +113,7 @@ if (! function_exists('package_domain'))
 
 if (! function_exists('callAfterResolvingPackageDomain')) {
     /**
-     * @param Closure|null $callable $callable
+     * @param  Closure|null  $callable $callable
      */
     function callAfterResolvingPackageDomain(ServiceProvider $provider, Closure|null $callable): void
     {
@@ -124,9 +125,9 @@ if (! function_exists('callAfterResolvingPackageDomain')) {
 
 if (! function_exists('callAfterResolvingService')) {
     /**
-     * @param Closure|string $abstract
-     * @param Closure|null $callback
-     * @param array $parameters
+     * @param  Closure|string  $abstract
+     * @param  Closure|null  $callback
+     * @param  array  $parameters
      */
     function callAfterResolvingService(Closure|string $abstract, Closure|null $callback, array $parameters = []): void
     {
@@ -494,7 +495,12 @@ if (! function_exists('collect_files_or_directories')) {
             }
 
             if ($prepend_directory) {
-                $arr = $arr->mapWithKeys(fn ($value) => [$value => $directory.'/'.$value]);
+                $arr = $arr->mapWithKeys(fn ($value) => [
+                    $value => Str::of($directory)
+                        ->finish('/')
+                        ->append($value)
+                        ->jsonSerialize(),
+                ]);
             }
 
             return $arr;
@@ -580,7 +586,11 @@ if (! function_exists('guess_file_or_directory_path')) {
         $result = collect();
 
         $add_to_result = static function (string $dir, $file_or_folder, Collection $result) {
-            if ($exists = file_exists($temp = $dir.'/'.$file_or_folder)) {
+            if ($exists = file_exists($temp = Str::of($dir)
+                ->finish('/')
+                ->append($file_or_folder)
+                ->jsonSerialize())
+            ) {
                 $result->put($file_or_folder, $temp);
             }
 
@@ -588,12 +598,13 @@ if (! function_exists('guess_file_or_directory_path')) {
         };
 
         // For level 0
-
         $targets = $targets->filter(
             function ($value) use ($add_to_result, $dir, $result) {
                 return ! $add_to_result($dir, $value, $result);
             }
         );
+
+        // For level 1 and above
 
         if ($targets->count()) {
             // For upward folder traversal
@@ -605,17 +616,20 @@ if (! function_exists('guess_file_or_directory_path')) {
                         }
                     );
                 }
-            } else { // For downward folder traversal
+            }
+
+            // For downward folder traversal
+            else {
                 $directories = collect($dir);
                 for ($level = 1; $targets->count() && $level <= $max_levels; $level++) {
                     $directories = $directories->mapWithKeys(
                         function ($value) use ($result, $add_to_result, &$targets) {
                             if ($targets->count()) {
-                                $subDirs = collect_files_or_directories($value, true, false, true) ?? collect();
-                                if ($subDirs->count()) {
+                                $sub_dirs = collect_files_or_directories($value, true, false, true) ?? collect();
+                                if ($sub_dirs->count()) {
                                     $targets = $targets->filter(
-                                        function ($value) use ($add_to_result, $subDirs, $result) {
-                                            foreach ($subDirs as $directory) {
+                                        function ($value) use ($add_to_result, $sub_dirs, $result) {
+                                            foreach ($sub_dirs as $directory) {
                                                 if ($add_to_result($directory, $value, $result)) {
                                                     return false;
                                                 }
@@ -633,6 +647,8 @@ if (! function_exists('guess_file_or_directory_path')) {
                 }
             }
         }
+
+        // Return depending on the initial data type
 
         if (is_string($target_file_or_folder)) {
             return $result->first();
@@ -862,9 +878,10 @@ if (! function_exists('classUsesTrait')) {
 if (! function_exists('get_contents_from_composer_json')) {
     /**
      * @param  string|null  $path
+     * @param  string|null  $dot_notation_key
      * @return Collection|null
      */
-    function get_contents_from_composer_json(string $path = null): Collection|null
+    function get_contents_from_composer_json(string $path = null, string $dot_notation_key = null): Collection|null
     {
         $path = qualify_composer_json($path);
 
@@ -873,19 +890,63 @@ if (! function_exists('get_contents_from_composer_json')) {
             return null;
         }
 
+        $data = json_decode($contents, true);
+
+        // Search through array using dot notation
+        if ($dot_notation_key) {
+            $result = Arr::get($data, $dot_notation_key);
+
+            return $result ? collect($result) : null;
+        }
+
         // Decode string to associative Collection|null
-        return collect(json_decode($contents, true));
+        return collect($data);
     }
 }
 
 if (! function_exists('getContentsFromComposerJson')) {
     /**
      * @param  string|null  $path
+     * @param  string|null  $dot_notation_key
      * @return Collection|null
      */
-    function getContentsFromComposerJson(string $path = null): Collection|null
+    function getContentsFromComposerJson(string $path = null, string $dot_notation_key = null): Collection|null
     {
-        return get_contents_from_composer_json($path);
+        return get_contents_from_composer_json($path, $dot_notation_key);
+    }
+}
+
+if (! function_exists('add_provider_to_composer_json')) {
+    /**
+     * @param  string  $provider
+     * @param  string|null  $path
+     * @return bool
+     */
+    function add_provider_to_composer_json(string $provider, string $path = null): bool
+    {
+        // Check if app config exists or if provider is already load or if provider is already appended
+        if (app()->getProvider($provider)) {
+            return false;
+        }
+
+        return add_contents_to_composer_json('extra.laravel.providers', [$provider], $path);
+    }
+}
+
+if (! function_exists('remove_provider_from_composer_json')) {
+    /**
+     * @param  string  $provider
+     * @param  string|null  $path
+     * @return bool
+     */
+    function remove_provider_from_composer_json(string $provider, string $path = null): bool
+    {
+        // Check if app config exists or if provider is already load or if provider is already appended
+        if (! app()->getProvider($provider)) {
+            return false;
+        }
+
+        return remove_contents_from_composer_json('extra.laravel.providers', [$provider], $path);
     }
 }
 
@@ -906,7 +967,7 @@ if (! function_exists('qualify_composer_json')) {
             return Str::of($path)
                 ->replace('\\', '/')
                 ->replace($file_name, '')
-                ->trim('/')
+                ->rtrim('/')
                 ->append('/'.$file_name)
                 ->jsonSerialize();
         }
@@ -928,14 +989,14 @@ if (! function_exists('qualifyComposerJson')) {
 
 /***** ENV FILE RELATED *****/
 
-if (! function_exists('set_contents_to_env')) {
+if (! function_exists('add_contents_to_env')) {
     /**
-     * @param Collection|array $contents
-     * @param string|null $title
-     * @param bool $override
+     * @param  Collection|array  $contents
+     * @param  string|null  $title
+     * @param  bool  $override
      * @return bool
      */
-    function set_contents_to_env(Collection|array $contents, string $title = null, bool $override = false): bool
+    function add_contents_to_env(Collection|array $contents, string $title = null, bool $override = false): bool
     {
         // Get contents from composer.json
         $path = App::environmentFilePath();
@@ -951,6 +1012,7 @@ if (! function_exists('set_contents_to_env')) {
         $contents = collect($contents)
             ->mapWithKeys(function ($item, $key) {
                 $key = Str::of($key)->lower()->snake()->upper()->jsonSerialize();
+
                 return [$key => $item];
             })
             ->filter(function ($item, $key) use ($override, &$env, $repository) {
@@ -963,17 +1025,18 @@ if (! function_exists('set_contents_to_env')) {
                 if ($replaced = ($result && $env !== $result)) {
                     $env = $result;
                 }
+
                 return ! $replaced;
             });
 
         if ($contents->count()) {
             $title = Str::of($title);
             $addon = $contents
-                ->map(fn($item, $key) => get_combined_key_value($key, $item).PHP_EOL)
+                ->map(fn ($item, $key) => get_combined_key_value($key, $item).PHP_EOL)
                 ->values()
                 ->when(
                     $title->isNotEmpty(),
-                    fn(Collection $collection) => $collection->prepend($title
+                    fn (Collection $collection) => $collection->prepend($title
                         ->headline()
                         ->start('# ')
                         ->append(PHP_EOL)
@@ -989,30 +1052,30 @@ if (! function_exists('set_contents_to_env')) {
     }
 }
 
-if (! function_exists('setContentsToEnv')) {
+if (! function_exists('addContentsToEnv')) {
     /**
-     * @param Collection|array $contents
-     * @param string|null $title
-     * @param bool $override
+     * @param  Collection|array  $contents
+     * @param  string|null  $title
+     * @param  bool  $override
      * @return bool
      */
-    function setContentsToEnv(Collection|array $contents, string $title = null, bool $override = false): bool
+    function addContentsToEnv(Collection|array $contents, string $title = null, bool $override = false): bool
     {
-        return set_contents_to_env($contents, $title, $override);
+        return add_contents_to_env($contents, $title, $override);
     }
 }
 
 if (! function_exists('get_combined_key_value')) {
     /**
-     * @param string $key
-     * @param string $value
+     * @param  string  $key
+     * @param  string  $value
      * @return string
      */
     function get_combined_key_value(string $key, string $value): string
     {
         return Str::of($value)
             ->whenContains(
-                ' ', fn(Stringable $str) => $str->append('"')->prepend('"')
+                ' ', fn (Stringable $str) => $str->append('"')->prepend('"')
             )
             ->prepend($key.'=')
             ->jsonSerialize();
@@ -1021,8 +1084,8 @@ if (! function_exists('get_combined_key_value')) {
 
 if (! function_exists('getCombinedKeyValue')) {
     /**
-     * @param string $key
-     * @param string $value
+     * @param  string  $key
+     * @param  string  $value
      * @return string
      */
     function getCombinedKeyValue(string $key, string $value): string
@@ -1031,3 +1094,129 @@ if (! function_exists('getCombinedKeyValue')) {
     }
 }
 
+/***** PARSE DOMAIN *****/
+
+if (! function_exists('domain_decode')) {
+    /**
+     * @param  string  $domain
+     * @param  bool  $as_namespace
+     * @param  string  $separator
+     * @return string
+     */
+    function domain_decode(string $domain, bool $as_namespace = false, string $separator = '.'): string
+    {
+        $replace = ! $as_namespace ? '/domains/' : '\\Domains\\';
+
+        return Str::of($domain)->start($separator)->replace('.', $replace)->jsonSerialize();
+    }
+}
+
+if (! function_exists('domain_encode')) {
+    /**
+     * @param  string  $path_or_namespace
+     * @param  string  $separator
+     * @return string|null
+     */
+    function domain_encode(string $path_or_namespace, string $separator = '.'): ?string
+    {
+        if (preg_match('~((\\\\|/)*domains(\\\\|/)[a-z\d]+)+~i', $path_or_namespace, $matches)) {
+            $res = preg_replace('~(\\\\|/)*domains(\\\\|/)+~i', $separator, $matches[0]);
+
+            return trim($res, $separator);
+        }
+
+        return null;
+    }
+}
+
+/***** APP CONFIG FILE RELATED *****/
+
+if (! function_exists('add_provider_to_app_config')) {
+    /**
+     * @param  string  $provider
+     * @return bool
+     */
+    function add_provider_to_app_config(string $provider): bool
+    {
+        // Check if app config exists or if provider is already load or if provider is already appended
+        if (
+            ! file_exists($path = config_path('app.php')) ||
+            app()->getProvider($provider) || (
+                ($contents = explode(PHP_EOL, file_get_contents($path))) &&
+                preg_grep('/'.preg_quote($provider).'/', $contents)
+            )
+        ) {
+            return false;
+        }
+
+        $search = ["'providers' => [", '],'];
+
+        $pieces = collect();
+
+        foreach ($search as $s) {
+            $matches = preg_grep('/'.preg_quote($s).'/', $contents);
+            if ($matches && count($matches)) {
+                $index = array_keys($matches)[0];
+                $pieces->add(array_slice($contents, 0, $index));
+                $contents = array_slice($contents, $index);
+            }
+        }
+
+        $pieces->add($contents);
+
+        if ($pieces->count() === 3) {
+            $providers = $pieces->get(1);
+
+            // Find uncommented string from reversed providers array
+            $sample = null;
+            $reverse = array_reverse($providers);
+
+            foreach ($reverse as $rev) {
+                if ($rev && ! preg_match('~[/\*]+~', $rev)) {
+                    $sample = $rev;
+                    break;
+                }
+            }
+
+            // Use the uncommented string
+            if ($sample) {
+                $sample = preg_replace(
+                    '/[a-z\d\\\:]+/i',
+                    Str::of($provider)->finish('::class')->jsonSerialize(),
+                    $sample
+                );
+                $providers[] = Str::finish($sample, ',');
+                $pieces->put(1, $providers);
+
+                return file_put_contents($path, $pieces->collapse()->implode(PHP_EOL));
+            }
+        }
+
+        return false;
+    }
+}
+
+if (! function_exists('remove_provider_from_app_config')) {
+    /**
+     * @param  string  $provider
+     * @return bool
+     */
+    function remove_provider_from_app_config(string $provider): bool
+    {
+        // Check if app config exists or if provider is already load or if provider is already appended
+        if (! file_exists($path = config_path('app.php'))) {
+            return false;
+        }
+
+        $contents = explode(PHP_EOL, file_get_contents($path));
+
+        if (($matches = preg_grep('/'.preg_quote($provider).'/', $contents)) && count($matches)) {
+            $index = array_keys($matches)[0];
+            unset($contents[$index]);
+
+            return file_put_contents($path, implode(PHP_EOL, $contents));
+        }
+
+        return false;
+    }
+}

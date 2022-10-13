@@ -2,10 +2,6 @@
 
 namespace Fligno\StarterKit\Traits;
 
-use Exception;
-use Illuminate\Support\Collection;
-use Throwable;
-
 /**
  * Trait UsesProviderObserverMapTrait
  *
@@ -29,7 +25,7 @@ trait UsesProviderObserverMapTrait
      */
     public function areObserversEnabled(): bool
     {
-        return config('starter-kit.observers_enabled');
+        return config('starter-kit.observers_enabled', true);
     }
 
     /**
@@ -41,7 +37,7 @@ trait UsesProviderObserverMapTrait
     }
 
     /**
-     * @param array $observer_map
+     * @param  array  $observer_map
      */
     public function setObserverMap(array $observer_map): void
     {
@@ -49,7 +45,7 @@ trait UsesProviderObserverMapTrait
     }
 
     /**
-     * @param array $observer_map
+     * @param  array  $observer_map
      * @return $this
      */
     public function observerMap(array $observer_map): static

@@ -9,7 +9,6 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use ReflectionClass;
 use ReflectionException;
 
 /**
@@ -117,8 +116,17 @@ trait UsesDataParsingTrait
         }
 
         try {
-            if (is_object($data) && ($class = (new ReflectionClass($data))->getShortName()) && method_exists($this, $method = 'parse'.$class)) {
-                return $this->$method($data, $key);
+            if (is_object($data)) {
+                if (($class = get_class($data)) && method_exists($this, $method = 'parse'.class_basename($class))) {
+                    return $this->$method($data, $key);
+                }
+
+                // Attempt checking for parents
+                while ($class = get_parent_class($class)) {
+                    if (method_exists($this, $method = 'parse'.class_basename($class))) {
+                        return $this->$method($data, $key);
+                    }
+                }
             }
         } catch (ReflectionException) {
             return [];

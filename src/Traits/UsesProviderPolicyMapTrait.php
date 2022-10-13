@@ -2,10 +2,6 @@
 
 namespace Fligno\StarterKit\Traits;
 
-use Exception;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Gate;
-
 /**
  * Trait UsesProviderPolicyMapTrait
  *
@@ -29,7 +25,7 @@ trait UsesProviderPolicyMapTrait
      */
     public function arePoliciesEnabled(): bool
     {
-        return config('starter-kit.policies_enabled');
+        return config('starter-kit.policies_enabled', true);
     }
 
     /**
@@ -41,7 +37,7 @@ trait UsesProviderPolicyMapTrait
     }
 
     /**
-     * @param array $policy_map
+     * @param  array  $policy_map
      */
     public function setPolicyMap(array $policy_map): void
     {
@@ -49,7 +45,7 @@ trait UsesProviderPolicyMapTrait
     }
 
     /**
-     * @param array $policy_map
+     * @param  array  $policy_map
      * @return $this
      */
     public function policyMap(array $policy_map): static

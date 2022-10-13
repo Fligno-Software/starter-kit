@@ -2,7 +2,6 @@
 
 namespace Fligno\StarterKit\Traits;
 
-use Fligno\BoilerplateGenerator\Traits\UsesProviderRoutesTrait;
 use Fligno\StarterKit\Services\PackageDomain;
 use Fligno\StarterKit\Services\StarterKit;
 use Illuminate\Support\Collection;
@@ -45,7 +44,7 @@ trait UsesProviderStarterKitTrait
     }
 
     /**
-     * @param PackageDomain $package_domain
+     * @param  PackageDomain  $package_domain
      * @return void
      */
     protected function preparePackageDomain(PackageDomain $package_domain): void
@@ -75,6 +74,14 @@ trait UsesProviderStarterKitTrait
     }
 
     /**
+     * @return PackageDomain
+     */
+    public function getPackageDomain(): PackageDomain
+    {
+        return $this->package_domain;
+    }
+
+    /**
      * @return Collection
      */
     protected function getExceptTargetDirectories(): Collection
@@ -99,14 +106,6 @@ trait UsesProviderStarterKitTrait
      */
     abstract protected function bootForConsole(): void;
 
-    /**
-     * @return string|null
-     */
-    protected function getBasePath(): ?string
-    {
-        return $this->package_domain->getPackagePath();
-    }
-
     /***** HELPER FILES RELATED *****/
 
     /**
@@ -124,7 +123,7 @@ trait UsesProviderStarterKitTrait
      */
     public function areTranslationsEnabled(): bool
     {
-        return config('starter-kit.translations_enabled', false);
+        return config('starter-kit.translations_enabled', true);
     }
 
     /***** CONFIGS RELATED *****/
@@ -134,7 +133,7 @@ trait UsesProviderStarterKitTrait
      */
     public function areConfigsEnabled(): bool
     {
-        return config('starter-kit.configs_enabled');
+        return config('starter-kit.configs_enabled', true);
     }
 
     /***** MIGRATIONS RELATED *****/
@@ -144,6 +143,6 @@ trait UsesProviderStarterKitTrait
      */
     public function areMigrationsEnabled(): bool
     {
-        return config('starter-kit.migrations_enabled');
+        return config('starter-kit.migrations_enabled', true);
     }
 }

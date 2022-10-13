@@ -29,7 +29,7 @@ trait UsesProviderMorphMapTrait
     }
 
     /**
-     * @param array $morph_map
+     * @param  array  $morph_map
      */
     public function setMorphMap(array $morph_map): void
     {
@@ -37,7 +37,7 @@ trait UsesProviderMorphMapTrait
     }
 
     /**
-     * @param array $morph_map
+     * @param  array  $morph_map
      * @return UsesProviderMorphMapTrait
      */
     public function morphMap(array $morph_map): static

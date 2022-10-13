@@ -3,6 +3,7 @@
 namespace Fligno\StarterKit\Services;
 
 use Closure;
+use Fligno\StarterKit\Data\ServiceProviderData;
 use Fligno\StarterKit\Traits\HasTaggableCacheTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -10,6 +11,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Symfony\Component\Finder\SplFileInfo;
 
@@ -32,6 +34,11 @@ class StarterKit
     /**
      * @var array
      */
+    protected array $providers = [];
+
+    /**
+     * @var array
+     */
     protected array $exception_renders = [];
 
     /***** FOLDER NAMES OF LARAVEL FILES *****/
@@ -42,7 +49,7 @@ class StarterKit
 
     public const HELPERS_DIR = 'helpers';
 
-    public const LANG_DIR = 'resources/lang';
+    public const LANG_DIR = 'lang';
 
     public const VIEWS_DIR = 'resources/views';
 
@@ -51,6 +58,8 @@ class StarterKit
     public const ROUTES_DIR = 'routes';
 
     public const MODELS_DIR = 'Models';
+
+    public const PROVIDERS_DIR = 'Providers';
 
     public const REPOSITORIES_DIR = 'Repositories';
 
@@ -78,70 +87,96 @@ class StarterKit
     }
 
     /**
-     * @param  string|null  $package_name
+     * @param  string|null  $package
      * @param  string|null  $domain_name
      * @param  bool  $rehydrate
      * @return Collection
      */
-    public function getPaths(string $package_name = null, string $domain_name = null, bool $rehydrate = false): Collection
+    public function getPaths(string $package = null, string $domain_name = null, bool $rehydrate = false): Collection
     {
         $tags = $this->getTags();
         $key = 'paths';
 
         $result = $this->getCache($tags, $key, fn () => collect($this->paths), $rehydrate);
 
-        if ($package_name) {
-            $package_name = str_replace('/', '.', $package_name);
-
-            if ($domain_name) {
-                $package_name = implode('.', [$package_name, 'domains', $domain_name]);
-            }
-
-            return collect(Arr::get($result, $package_name));
+        if ($package) {
+            $result = Arr::get($result, 'packages.'.str_replace('/', '.', $package));
         }
 
-        return $result;
+        // Since domain name might contain dots due to encoding, dot notation is not possible.
+        if ($domain_name && $result && isset($result[self::DOMAINS_DIR][$domain_name])) {
+            $result = $result[self::DOMAINS_DIR][$domain_name];
+        }
+
+        return collect($result);
     }
 
     /**
-     * @param  string  $package_name
-     * @param  string  $source_dir
-     * @param  string|null  $domain
-     * @param  array|null  $paths
-     * @return bool
+     * @param  bool  $rehydrate
+     * @return Collection
      */
-    public function addToPaths(string $package_name, string $source_dir, string $domain = null, array &$paths = null): bool
+    public function getProviders(bool $rehydrate = false): Collection
     {
-        [$vendor, $package] = explode('/', $package_name);
+        $tags = $this->getTags();
+        $key = 'providers';
 
-        if (! $paths) {
-            $paths = $this->getPaths()->toArray();
-        }
+        return $this->getCache($tags, $key, fn () => collect($this->providers), $rehydrate);
+    }
+
+    /**
+     * @param  ServiceProvider  $provider
+     * @return ServiceProviderData
+     */
+    public function addToProviders(ServiceProvider $provider): ServiceProviderData
+    {
+        $providers = $this->getProviders();
+        $class = get_class($provider);
 
         // Check whether already exists
-        if ((! $domain && isset($paths[$vendor][$package])) || ($domain && isset($paths[$vendor][$package]['domains'][$domain]))) {
-            return false;
+        if ($providers->has($class)) {
+            return ServiceProviderData::from($providers->get($class));
         }
 
-        $targets = $this->getFilesFromPaths($source_dir);
+        $data = ServiceProviderData::from($provider);
+        $providers->put($class, $data);
+        $this->providers = $providers->toArray();
+        $this->getProviders(rehydrate: true);
 
-        // Look for Domains
-        if ($domains_path = guess_file_or_directory_path($source_dir, self::DOMAINS_DIR)) {
-            collect_files_or_directories($domains_path, true, false, true)
-                ->each(function ($directory, $domain) use ($package_name, &$paths) {
-                    $this->addToPaths($package_name, $directory, $domain, $paths);
-                });
-        }
+        return $data;
+    }
 
-        if ($domain) {
-            $paths[$vendor][$package]['domains'][$domain]['path'] = $source_dir;
-            $paths[$vendor][$package]['domains'][$domain]['directories'] = $targets;
+    /**
+     * @param  ServiceProviderData  $data
+     * @return bool
+     */
+    public function addToPaths(ServiceProviderData $data): bool
+    {
+        $paths = $this->getPaths()->toArray();
+
+        $targets = $this->getFilesFromPaths($data->path);
+
+        if ($data->package) {
+            [$vendor_name, $package] = explode('/', $data->package);
+
+            if ($data->domain) {
+                $paths['packages'][$vendor_name][$package][self::DOMAINS_DIR][$data->domain]['path'] = $data->path;
+                $paths['packages'][$vendor_name][$package][self::DOMAINS_DIR][$data->domain]['directories'] = $targets;
+            } else {
+                $paths['packages'][$vendor_name][$package]['path'] = $data->path;
+                $paths['packages'][$vendor_name][$package]['directories'] = $targets;
+            }
         } else {
-            $paths[$vendor][$package]['path'] = $source_dir;
-            $paths[$vendor][$package]['directories'] = $targets;
-            $this->paths = $paths;
-            $this->getPaths(rehydrate: true);
+            if ($data->domain) {
+                $paths[self::DOMAINS_DIR][$data->domain]['path'] = $data->path;
+                $paths[self::DOMAINS_DIR][$data->domain]['directories'] = $targets;
+            } else {
+                $paths['path'] = $data->path;
+                $paths['directories'] = $targets;
+            }
         }
+
+        $this->paths = $paths;
+        $this->getPaths(rehydrate: true);
 
         return true;
     }
@@ -160,6 +195,7 @@ class StarterKit
             self::TESTS_DIR,
             self::ROUTES_DIR,
             self::MODELS_DIR,
+            self::PROVIDERS_DIR,
             self::REPOSITORIES_DIR,
             self::POLICIES_DIR,
             self::OBSERVERS_DIR,
@@ -175,6 +211,7 @@ class StarterKit
         return guess_file_or_directory_path($source_dir, $this->getTargetDirectories())
             ->mapWithKeys(function ($path, $directory) {
                 $files = match ($directory) {
+                    self::PROVIDERS_DIR,
                     self::MODELS_DIR => collect_classes_from_path($path)
                         ->mapWithKeys(fn ($model) => [
                             // App/Models/User => User
@@ -212,14 +249,14 @@ class StarterKit
     }
 
     /**
-     * @param  string  $package_name
+     * @param  string|null  $package
      * @param  string|null  $domain
      * @param  string|null  $dot_notation
      * @return Collection|null
      */
-    public function getFromPaths(string $package_name, string $domain = null, string $dot_notation = null): ?Collection
+    public function getFromPaths(string $package = null, string $domain = null, string $dot_notation = null): ?Collection
     {
-        if ($value = Arr::get($this->getPaths($package_name, $domain), $dot_notation)) {
+        if ($value = Arr::get($this->getPaths($package, $domain), $dot_notation)) {
             return collect($value);
         }
 
@@ -227,18 +264,18 @@ class StarterKit
     }
 
     /**
-     * @param  string  $package_name
+     * @param  string|null  $package
      * @param  string|null  $domain
      * @param  array  $only
      * @return Collection|null
      */
-    public function getPathsOnly(string $package_name, string $domain = null, array $only = []): ?Collection
+    public function getPathsOnly(string $package = null, string $domain = null, array $only = []): ?Collection
     {
-        $tags = $this->getTags($package_name, $domain);
+        $tags = $this->getTags($package, $domain);
         $key = 'paths';
 
-        $result = $this->getCache($tags, $key, function () use ($package_name, $domain, $only) {
-            return $this->getFromPaths($package_name, $domain, 'directories')
+        $result = $this->getCache($tags, $key, function () use ($package, $domain) {
+            return $this->getFromPaths($package, $domain, 'directories')
                     ?->map(fn ($item) => $item['path']);
         });
 
@@ -246,92 +283,96 @@ class StarterKit
     }
 
     /**
-     * @param  string|null  $package_name
+     * @param  string|null  $package
      * @return Collection|null
      */
-    public function getDomains(string $package_name = null): ?Collection
+    public function getDomains(string $package = null): ?Collection
     {
-        if (is_null($package_name)) {
-            $package_name = 'laravel/laravel';
-        }
-
-        return $this->getFromPaths($package_name, null, 'domains')?->map(fn ($value) => $value['path']);
+        return $this->getFromPaths($package, null, self::DOMAINS_DIR)?->map(fn ($value) => $value['path']);
     }
 
     /**
-     * @param  string  $package_name
+     * @return Collection
+     */
+    public function getRoot(): Collection
+    {
+        return $this->getFromPaths()->forget('packages');
+    }
+
+    /**
+     * @return Collection|null
+     */
+    public function getPackages(): ?Collection
+    {
+        return $this->getFromPaths(dot_notation: 'packages');
+    }
+
+    /**
+     * @param  string|null  $package
      * @param  string|null  $domain
      * @return Collection|null
      */
-    public function getConfigs(string $package_name, string $domain = null): ?Collection
+    public function getConfigs(string $package = null, string $domain = null): ?Collection
     {
-        return $this->getFromPaths($package_name, $domain, 'directories.' . self::CONFIG_DIR . '.files');
+        return $this->getFromPaths($package, $domain, 'directories.'.self::CONFIG_DIR.'.files');
     }
 
     /**
-     * @param string $package_name
-     * @param string|null $domain
-     * @return Collection|null
-     */
-    public function getMigrationsPath(string $package_name, string $domain = null): ?Collection
-    {
-        return $this->getFromPaths($package_name, $domain, 'directories.' . self::MIGRATIONS_DIR . '.path');
-    }
-
-    /**
-     * @param  string  $package_name
+     * @param  string|null  $package
      * @param  string|null  $domain
      * @return Collection|null
      */
-    public function getHelpers(string $package_name, string $domain = null): ?Collection
+    public function getMigrationsPath(string $package = null, string $domain = null): ?Collection
     {
-        return $this->getFromPaths($package_name, $domain, 'directories.' . self::HELPERS_DIR. '.files');
+        return $this->getFromPaths($package, $domain, 'directories.'.self::MIGRATIONS_DIR.'.path');
     }
 
     /**
-     * @param  string  $package_name
+     * @param  string|null  $package
      * @param  string|null  $domain
      * @return Collection|null
      */
-    public function getRoutes(string $package_name, string $domain = null): ?Collection
+    public function getHelpers(string $package = null, string $domain = null): ?Collection
     {
-        return $this->getFromPaths($package_name, $domain, 'directories.' . self::ROUTES_DIR . '.files');
+        return $this->getFromPaths($package, $domain, 'directories.'.self::HELPERS_DIR.'.files');
     }
 
     /**
-     * @param  string  $package_name
+     * @param  string|null  $package
+     * @param  string|null  $domain
+     * @return Collection|null
+     */
+    public function getRoutes(string $package = null, string $domain = null): ?Collection
+    {
+        return $this->getFromPaths($package, $domain, 'directories.'.self::ROUTES_DIR.'.files');
+    }
+
+    /**
+     * @param  string|null  $package
      * @param  string|null  $domain
      * @return string|null
      */
-    public function getTranslations(string $package_name, string $domain = null): ?string
+    public function getTranslations(string $package = null, string $domain = null): ?string
     {
-        return $this->getFromPaths($package_name, $domain, 'directories.' . self::LANG_DIR)->get('path');
+        return $this->getFromPaths($package, $domain, 'directories.'.self::LANG_DIR)->get('path');
     }
 
     /**
-     * @param  string  $package_name
+     * @param  string|null  $package
      * @param  string|null  $domain
      * @return Collection|null
      */
-    public function getModels(string $package_name, string $domain = null): ?Collection
+    public function getModels(string $package = null, string $domain = null): ?Collection
     {
-        return $this->getFromPaths($package_name, $domain, 'directories.' . self::MODELS_DIR . '.files');
+        return $this->getFromPaths($package, $domain, 'directories.'.self::MODELS_DIR.'.files');
     }
 
     /**
-     * @return Collection|null
-     */
-    public function getDefaultPossibleModels(): ?Collection
-    {
-        return $this->getModels('laravel/laravel');
-    }
-
-    /**
-     * @param  string  $package_name
+     * @param  string|null  $package
      * @param  string|null  $domain
      * @return Collection|null
      */
-    public function getPossibleModels(string $package_name, string $domain = null): ?Collection
+    public function getPossibleModels(string $package = null, string $domain = null): ?Collection
     {
         $possibleModels = collect();
 
@@ -340,14 +381,14 @@ class StarterKit
 
         // Domain level
         if ($domain) {
-            $possibleModels = $possibleModels->merge($this->getModels($package_name, $domain));
+            $possibleModels = $possibleModels->merge($this->getModels($package, $domain));
         }
 
         // Package level
-        $possibleModels = $possibleModels->merge($this->getModels($package_name));
+        $possibleModels = $possibleModels->merge($this->getModels($package));
 
         // Root level
-        $possibleModels = $possibleModels->merge($this->getDefaultPossibleModels());
+        $possibleModels = $possibleModels->merge($this->getModels());
 
         return $possibleModels->mapToGroups(
             function ($item, $key) {
@@ -357,21 +398,21 @@ class StarterKit
 
     /**
      * @param  string  $directory
-     * @param  string  $package_name
+     * @param  string|null  $package
      * @param  string|null  $domain
      * @param  array  $map
      * @return Collection|null
      */
-    public function getModelRelatedFiles(string $directory, string $package_name, string $domain = null, array $map = []): ?Collection
+    public function getModelRelatedFiles(string $directory, string $package = null, string $domain = null, array $map = []): ?Collection
     {
-        if ($files = $this->getFromPaths($package_name, $domain, 'directories.'.$directory.'.files')) {
+        if ($files = $this->getFromPaths($package, $domain, 'directories.'.$directory.'.files')) {
             $files = collect($files)->mapWithKeys(fn ($item, $key) => [$item => $key]);
             $map = collect($map)->only($files->keys());
             $files = $files->merge($map);
             $unmatched = $files->except($map->keys());
 
             if ($unmatched->count()) {
-                $possible_models = $this->getPossibleModels($package_name, $domain);
+                $possible_models = $this->getPossibleModels($package, $domain);
                 $unmatched = $unmatched->map(fn ($item) => $possible_models->get($item) ?? []);
                 $files = $files->merge($unmatched);
             }
@@ -383,36 +424,36 @@ class StarterKit
     }
 
     /**
-     * @param  string  $package_name
-     * @param  array  $policy_map
+     * @param  string|null  $package
      * @param  string|null  $domain
+     * @param  array  $policy_map
      * @return Collection|null
      */
-    public function getPolicies(string $package_name, string $domain = null, array $policy_map = []): ?Collection
+    public function getPolicies(string $package = null, string $domain = null, array $policy_map = []): ?Collection
     {
-        return $this->getModelRelatedFiles('Policies', $package_name, $domain, $policy_map);
+        return $this->getModelRelatedFiles(self::POLICIES_DIR, $package, $domain, $policy_map);
     }
 
     /**
-     * @param  string  $package_name
+     * @param  string|null  $package
      * @param  string|null  $domain
      * @param  array  $observer_map
      * @return Collection|null
      */
-    public function getObservers(string $package_name, string $domain = null, array $observer_map = []): ?Collection
+    public function getObservers(string $package = null, string $domain = null, array $observer_map = []): ?Collection
     {
-        return $this->getModelRelatedFiles('Observers', $package_name, $domain, $observer_map);
+        return $this->getModelRelatedFiles(self::OBSERVERS_DIR, $package, $domain, $observer_map);
     }
 
     /**
-     * @param  string  $package_name
+     * @param  string|null  $package
      * @param  string|null  $domain
      * @param  array  $repository_map
      * @return Collection|null
      */
-    public function getRepositories(string $package_name, string $domain = null, array $repository_map = []): ?Collection
+    public function getRepositories(string $package = null, string $domain = null, array $repository_map = []): ?Collection
     {
-        return $this->getModelRelatedFiles('Repositories', $package_name, $domain, $repository_map);
+        return $this->getModelRelatedFiles(self::REPOSITORIES_DIR, $package, $domain, $repository_map);
     }
 
     /***** EXCEPTION RELATED *****/

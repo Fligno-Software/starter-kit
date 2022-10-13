@@ -1,6 +1,6 @@
 <?php
 
-namespace Fligno\StarterKit\Providers;
+namespace Fligno\StarterKit\Abstracts;
 
 use Fligno\StarterKit\Traits\UsesProviderStarterKitTrait;
 use Illuminate\Contracts\Foundation\Application;
@@ -36,7 +36,7 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Boot Laravel Files
-        $this->package_domain->bootLaravelFiles();
+        $this->getPackageDomain()->bootLaravelFiles();
 
         // For Console Kernel
         $this->bootConsoleKernel();
@@ -61,6 +61,6 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Register Laravel Files
-        $this->package_domain->registerLaravelFiles();
+        $this->getPackageDomain()->registerLaravelFiles();
     }
 }

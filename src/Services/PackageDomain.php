@@ -2,17 +2,13 @@
 
 namespace Fligno\StarterKit\Services;
 
-use App\Models\Something;
-use App\Providers\AppServiceProvider;
-use Domains\OtherThing\Providers\OtherThingServiceProvider;
-use Dummy\AlMighty\Domains\Something\Providers\SomethingServiceProvider;
-use Dummy\AlMighty\Providers\AlMightyServiceProvider;
 use Exception;
-use Fligno\BoilerplateGenerator\Traits\UsesProviderRoutesTrait;
+use Fligno\StarterKit\Data\ServiceProviderData;
 use Fligno\StarterKit\Traits\UsesProviderMorphMapTrait;
 use Fligno\StarterKit\Traits\UsesProviderObserverMapTrait;
 use Fligno\StarterKit\Traits\UsesProviderPolicyMapTrait;
 use Fligno\StarterKit\Traits\UsesProviderRepositoryMapTrait;
+use Fligno\StarterKit\Traits\UsesProviderRoutesTrait;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Contracts\Foundation\CachesRoutes;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,7 +27,6 @@ use Throwable;
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
  */
-
 class PackageDomain
 {
     use UsesProviderRoutesTrait;
@@ -39,41 +34,6 @@ class PackageDomain
     use UsesProviderObserverMapTrait;
     use UsesProviderPolicyMapTrait;
     use UsesProviderRepositoryMapTrait;
-
-    /**
-     * @var string|null
-     */
-    protected ?string $provider_directory = null;
-
-    /**
-     * @var string|null
-     */
-    protected ?string $parent_directory = null;
-
-    /**
-     * @var string|null
-     */
-    protected ?string $package_path = null;
-
-    /**
-     * @var string|null
-     */
-    protected ?string $package_dir = null;
-
-    /**
-     * @var string|null
-     */
-    protected ?string $package_name = null;
-
-    /**
-     * @var string|null
-     */
-    protected ?string $vendor_name = null;
-
-    /**
-     * @var string|null
-     */
-    protected ?string $domain_name = null;
 
     /**
      * @var Collection|array
@@ -91,37 +51,24 @@ class PackageDomain
     protected Application|null $app = null;
 
     /**
+     * @var ServiceProviderData|null
+     */
+    protected ServiceProviderData|null $provider_data = null;
+
+    /**
      * @var Collection|null
      */
     protected Collection|null $existing_paths = null;
 
     /**
-     * @param ServiceProvider $provider
+     * @param  ServiceProvider  $provider
      */
     public function __construct(protected ServiceProvider $provider)
     {
-        $this->provider_directory = get_dir_from_object_class_dir($this->provider);
-
-        $this->parent_directory = Str::of($this->provider_directory)
-            ->before(StarterKit::DOMAINS_DIR)
-            ->jsonSerialize();
-
-        $this->package_dir = $this->guessComposerJsonFromProvider('name');
-
-        $temp = Str::of($this->provider_directory);
-
-        if ($this->package_dir) {
-            $this->package_path = $temp->before($temp->after($this->package_dir))->jsonSerialize();
-            [$this->vendor_name, $this->package_name] = explode('/', $this->package_dir);
-        }
-
-//        if ($this->provider instanceof SomethingServiceProvider) {
-//            dd($this->provider_directory, $this->parent_directory, $this->package_dir, $this->package_path, $this->vendor_name, $this->package_name);
-//        }
     }
 
     /**
-     * @param ServiceProvider $provider
+     * @param  ServiceProvider  $provider
      * @return PackageDomain
      */
     public static function fromProvider(ServiceProvider $provider): PackageDomain
@@ -129,90 +76,10 @@ class PackageDomain
         return new self($provider);
     }
 
-    /**
-     * Get composer.json contents
-     *
-     * @param  string|null  $key
-     * @return Collection|mixed|null
-     */
-    public function guessComposerJsonFromProvider(string $key = null): mixed
-    {
-        // from this Provider class, traverse up and find the composer.json file
-        // if from a domain, it's easier to find composer.json location by removing everything after domains
-        $directory = Str::of($this->provider_directory)->before('domains')->jsonSerialize();
-        $path = guess_file_or_directory_path($directory, 'composer.json', true);
-
-        $collection = getContentsFromComposerJson($path);
-
-        if ($collection) {
-            return $key ? $collection->get($key) : $collection;
-        }
-
-        return null;
-    }
-
-    // Getters
-
-    /**
-     * @return ServiceProvider
-     */
-    public function getProvider(): ServiceProvider
-    {
-        return $this->provider;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getProviderDirectory(): ?string
-    {
-        return $this->provider_directory;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getPackagePath(): ?string
-    {
-        return $this->package_path;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getPackageDir(): ?string
-    {
-        return $this->package_dir;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getVendorName(): ?string
-    {
-        return $this->vendor_name;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getPackageName(): ?string
-    {
-        return $this->package_name;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getDomainName(): ?string
-    {
-        return $this->domain_name;
-    }
-
     // Setters
 
     /**
-     * @param array|Collection $except_directories
+     * @param  array|Collection  $except_directories
      */
     public function setExceptDirectories(array|Collection $except_directories): void
     {
@@ -220,7 +87,7 @@ class PackageDomain
     }
 
     /**
-     * @param array|Collection $except_directories
+     * @param  array|Collection  $except_directories
      * @return $this
      */
     public function exceptDirectories(array|Collection $except_directories): static
@@ -257,16 +124,15 @@ class PackageDomain
             // set the StarterKit instance to be used by load methods
             $this->kit = $kit;
 
-            // add current package/domain to StarterKit
-            $kit->addToPaths($this->getPackageDir(), $this->getPackagePath(), $this->getDomainName());
+            $this->provider_data = $kit->addToProviders($this->provider);
 
             // set Application instance to be used by loader methods
             $this->app = $app;
 
             // set existing paths to be used by
             $this->existing_paths = $kit->getPathsOnly(
-                $this->getPackageDir(),
-                $this->getDomainName(),
+                $this->provider_data->package,
+                $this->provider_data->domain,
                 $kit->getTargetDirectories()->diff($this->except_directories)->toArray()
             );
 
@@ -288,7 +154,7 @@ class PackageDomain
     protected function loadHelpers(): static
     {
         if ($this->existing_paths?->has(StarterKit::HELPERS_DIR)) {
-            $this->kit->getHelpers($this->getPackageDir(), $this->getDomainName())
+            $this->kit->getHelpers($this->provider_data->package, $this->provider_data->domain)
                 ->each(function ($item) {
                     file_exists($item['path']) && require $item['path'];
                 });
@@ -310,7 +176,7 @@ class PackageDomain
             $this->existing_paths?->has(StarterKit::CONFIG_DIR) &&
             ! ($this->app instanceof CachesConfiguration && $this->app->configurationIsCached())
         ) {
-            $this->kit->getConfigs($this->getPackageDir(), $this->getDomainName())
+            $this->kit->getConfigs($this->provider_data->package, $this->provider_data->domain)
                 ->each(function ($item) {
                     $path = $item['path'];
 
@@ -339,10 +205,10 @@ class PackageDomain
     protected function loadMigrations(): static
     {
         if ($this->existing_paths?->has(StarterKit::MIGRATIONS_DIR)) {
-            $paths = $this->kit->getMigrationsPath($this->getPackageDir(), $this->getDomainName());
+            $paths = $this->kit->getMigrationsPath($this->provider_data->package, $this->provider_data->domain);
 
             callAfterResolvingService('migrator', function (Migrator $migrator) use ($paths) {
-                $paths->each(function($path) use ($migrator) {
+                $paths->each(function ($path) use ($migrator) {
                     file_exists($path) && $migrator->path($path);
                 });
             });
@@ -436,7 +302,7 @@ class PackageDomain
     protected function loadObservers(): static
     {
         if ($this->existing_paths?->has(StarterKit::OBSERVERS_DIR)) {
-            $this->kit->getObservers($this->getPackageDir(), $this->getDomainName(), $this->getObserverMap())
+            $this->kit->getObservers($this->provider_data->package, $this->provider_data->domain, $this->getObserverMap())
                 ->each(function ($model, $observer) {
                     if ($model instanceof Collection) {
                         $model = $model->first();
@@ -463,7 +329,7 @@ class PackageDomain
     protected function loadPolicies(): static
     {
         if ($this->existing_paths?->has(StarterKit::POLICIES_DIR)) {
-            $this->kit->getPolicies($this->getPackageDir(), $this->getDomainName(), $this->getPolicyMap())
+            $this->kit->getPolicies($this->provider_data->package, $this->provider_data->domain, $this->getPolicyMap())
                 ->each(function ($model, $policy) {
                     if ($model instanceof Collection) {
                         $model = $model->first();
@@ -490,14 +356,14 @@ class PackageDomain
     protected function loadRepositories(): static
     {
         if ($this->existing_paths?->has(StarterKit::REPOSITORIES_DIR)) {
-            $this->kit->getRepositories($this->getPackageDir(), $this->getDomainName(), $this->getRepositoryMap())
+            $this->kit->getRepositories($this->provider_data->package, $this->provider_data->domain, $this->getRepositoryMap())
                 ->each(function ($model, $repository) {
                     if ($model instanceof Collection) {
                         $model = $model->first();
                     }
                     try {
-                        app()->when($repository)->needs(Builder::class)->give(fn(
-                        ) => call_user_func($model . '::query'));
+                        app()->when($repository)->needs(Builder::class)->give(fn (
+                        ) => call_user_func($model.'::query'));
                     } catch (Exception) {
                         starterKit()->clearCache();
                     }
@@ -516,7 +382,7 @@ class PackageDomain
             $this->existing_paths?->has(StarterKit::ROUTES_DIR) &&
             ! ($this->app instanceof CachesRoutes && $this->app->routesAreCached())
         ) {
-            $routes = $this->kit->getRoutes($this->getPackageDir(), $this->getDomainName())
+            $routes = $this->kit->getRoutes($this->provider_data->package, $this->provider_data->domain)
                 ->filter(fn ($item) => file_exists($item['path']))
                 ->when($this->shouldPrefixRouteWithDirectory(), function (Collection $collection) {
                     return $collection->map(function ($item) {
@@ -596,8 +462,8 @@ class PackageDomain
     }
 
     /**
-     * @param bool $is_api
-     * @param array|null $append_to_prefix
+     * @param  bool  $is_api
+     * @param  array|null  $append_to_prefix
      * @return string[]
      */
     public function getRouteConfiguration(bool $is_api, array $append_to_prefix = null): array
@@ -662,5 +528,3 @@ class PackageDomain
         return $this;
     }
 }
-
-
