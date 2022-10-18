@@ -1,6 +1,6 @@
 <?php
 
-namespace Fligno\StarterKit;
+namespace Fligno\StarterKit\Services;
 
 use Fligno\StarterKit\Traits\UsesDataParsingTrait;
 use Illuminate\Http\JsonResponse;
@@ -9,7 +9,7 @@ use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\Str;
 
 /**
- * Class ExtendedResponse
+ * Class CustomResponse
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
  *
@@ -20,7 +20,7 @@ use Illuminate\Support\Str;
  *  The creation of response as well as creating a unified response format
  *  The end of your chain must always end with the generate() function
  */
-class ExtendedResponse
+class CustomResponse
 {
     use UsesDataParsingTrait;
 
@@ -77,7 +77,7 @@ class ExtendedResponse
      * @param  int  $code
      * @return $this
      */
-    public function code(int $code): ExtendedResponse
+    public function code(int $code): CustomResponse
     {
         $this->code = $code;
 
@@ -94,7 +94,7 @@ class ExtendedResponse
      * @param  int  $code
      * @return $this
      */
-    public function success(int $code = 200): ExtendedResponse
+    public function success(int $code = 200): CustomResponse
     {
         $this->code = $code;
         $this->success = true;
@@ -108,7 +108,7 @@ class ExtendedResponse
      * @param  int  $code
      * @return $this
      */
-    public function failed(int $code = 400): ExtendedResponse
+    public function failed(int $code = 400): CustomResponse
     {
         $this->code = $code;
         $this->success = false;
@@ -122,7 +122,7 @@ class ExtendedResponse
      *
      * @return $this
      */
-    public function unauthorized(): ExtendedResponse
+    public function unauthorized(): CustomResponse
     {
         $this->code = 401;
         $this->success = false;
@@ -135,7 +135,7 @@ class ExtendedResponse
      *
      * @return $this
      */
-    public function forbidden(): ExtendedResponse
+    public function forbidden(): CustomResponse
     {
         $this->code = 403;
         $this->success = false;
@@ -148,7 +148,7 @@ class ExtendedResponse
      *
      * @return $this
      */
-    public function notFound(): ExtendedResponse
+    public function notFound(): CustomResponse
     {
         $this->code = 404;
         $this->success = false;
@@ -162,7 +162,7 @@ class ExtendedResponse
      * @param  string  $value
      * @return $this
      */
-    public function slug(string $value): ExtendedResponse
+    public function slug(string $value): CustomResponse
     {
         $this->slug = $value;
 
@@ -175,7 +175,7 @@ class ExtendedResponse
      * @param  array|string|null  $value
      * @return $this
      */
-    public function message(array|string|null $value): ExtendedResponse
+    public function message(array|string|null $value): CustomResponse
     {
         if (is_string($value)) {
             $value = [$value];
@@ -210,7 +210,7 @@ class ExtendedResponse
      * @param  mixed  $value
      * @return $this
      */
-    public function data(mixed $value = null): ExtendedResponse
+    public function data(mixed $value = null): CustomResponse
     {
         if ($value instanceof ResourceCollection) {
             $pagination = $value->response(request())->getData(true);

@@ -2,10 +2,6 @@
 
 namespace Fligno\StarterKit\Traits;
 
-use Exception;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Gate;
-
 /**
  * Trait UsesProviderPolicyMapTrait
  *
@@ -29,28 +25,33 @@ trait UsesProviderPolicyMapTrait
      */
     public function arePoliciesEnabled(): bool
     {
-        return config('starter-kit.policies_enabled');
+        return config('starter-kit.policies_enabled', true);
     }
 
     /**
-     * Load Policies
-     *
-     * @param  Collection|null  $policies
-     * @return void
+     * @return array
      */
-    protected function loadPolicies(Collection $policies = null): void
+    public function getPolicyMap(): array
     {
-        $policies?->each(
-            static function ($model, $policy) {
-                if ($model instanceof Collection) {
-                    $model = $model->first();
-                }
-                try {
-                    Gate::policy($model, $policy);
-                } catch (Exception) {
-                    starterKit()->clearCache();
-                }
-            }
-        );
+        return $this->policy_map;
+    }
+
+    /**
+     * @param  array  $policy_map
+     */
+    public function setPolicyMap(array $policy_map): void
+    {
+        $this->policy_map = $policy_map;
+    }
+
+    /**
+     * @param  array  $policy_map
+     * @return $this
+     */
+    public function policyMap(array $policy_map): static
+    {
+        $this->setPolicyMap($policy_map);
+
+        return $this;
     }
 }

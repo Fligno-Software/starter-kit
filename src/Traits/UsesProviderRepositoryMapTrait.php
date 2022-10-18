@@ -2,10 +2,6 @@
 
 namespace Fligno\StarterKit\Traits;
 
-use Exception;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
-
 /**
  * Trait UsesProviderRepositoryMapTrait
  *
@@ -27,27 +23,33 @@ trait UsesProviderRepositoryMapTrait
      */
     public function areRepositoriesEnabled(): bool
     {
-        return config('starter-kit.repositories_enabled');
+        return config('starter-kit.repositories_enabled', true);
     }
 
     /**
-     * Load Repositories
-     *
-     * @param  Collection|null  $repositories
-     * @return void
+     * @return array
      */
-    protected function loadRepositories(Collection $repositories = null): void
+    public function getRepositoryMap(): array
     {
-        $repositories?->each(function ($model, $repository) {
-            if ($model instanceof Collection) {
-                $model = $model->first();
-            }
-            try {
-                app()->when($repository)->needs(Builder::class)->give(fn () => call_user_func($model.'::query'));
-            } catch (Exception) {
-                starterKit()->clearCache();
-            }
-        }
-        );
+        return $this->repository_map;
+    }
+
+    /**
+     * @param  array  $repository_map
+     */
+    public function setRepositoryMap(array $repository_map): void
+    {
+        $this->repository_map = $repository_map;
+    }
+
+    /**
+     * @param  array  $repository_map
+     * @return $this
+     */
+    public function repositoryMap(array $repository_map): static
+    {
+        $this->setRepositoryMap($repository_map);
+
+        return $this;
     }
 }

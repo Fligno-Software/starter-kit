@@ -2,13 +2,8 @@
 
 namespace Fligno\StarterKit\Interfaces;
 
-use App\Models\User;
-use Fligno\StarterKit\Abstracts\BaseJsonSerializable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Client\Response;
-use Illuminate\Http\Request;
 
 /**
  * Interface RepositoryInterface
@@ -20,70 +15,48 @@ use Illuminate\Http\Request;
 interface RepositoryInterface
 {
     /**
-     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null  $attributes
-     * @param  User|null  $user
-     * @return Collection|array
+     * @param  mixed  $attributes
+     * @return Collection|array|null
      */
-    public function all(
-        BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes = null,
-        User $user = null
-    ): Collection|array;
+    public function all(mixed $attributes = null): Collection|array|null;
 
     /**
-     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array  $attributes
-     * @param  User|null  $user
+     * @param  mixed  $attributes
      * @return Model|null
      */
-    public function create(
-        BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes,
-        User $user = null
-    ): Model|null;
+    public function make(mixed $attributes = null): Model|null;
 
     /**
-     * @param  int|string  $id
-     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null  $attributes
-     * @param  User|null  $user
-     * @return Model|Collection|Builder|array|null
-     */
-    public function get(
-        int|string $id,
-        BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes = null,
-        User $user = null
-    ): Model|Collection|Builder|array|null;
-
-    /**
-     * @param  int|string  $id
-     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null  $attributes
-     * @param  User|null  $user
+     * @param  mixed  $attributes
      * @return Model|null
      */
-    public function update(
-        int|string $id,
-        BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes = null,
-        User $user = null
-    ): Model|null;
+    public function create(mixed $attributes = null): Model|null;
 
     /**
-     * @param  int|string  $id
-     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null  $attributes
-     * @param  User|null  $user
-     * @return Model|null
+     * @param  int|string|array|null  $id
+     * @param  mixed  $attributes
+     * @return Model|Collection|array|null
      */
-    public function delete(
-        int|string $id,
-        BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes = null,
-        User $user = null
-    ): Model|null;
+    public function get(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null;
 
     /**
-     * @param  int|string  $id
-     * @param  BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array|null  $attributes
-     * @param  User|null  $user
-     * @return Model|null
+     * @param  int|string|array|null  $id
+     * @param  mixed  $attributes
+     * @return Model|Collection|array|null
      */
-    public function restore(
-        int|string $id,
-        BaseJsonSerializable|Response|Request|\Illuminate\Support\Collection|Model|array $attributes = null,
-        User $user = null
-    ): Model|null;
+    public function update(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null;
+
+    /**
+     * @param  int|string|array|null  $id
+     * @param  mixed  $attributes
+     * @return Model|Collection|array|null
+     */
+    public function delete(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null;
+
+    /**
+     * @param  int|string|array|null  $id
+     * @param  mixed  $attributes
+     * @return Model|Collection|array|null
+     */
+    public function restore(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null;
 }

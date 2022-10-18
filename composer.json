@@ -20,14 +20,10 @@
         "php": "^8.0",
         "illuminate/support": "~7|~8|~9",
         "composer/composer": "^2.0",
-        "knuckleswtf/scribe": "^3.16.0",
         "laravel/telescope": "^4.8",
-        "laravel/horizon": "^5.9",
         "ext-zlib": "*",
-        "laravel/pint": "^1.0",
         "sentry/sentry-laravel": "^2.13",
-        "hammerstone/fast-paginate": "^0.1.7",
-        "brainmaestro/composer-git-hooks": "*"
+        "hammerstone/fast-paginate": "^0.1.7"
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest",
@@ -50,16 +46,16 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Fligno\\StarterKit\\StarterKitServiceProvider"
+                "Fligno\\StarterKit\\Providers\\StarterKitServiceProvider"
             ],
             "aliases": {
                 "StarterKit": "Fligno\\StarterKit\\Facades\\StarterKit"
             }
         },
         "branch-alias": {
-            "dev-master": "2.x.x-dev",
-            "dev-develop": "2.x.x-dev",
-            "dev-feature": "2.x.x-dev"
+            "dev-master": "3.0.x-dev",
+            "dev-develop": "3.0.x-dev",
+            "dev-feature": "3.0.x-dev"
         }
     }
 }

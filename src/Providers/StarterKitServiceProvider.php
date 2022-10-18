@@ -1,16 +1,19 @@
 <?php
 
-namespace Fligno\StarterKit;
+namespace Fligno\StarterKit\Providers;
 
+use Fligno\StarterKit\Abstracts\BaseStarterKitServiceProvider as ServiceProvider;
 use Fligno\StarterKit\Console\Commands\StarterKitClearCacheCommand;
 use Fligno\StarterKit\Console\Commands\StarterKitGitHooksApplyCommand;
 use Fligno\StarterKit\Console\Commands\StarterKitGitHooksPublishCommand;
 use Fligno\StarterKit\Console\Commands\StarterKitGitHooksRemoveCommand;
 use Fligno\StarterKit\Exceptions\Handler;
-use Fligno\StarterKit\Providers\BaseStarterKitServiceProvider as ServiceProvider;
+use Fligno\StarterKit\Services\CustomResponse;
+use Fligno\StarterKit\Services\StarterKit;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use function Pest\Laravel\get;
 use Throwable;
 
 class StarterKitServiceProvider extends ServiceProvider
@@ -19,10 +22,7 @@ class StarterKitServiceProvider extends ServiceProvider
      * @var string[]
      */
     protected array $commands = [
-        StarterKitClearCacheCommand::class,
-        StarterKitGitHooksApplyCommand::class,
-        StarterKitGitHooksRemoveCommand::class,
-        StarterKitGitHooksPublishCommand::class,
+        StarterKitClearCacheCommand::class
     ];
 
     /**
@@ -37,25 +37,25 @@ class StarterKitServiceProvider extends ServiceProvider
         // Register Custom Exception Handler
         if (starterKit()->shouldOverrideExceptionHandler()) {
             $this->app->singleton(ExceptionHandler::class, Handler::class);
+
+            starterKit()->addExceptionRender(ModelNotFoundException::class, function (Throwable $e) {
+                return customResponse()
+                    ->data([])
+                    ->message('The identifier you are querying does not exist.')
+                    ->slug('no_query_result')
+                    ->failed(404)
+                    ->generate();
+            });
+
+            starterKit()->addExceptionRender(AuthorizationException::class, function (Throwable $e) {
+                return customResponse()
+                    ->data([])
+                    ->message('You do not have right to access this resource.')
+                    ->slug('forbidden_request')
+                    ->failed(403)
+                    ->generate();
+            });
         }
-
-        starterKit()->addExceptionRender(ModelNotFoundException::class, function (Throwable $e) {
-            return customResponse()
-                ->data([])
-                ->message('The identifier you are querying does not exist.')
-                ->slug('no_query_result')
-                ->failed(404)
-                ->generate();
-        });
-
-        starterKit()->addExceptionRender(AuthorizationException::class, function (Throwable $e) {
-            return customResponse()
-                ->data([])
-                ->message('You do not have right to access this resource.')
-                ->slug('forbidden_request')
-                ->failed(403)
-                ->generate();
-        });
     }
 
     /**
@@ -65,8 +65,8 @@ class StarterKitServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/starter-kit.php', 'starter-kit');
-        $this->mergeConfigFrom(__DIR__.'/../config/git-hooks.php', 'git-hooks');
+        $this->mergeConfigFrom(__DIR__.'/../../config/starter-kit.php', 'starter-kit');
+        $this->mergeConfigFrom(__DIR__.'/../../config/git-hooks.php', 'git-hooks');
 
         // Register the service the package provides.
         $this->app->singleton(
@@ -78,9 +78,9 @@ class StarterKitServiceProvider extends ServiceProvider
 
         // Register the service the package provides.
         $this->app->bind(
-            'extended-response',
+            'custom-response',
             function () {
-                return new ExtendedResponse();
+                return new CustomResponse();
             }
         );
 
@@ -94,7 +94,7 @@ class StarterKitServiceProvider extends ServiceProvider
      */
     public function provides(): array
     {
-        return ['starter-kit', 'extended-response'];
+        return ['starter-kit', 'custom-response'];
     }
 
     /**
@@ -139,14 +139,6 @@ class StarterKitServiceProvider extends ServiceProvider
     }
 
     /**
-     * @return bool
-     */
-    public function areHelpersEnabled(): bool
-    {
-        return false;
-    }
-
-    /**
      * @return string|null
      */
     public function getRoutePrefix(): ?string
@@ -161,5 +153,21 @@ class StarterKitServiceProvider extends ServiceProvider
     public function getDefaultRouteMiddleware(bool $is_api): array
     {
         return [];
+    }
+
+    /**
+     * @return bool
+     */
+    public function areHelpersEnabled(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function areConfigsEnabled(): bool
+    {
+        return false;
     }
 }

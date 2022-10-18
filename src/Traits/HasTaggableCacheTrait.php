@@ -49,7 +49,7 @@ trait HasTaggableCacheTrait
      */
     public function getTags(...$tags): array
     {
-        return collect($this->getMainTag())->merge($tags)->filter()->toArray();
+        return collect([config('app.key'), $this->getMainTag()])->merge($tags)->filter()->toArray();
     }
 
     /**
