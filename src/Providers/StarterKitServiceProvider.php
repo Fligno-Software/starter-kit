@@ -22,10 +22,7 @@ class StarterKitServiceProvider extends ServiceProvider
      * @var string[]
      */
     protected array $commands = [
-        StarterKitClearCacheCommand::class,
-        StarterKitGitHooksApplyCommand::class,
-        StarterKitGitHooksRemoveCommand::class,
-        StarterKitGitHooksPublishCommand::class,
+        StarterKitClearCacheCommand::class
     ];
 
     /**

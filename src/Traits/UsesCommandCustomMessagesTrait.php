@@ -3,6 +3,7 @@
 namespace Fligno\StarterKit\Traits;
 
 use Illuminate\Support\Str;
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 
 /**
  * Trait UsesCommandCustomMessagesTrait
@@ -40,7 +41,8 @@ trait UsesCommandCustomMessagesTrait
      */
     public function failed(string $message, int|string $verbosity = null): void
     {
-        $this->error(Str::finish('<fg=white;bg=red>[ ERROR ]</> '.$message, '.'), $verbosity);
+        $this->setupOutputFormatters();
+        $this->error(Str::finish('<red-bg-bold>[ ERROR ]</red-bg-bold> '.$message, '.'), $verbosity);
     }
 
     /**
@@ -50,7 +52,8 @@ trait UsesCommandCustomMessagesTrait
      */
     public function warning(string $message, int|string $verbosity = null): void
     {
-        $this->warn(Str::finish('<fg=white;bg=yellow>[ WARNING ]</> '.$message, '.'), $verbosity);
+        $this->setupOutputFormatters();
+        $this->warn(Str::finish('<yellow-bg-bold>[ WARNING ]</yellow-bg-bold> '.$message, '.'), $verbosity);
     }
 
     /**
@@ -61,6 +64,22 @@ trait UsesCommandCustomMessagesTrait
      */
     public function note(string $message, string $title = 'INFO', int|string $verbosity = null): void
     {
-        $this->info(Str::finish('<fg=white;bg=green>[ '.$title.' ]</> '.$message, '.'), $verbosity);
+        $this->setupOutputFormatters();
+        $this->info(Str::finish('<green-bg-bold>[ '.$title.' ]</green-bg-bold> '.$message, '.'), $verbosity);
+    }
+
+    /**
+     * @return void
+     */
+    private function setupOutputFormatters(): void
+    {
+        $colors = ['green', 'yellow', 'red', 'white'];
+
+        foreach ($colors as $color) {
+            $this->output->getFormatter()->setStyle($color.'-bg-bold', new OutputFormatterStyle('white', $color, ['bold']));
+            $this->output->getFormatter()->setStyle($color.'-bold', new OutputFormatterStyle($color, null, ['bold']));
+        }
+
+        $this->output->getFormatter()->setStyle('blink-icon', new OutputFormatterStyle(options: ['blink']));
     }
 }

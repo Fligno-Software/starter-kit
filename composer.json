@@ -23,8 +23,7 @@
         "laravel/telescope": "^4.8",
         "ext-zlib": "*",
         "sentry/sentry-laravel": "^2.13",
-        "hammerstone/fast-paginate": "^0.1.7",
-        "brainmaestro/composer-git-hooks": "*"
+        "hammerstone/fast-paginate": "^0.1.7"
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest",
@@ -54,9 +53,9 @@
             }
         },
         "branch-alias": {
-            "dev-master": "2.1.x-dev",
-            "dev-develop": "2.1.x-dev",
-            "dev-feature": "2.1.x-dev"
+            "dev-master": "3.0.x-dev",
+            "dev-develop": "3.0.x-dev",
+            "dev-feature": "3.0.x-dev"
         }
     }
 }
