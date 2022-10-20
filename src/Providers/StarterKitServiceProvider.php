@@ -4,9 +4,6 @@ namespace Fligno\StarterKit\Providers;
 
 use Fligno\StarterKit\Abstracts\BaseStarterKitServiceProvider as ServiceProvider;
 use Fligno\StarterKit\Console\Commands\StarterKitClearCacheCommand;
-use Fligno\StarterKit\Console\Commands\StarterKitGitHooksApplyCommand;
-use Fligno\StarterKit\Console\Commands\StarterKitGitHooksPublishCommand;
-use Fligno\StarterKit\Console\Commands\StarterKitGitHooksRemoveCommand;
 use Fligno\StarterKit\Exceptions\Handler;
 use Fligno\StarterKit\Services\CustomResponse;
 use Fligno\StarterKit\Services\StarterKit;
@@ -22,7 +19,7 @@ class StarterKitServiceProvider extends ServiceProvider
      * @var string[]
      */
     protected array $commands = [
-        StarterKitClearCacheCommand::class
+        StarterKitClearCacheCommand::class,
     ];
 
     /**
