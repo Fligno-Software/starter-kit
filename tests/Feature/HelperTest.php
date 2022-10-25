@@ -16,7 +16,7 @@ it('can update env variables', function (string $key, string $value, string|null
     $find[] = get_combined_key_value($key, $value);
 
     if ($title) {
-        $find[] = Str::of($title)->headline()->prepend('# ')->jsonSerialize();
+        $find[] = Str::of($title)->prepend('# ')->jsonSerialize();
     }
 
     assertTrue(Str::contains(file_get_contents(base_path('.env')), $find));

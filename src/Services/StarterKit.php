@@ -88,11 +88,11 @@ class StarterKit
 
     /**
      * @param  string|null  $package
-     * @param  string|null  $domain_name
+     * @param  string|null  $domain
      * @param  bool  $rehydrate
      * @return Collection
      */
-    public function getPaths(string $package = null, string $domain_name = null, bool $rehydrate = false): Collection
+    public function getPaths(string $package = null, string $domain = null, bool $rehydrate = false): Collection
     {
         $tags = $this->getTags();
         $key = 'paths';
@@ -104,8 +104,8 @@ class StarterKit
         }
 
         // Since domain name might contain dots due to encoding, dot notation is not possible.
-        if ($domain_name && $result && isset($result[self::DOMAINS_DIR][$domain_name])) {
-            $result = $result[self::DOMAINS_DIR][$domain_name];
+        if ($domain && $result && isset($result[self::DOMAINS_DIR][$domain])) {
+            $result = $result[self::DOMAINS_DIR][$domain];
         }
 
         return collect($result);
@@ -121,6 +121,19 @@ class StarterKit
         $key = 'providers';
 
         return $this->getCache($tags, $key, fn () => collect($this->providers), $rehydrate);
+    }
+
+    /**
+     * @param  string|null  $package
+     * @param  string|null  $domain
+     * @return Collection<ServiceProvider>
+     */
+    public function getProvidersFromList(string $package = null, string $domain = null): Collection
+    {
+        return $this->getProviders()
+            ->where('package', $package)
+            ->where('domain', $domain)
+            ->pluck('provider');
     }
 
     /**
@@ -141,6 +154,11 @@ class StarterKit
         $providers->put($class, $data);
         $this->providers = $providers->toArray();
         $this->getProviders(rehydrate: true);
+
+        // Publish Environment Variables
+        if ($this->shouldPublishEnvVars()) {
+            $data->publishEnvVars();
+        }
 
         return $data;
     }
@@ -586,6 +604,14 @@ class StarterKit
     }
 
     /***** OTHER METHODS *****/
+
+    /**
+     * @return bool
+     */
+    public function shouldPublishEnvVars(): bool
+    {
+        return config('starter-kit.publish_env_vars', true);
+    }
 
     /**
      * @return bool

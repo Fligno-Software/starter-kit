@@ -21,6 +21,7 @@ trait UsesProviderStarterKitTrait
     use UsesProviderHttpKernelTrait;
     use UsesProviderConsoleKernelTrait;
     use UsesProviderRoutesTrait;
+    use UsesProviderEnvVarsTrait;
 
     /**
      * Artisan Commands

@@ -3,6 +3,7 @@
 namespace Fligno\StarterKit\Data;
 
 use Fligno\StarterKit\Abstracts\BaseJsonSerializable;
+use Fligno\StarterKit\Abstracts\BaseStarterKitServiceProvider;
 use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -24,6 +25,11 @@ class ServiceProviderData extends BaseJsonSerializable
      * @var string
      */
     public string $composer;
+
+    /**
+     * @var ServiceProvider
+     */
+    public ServiceProvider $provider;
 
     /**
      * @var string|null
@@ -51,6 +57,7 @@ class ServiceProviderData extends BaseJsonSerializable
         // Add to StarterKit's paths
         if ($data instanceof ServiceProvider) {
             starterKit()->addToPaths($this);
+            $this->provider = $data;
         }
     }
 
@@ -103,5 +110,34 @@ class ServiceProviderData extends BaseJsonSerializable
     public function getPackageDomainData(): Collection
     {
         return starterKit()->getPaths($this->package, $this->domain);
+    }
+
+    /**
+     * @return Collection|null
+     */
+    public function getPackageEnvVars(): Collection|null
+    {
+        if ($this->provider instanceof BaseStarterKitServiceProvider) {
+            return collect($this->provider->getEnvVars())->map(fn ($item) => is_string($item) ? $item : json_encode($item));
+        }
+
+        return null;
+    }
+
+    /**
+     * @return bool
+     */
+    public function publishEnvVars(): bool
+    {
+        if ($env_vars = $this->getPackageEnvVars()) {
+            $title = $this->package ?? 'Laravel';
+            if ($this->domain) {
+                $title .= ' ('.$this->domain.')';
+            }
+
+            return add_contents_to_env($env_vars, $title);
+        }
+
+        return false;
     }
 }
