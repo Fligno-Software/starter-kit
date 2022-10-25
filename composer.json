@@ -30,6 +30,9 @@
         "phpunit/phpunit": "~9.0",
         "orchestra/testbench": "~5|~6|~7"
     },
+    "suggest": {
+        "fligno/boilerplate-generator": "^2.1"
+    },
     "autoload": {
         "psr-4": {
             "Fligno\\StarterKit\\": "src/"
