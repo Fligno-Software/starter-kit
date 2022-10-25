@@ -994,14 +994,24 @@ if (! function_exists('add_contents_to_env')) {
      * @param  Collection|array  $contents
      * @param  string|null  $title
      * @param  bool  $override
+     * @param  bool  $force
      * @return bool
      */
-    function add_contents_to_env(Collection|array $contents, string $title = null, bool $override = false): bool
-    {
+    function add_contents_to_env(
+        Collection|array $contents,
+        string $title = null,
+        bool $override = false,
+        bool $force = false
+    ): bool {
         // Get contents from composer.json
         $path = App::environmentFilePath();
 
-        if (App::configurationIsCached() || ! file_exists($path) || ! ($env = file_get_contents($path))) {
+        if (
+            (! $force && ! App::isLocal()) ||
+            App::configurationIsCached() ||
+            ! file_exists($path) ||
+            ! ($env = file_get_contents($path))
+        ) {
             return false;
         }
 
@@ -1037,7 +1047,6 @@ if (! function_exists('add_contents_to_env')) {
                 ->when(
                     $title->isNotEmpty(),
                     fn (Collection $collection) => $collection->prepend($title
-                        ->headline()
                         ->start('# ')
                         ->append(PHP_EOL)
                         ->jsonSerialize()
@@ -1057,11 +1066,16 @@ if (! function_exists('addContentsToEnv')) {
      * @param  Collection|array  $contents
      * @param  string|null  $title
      * @param  bool  $override
+     * @param  bool  $force
      * @return bool
      */
-    function addContentsToEnv(Collection|array $contents, string $title = null, bool $override = false): bool
-    {
-        return add_contents_to_env($contents, $title, $override);
+    function addContentsToEnv(
+        Collection|array $contents,
+        string $title = null,
+        bool $override = false,
+        bool $force = false
+    ): bool {
+        return add_contents_to_env($contents, $title, $override, $force);
     }
 }
 

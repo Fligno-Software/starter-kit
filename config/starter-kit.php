@@ -17,4 +17,5 @@ return [
     'verify_ssl' => env('SK_VERIFY_SSL', true),
     'sentry_enabled' => env('SK_SENTRY_ENABLED', false),
     'sentry_test_api_enabled' => env('SK_SENTRY_TEST_API_ENABLED', false),
+    'publish_env_vars' => env('SK_PUBLISH_ENV_VARS', true),
 ];

@@ -10,7 +10,6 @@ use Fligno\StarterKit\Services\StarterKit;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use function Pest\Laravel\get;
 use Throwable;
 
 class StarterKitServiceProvider extends ServiceProvider
@@ -20,6 +19,30 @@ class StarterKitServiceProvider extends ServiceProvider
      */
     protected array $commands = [
         StarterKitClearCacheCommand::class,
+    ];
+
+    /**
+     * Publishable Environment Variables
+     *
+     * @example [ 'SK_OVERRIDE_EXCEPTION_HANDLER' => true ]
+     *
+     * @var array
+     */
+    protected array $env_vars = [
+        'SK_OVERRIDE_EXCEPTION_HANDLER' => false,
+        'SK_ENFORCE_MORPH_MAP' => true,
+        'SK_DYNAMIC_RELATIONSHIP_ENABLED' => true,
+        'SK_CONFIGS_ENABLED' => true,
+        'SK_MIGRATIONS_ENABLED' => true,
+        'SK_ROUTES_ENABLED' => true,
+        'SK_TRANSLATIONS_ENABLED' => true,
+        'SK_REPOSITORIES_ENABLED' => true,
+        'SK_POLICIES_ENABLED' => true,
+        'SK_OBSERVERS_ENABLED' => true,
+        'SK_VERIFY_SSL' => true,
+        'SK_SENTRY_ENABLED' => false,
+        'SK_SENTRY_TEST_API_ENABLED' => false,
+        'SK_PUBLISH_ENV_VARS' => true,
     ];
 
     /**
