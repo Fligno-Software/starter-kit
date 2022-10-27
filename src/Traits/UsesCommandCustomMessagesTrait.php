@@ -106,8 +106,8 @@ trait UsesCommandCustomMessagesTrait
         ];
 
         foreach ($colors as $color) {
-            $this->output->getFormatter()->setStyle($color.'-bg-bold', new OutputFormatterStyle('default', $color, ['bold']));
-            $this->output->getFormatter()->setStyle($color.'-bg-bold-blink', new OutputFormatterStyle('default', $color, ['bold', 'blink']));
+            $this->output->getFormatter()->setStyle($color.'-bg-bold', new OutputFormatterStyle(null, $color, ['bold']));
+            $this->output->getFormatter()->setStyle($color.'-bg-bold-blink', new OutputFormatterStyle(null, $color, ['bold', 'blink']));
             $this->output->getFormatter()->setStyle($color.'-bold', new OutputFormatterStyle($color, null, ['bold']));
             $this->output->getFormatter()->setStyle($color.'-bold-blink', new OutputFormatterStyle($color, null, ['bold', 'blink']));
         }
