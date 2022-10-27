@@ -18,6 +18,8 @@ use Symfony\Component\Console\Helper\TableStyle;
  */
 trait UsesCommandCustomMessagesTrait
 {
+    protected bool $has_set_output_formatters = false;
+
     /**
      * @param  string  $message
      * @param  bool  $add_ellipsis
@@ -26,7 +28,7 @@ trait UsesCommandCustomMessagesTrait
      */
     public function ongoing(string $message, bool $add_ellipsis = true, int|string $verbosity = null): void
     {
-        $message = $message.($add_ellipsis ? '...' : null);
+        $message = Str::of($message)->when($add_ellipsis, fn(Stringable $str) => $str->finish('...'))->jsonSerialize();
         $this->note(message: $message, title: 'ONGOING', verbosity: $verbosity);
     }
 
@@ -48,7 +50,7 @@ trait UsesCommandCustomMessagesTrait
     public function failed(string $message, int|string $verbosity = null): void
     {
         $this->setupOutputFormatters();
-        $this->error(Str::finish('<red-bg-bold>[ ERROR ]</red-bg-bold> '.$message, '.'), $verbosity);
+        $this->error(Str::finish("<red-bg-bold>[ ERROR ]</red-bg-bold> $message", '.'), $verbosity);
     }
 
     /**
@@ -59,7 +61,7 @@ trait UsesCommandCustomMessagesTrait
     public function warning(string $message, int|string $verbosity = null): void
     {
         $this->setupOutputFormatters();
-        $this->warn(Str::finish('<yellow-bg-bold>[ WARNING ]</yellow-bg-bold> '.$message, '.'), $verbosity);
+        $this->warn(Str::finish("<yellow-bg-bold>[ WARNING ]</yellow-bg-bold> $message", '.'), $verbosity);
     }
 
     /**
@@ -72,8 +74,13 @@ trait UsesCommandCustomMessagesTrait
     public function note(string $message, string $title = 'INFO', bool $add_period = true, int|string $verbosity = null): void
     {
         $this->setupOutputFormatters();
-        $message = "<green-bg-bold>[ $title ]</green-bg-bold> $message";
-        $this->info(Str::of($message)->when($add_period, fn (Stringable $str) => $str->finish('.'))->jsonSerialize(), $verbosity);
+        $message = Str::of("<green-bg-bold>[ $title ]</green-bg-bold> $message");
+
+        if (! $message->endsWith('.')) {
+            $message = Str::of($message)->when($add_period, fn (Stringable $str) => $str->finish('.'));
+        }
+
+        $this->info($message->jsonSerialize(), $verbosity);
     }
 
     /**
@@ -81,6 +88,11 @@ trait UsesCommandCustomMessagesTrait
      */
     private function setupOutputFormatters(): void
     {
+        // Skip if already set
+        if ($this->has_set_output_formatters) {
+            return;
+        }
+
         $colors = [
             'black',
             'red',
@@ -94,13 +106,18 @@ trait UsesCommandCustomMessagesTrait
         ];
 
         foreach ($colors as $color) {
-            $this->output->getFormatter()->setStyle($color.'-bg-bold', new OutputFormatterStyle('default', $color, ['bold']));
-            $this->output->getFormatter()->setStyle($color.'-bg-bold-blink', new OutputFormatterStyle('default', $color, ['bold', 'blink']));
+            $this->output->getFormatter()->setStyle($color.'-bg-bold', new OutputFormatterStyle(null, $color, ['bold']));
+            $this->output->getFormatter()->setStyle($color.'-bg-bold-blink', new OutputFormatterStyle(null, $color, ['bold', 'blink']));
             $this->output->getFormatter()->setStyle($color.'-bold', new OutputFormatterStyle($color, null, ['bold']));
             $this->output->getFormatter()->setStyle($color.'-bold-blink', new OutputFormatterStyle($color, null, ['bold', 'blink']));
         }
 
-        $this->output->getFormatter()->setStyle('blink-icon', new OutputFormatterStyle(options: ['blink']));
+        // Bold and Blink
+        $this->output->getFormatter()->setStyle('bold', new OutputFormatterStyle(options: ['bold']));
+        $this->output->getFormatter()->setStyle('blink', new OutputFormatterStyle(options: ['blink']));
+
+        // Set to true
+        $this->has_set_output_formatters = true;
     }
 
     /**
