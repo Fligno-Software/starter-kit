@@ -28,7 +28,7 @@ trait UsesCommandCustomMessagesTrait
      */
     public function ongoing(string $message, bool $add_ellipsis = true, int|string $verbosity = null): void
     {
-        $message = Str::of($message)->when($add_ellipsis, fn(Stringable $str) => $str->finish('...'))->jsonSerialize();
+        $message = Str::of($message)->when($add_ellipsis, fn (Stringable $str) => $str->finish('...'))->jsonSerialize();
         $this->note(message: $message, title: 'ONGOING', verbosity: $verbosity);
     }
 
