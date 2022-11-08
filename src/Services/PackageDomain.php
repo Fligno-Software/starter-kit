@@ -3,6 +3,7 @@
 namespace Fligno\StarterKit\Services;
 
 use Exception;
+use Fligno\StarterKit\Abstracts\BaseStarterKitServiceProvider;
 use Fligno\StarterKit\Data\ServiceProviderData;
 use Fligno\StarterKit\Traits\UsesProviderMorphMapTrait;
 use Fligno\StarterKit\Traits\UsesProviderObserverMapTrait;
@@ -76,6 +77,41 @@ class PackageDomain
         return new self($provider);
     }
 
+    /**
+     * @return bool
+     */
+    public function initialize(): bool
+    {
+        if ($this->provider instanceof BaseStarterKitServiceProvider) {
+            $this
+                // General
+                ->exceptDirectories($this->provider->getExceptTargetDirectories())
+                ->morphMap($this->provider->getMorphMap())
+
+                // Routes Related
+                ->routePrefix($this->provider->getRoutePrefix())
+                ->prefixRouteWithFileName($this->provider->shouldPrefixRouteWithFileName())
+                ->prefixRouteWithDirectory($this->provider->shouldPrefixRouteWithDirectory())
+                ->webMiddleware($this->provider->getWebMiddleware())
+                ->apiMiddleware($this->provider->getApiMiddleware())
+                ->defaultWebMiddleware($this->provider->getDefaultWebMiddleware())
+                ->defaultApiMiddleware($this->provider->getDefaultApiMiddleware())
+
+                // Observers Related
+                ->observerMap($this->provider->getObserverMap())
+
+                // Policys Related
+                ->policyMap($this->provider->getPolicyMap())
+
+                // Repositories Related
+                ->repositoryMap($this->provider->getRepositoryMap());
+
+            return true;
+        }
+
+        return false;
+    }
+
     // Setters
 
     /**
@@ -106,8 +142,8 @@ class PackageDomain
             $this
                 ->loadMorphMap()
                 ->loadMigrations()
-                ->loadViews() // Todo
-                ->loadViewComponentsAs() // Todo
+                ->loadViews() // Todo: Load views
+                ->loadViewComponentsAs() // Todo: Load View Components As
                 ->loadRoutes()
                 ->loadObservers()
                 ->loadPolicies()
@@ -137,8 +173,8 @@ class PackageDomain
             );
 
             $this
-                ->loadTranslations() // Todo
-                ->loadJsonTranslations() // Todo
+                ->loadTranslations() // Todo: Load Translations
+                ->loadJsonTranslations() // Todo: Load JSON Translations
                 ->loadConfigs()
                 ->loadHelpers();
         });
