@@ -60,7 +60,10 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register Laravel Files
-        $this->getPackageDomain()->registerLaravelFiles();
+        // Initialize Package Domain
+        if ($this->getPackageDomain()->initialize()) {
+            // Register Laravel Files
+            $this->getPackageDomain()->registerLaravelFiles();
+        }
     }
 }

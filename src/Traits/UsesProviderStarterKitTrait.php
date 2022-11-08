@@ -41,37 +41,6 @@ trait UsesProviderStarterKitTrait
     protected function instantiatePackageDomain(): void
     {
         $this->package_domain = PackageDomain::fromProvider($this);
-        $this->preparePackageDomain($this->package_domain);
-    }
-
-    /**
-     * @param  PackageDomain  $package_domain
-     * @return void
-     */
-    protected function preparePackageDomain(PackageDomain $package_domain): void
-    {
-        $package_domain
-            // General
-            ->exceptDirectories($this->getExceptTargetDirectories())
-            ->morphMap($this->getMorphMap())
-
-            // Routes Related
-            ->routePrefix($this->getRoutePrefix())
-            ->prefixRouteWithFileName($this->shouldPrefixRouteWithFileName())
-            ->prefixRouteWithDirectory($this->shouldPrefixRouteWithDirectory())
-            ->webMiddleware($this->getWebMiddleware())
-            ->apiMiddleware($this->getApiMiddleware())
-            ->defaultWebMiddleware($this->getDefaultWebMiddleware())
-            ->defaultApiMiddleware($this->getDefaultApiMiddleware())
-
-            // Observers Related
-            ->observerMap($this->getObserverMap())
-
-            // Policys Related
-            ->policyMap($this->getPolicyMap())
-
-            // Repositories Related
-            ->repositoryMap($this->getRepositoryMap());
     }
 
     /**
@@ -85,7 +54,7 @@ trait UsesProviderStarterKitTrait
     /**
      * @return Collection
      */
-    protected function getExceptTargetDirectories(): Collection
+    public function getExceptTargetDirectories(): Collection
     {
         return collect()
             ->when(! $this->areConfigsEnabled(), fn ($collection) => $collection->push(StarterKit::CONFIG_DIR))
