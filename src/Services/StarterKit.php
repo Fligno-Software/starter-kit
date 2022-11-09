@@ -294,7 +294,7 @@ class StarterKit
 
         $result = $this->getCache($tags, $key, function () use ($package, $domain) {
             return $this->getFromPaths($package, $domain, 'directories')
-                    ?->map(fn ($item) => $item['path']);
+                ?->map(fn ($item) => $item['path']);
         });
 
         return $result?->only($only);

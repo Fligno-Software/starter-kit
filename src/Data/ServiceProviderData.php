@@ -118,7 +118,7 @@ class ServiceProviderData extends BaseJsonSerializable
     public function getPackageEnvVars(): Collection|null
     {
         if ($this->provider instanceof BaseStarterKitServiceProvider) {
-            return collect($this->provider->getEnvVars())->map(fn ($item) => is_string($item) ? $item : json_encode($item));
+            return collect($this->provider->getEnvVars())->map(fn ($item) => (is_string($item) || is_null($item)) ? $item : json_encode($item));
         }
 
         return null;

@@ -1082,10 +1082,10 @@ if (! function_exists('addContentsToEnv')) {
 if (! function_exists('get_combined_key_value')) {
     /**
      * @param  string  $key
-     * @param  string  $value
+     * @param  string|null  $value
      * @return string
      */
-    function get_combined_key_value(string $key, string $value): string
+    function get_combined_key_value(string $key, string|null $value = ''): string
     {
         return Str::of($value)
             ->whenContains(
