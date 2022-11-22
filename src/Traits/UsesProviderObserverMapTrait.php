@@ -25,7 +25,7 @@ trait UsesProviderObserverMapTrait
      */
     public function areObserversEnabled(): bool
     {
-        return config('starter-kit.observers_enabled', true);
+        return true;
     }
 
     /**

@@ -4,14 +4,22 @@ namespace Fligno\StarterKit\Providers;
 
 use Fligno\StarterKit\Abstracts\BaseStarterKitServiceProvider as ServiceProvider;
 use Fligno\StarterKit\Console\Commands\StarterKitClearCacheCommand;
+use Fligno\StarterKit\Console\Commands\StarterKitPublishEnvCommand;
 use Fligno\StarterKit\Exceptions\Handler;
 use Fligno\StarterKit\Services\CustomResponse;
+use Fligno\StarterKit\Services\PackageDomain;
 use Fligno\StarterKit\Services\StarterKit;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Application;
 use Throwable;
 
+/**
+ * Class StarterKitServiceProvider
+ *
+ * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
+ */
 class StarterKitServiceProvider extends ServiceProvider
 {
     /**
@@ -19,6 +27,7 @@ class StarterKitServiceProvider extends ServiceProvider
      */
     protected array $commands = [
         StarterKitClearCacheCommand::class,
+        StarterKitPublishEnvCommand::class,
     ];
 
     /**
@@ -31,14 +40,6 @@ class StarterKitServiceProvider extends ServiceProvider
     protected array $env_vars = [
         'SK_OVERRIDE_EXCEPTION_HANDLER' => false,
         'SK_ENFORCE_MORPH_MAP' => true,
-        'SK_DYNAMIC_RELATIONSHIP_ENABLED' => true,
-        'SK_CONFIGS_ENABLED' => true,
-        'SK_MIGRATIONS_ENABLED' => true,
-        'SK_ROUTES_ENABLED' => true,
-        'SK_TRANSLATIONS_ENABLED' => true,
-        'SK_REPOSITORIES_ENABLED' => true,
-        'SK_POLICIES_ENABLED' => true,
-        'SK_OBSERVERS_ENABLED' => true,
         'SK_VERIFY_SSL' => true,
         'SK_SENTRY_ENABLED' => false,
         'SK_SENTRY_TEST_API_ENABLED' => false,
@@ -86,23 +87,24 @@ class StarterKitServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../../config/starter-kit.php', 'starter-kit');
-        $this->mergeConfigFrom(__DIR__.'/../../config/git-hooks.php', 'git-hooks');
 
-        // Register the service the package provides.
-        $this->app->singleton(
-            'starter-kit',
-            function () {
-                return new StarterKit();
-            }
-        );
+        $this->app->singleton('starter-kit', function (Application $app) {
+            return new StarterKit($app, $app->make('cache'));
+        });
 
-        // Register the service the package provides.
-        $this->app->bind(
-            'custom-response',
-            function () {
-                return new CustomResponse();
-            }
-        );
+        $this->app->bind('custom-response', function () {
+            return new CustomResponse();
+        });
+
+        $this->app->bind('package-domain', function (Application $app, array $params) {
+            return new PackageDomain(
+                $params['provider'],
+                $app,
+                $app->make('starter-kit'),
+                $app->make('config'),
+                $app->make('migrator'),
+            );
+        });
 
         parent::register();
     }
@@ -114,7 +116,7 @@ class StarterKitServiceProvider extends ServiceProvider
      */
     public function provides(): array
     {
-        return ['starter-kit', 'custom-response'];
+        return ['starter-kit', 'custom-response', 'package-domain'];
     }
 
     /**
@@ -130,13 +132,6 @@ class StarterKitServiceProvider extends ServiceProvider
                 __DIR__.'/../config/starter-kit.php' => config_path('starter-kit.php'),
             ],
             'starter-kit.config'
-        );
-
-        $this->publishes(
-            [
-                __DIR__.'/../config/git-hooks.php' => config_path('git-hooks.php'),
-            ],
-            'git-hooks.config'
         );
 
         // Publishing the views.

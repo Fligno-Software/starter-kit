@@ -54,7 +54,7 @@ trait UsesProviderRoutesTrait
      */
     public function areRoutesEnabled(): bool
     {
-        return config('starter-kit.routes_enabled', true);
+        return true;
     }
 
     /***** PREFIXING *****/

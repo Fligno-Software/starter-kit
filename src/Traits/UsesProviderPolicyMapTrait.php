@@ -25,7 +25,7 @@ trait UsesProviderPolicyMapTrait
      */
     public function arePoliciesEnabled(): bool
     {
-        return config('starter-kit.policies_enabled', true);
+        return true;
     }
 
     /**

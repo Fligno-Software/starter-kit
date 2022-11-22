@@ -28,6 +28,6 @@ trait UsesProviderDynamicRelationshipsTrait
      */
     public function isDynamicRelationshipsEnabled(): bool
     {
-        return config('starter-kit.dynamic_relationships_enabled');
+        return true;
     }
 }

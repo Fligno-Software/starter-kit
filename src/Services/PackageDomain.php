@@ -10,6 +10,7 @@ use Fligno\StarterKit\Traits\UsesProviderObserverMapTrait;
 use Fligno\StarterKit\Traits\UsesProviderPolicyMapTrait;
 use Fligno\StarterKit\Traits\UsesProviderRepositoryMapTrait;
 use Fligno\StarterKit\Traits\UsesProviderRoutesTrait;
+use Illuminate\Config\Repository;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Contracts\Foundation\CachesRoutes;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,17 +40,7 @@ class PackageDomain
     /**
      * @var Collection|array
      */
-    protected Collection|array $except_directories = [];
-
-    /**
-     * @var StarterKit|null
-     */
-    protected StarterKit|null $kit = null;
-
-    /**
-     * @var Application|null
-     */
-    protected Application|null $app = null;
+    protected Collection|array $excluded_directories = [];
 
     /**
      * @var ServiceProviderData|null
@@ -63,29 +54,24 @@ class PackageDomain
 
     /**
      * @param  ServiceProvider  $provider
+     * @param  Application  $app
+     * @param  StarterKit  $starter_kit
+     * @param  Repository  $config
+     * @param  Migrator  $migrator
      */
-    public function __construct(protected ServiceProvider $provider)
-    {
-    }
-
-    /**
-     * @param  ServiceProvider  $provider
-     * @return PackageDomain
-     */
-    public static function fromProvider(ServiceProvider $provider): PackageDomain
-    {
-        return new self($provider);
-    }
-
-    /**
-     * @return bool
-     */
-    public function initialize(): bool
-    {
+    public function __construct(
+        protected ServiceProvider $provider,
+        protected Application $app,
+        protected StarterKit $starter_kit,
+        protected Repository $config,
+        protected Migrator $migrator,
+    ) {
         if ($this->provider instanceof BaseStarterKitServiceProvider) {
             $this
                 // General
-                ->exceptDirectories($this->provider->getExceptTargetDirectories())
+                ->excludeDirectories($this->provider->getExcludedTargetDirectories())
+
+                // Morph Map Related
                 ->morphMap($this->provider->getMorphMap())
 
                 // Routes Related
@@ -100,84 +86,74 @@ class PackageDomain
                 // Observers Related
                 ->observerMap($this->provider->getObserverMap())
 
-                // Policys Related
+                // Policies Related
                 ->policyMap($this->provider->getPolicyMap())
 
                 // Repositories Related
                 ->repositoryMap($this->provider->getRepositoryMap());
-
-            return true;
         }
-
-        return false;
     }
 
     // Setters
 
     /**
-     * @param  array|Collection  $except_directories
+     * @param  array|Collection  $excluded_directories
      */
-    public function setExceptDirectories(array|Collection $except_directories): void
+    public function setExcludedDirectories(array|Collection $excluded_directories): void
     {
-        $this->except_directories = $except_directories;
+        $this->excluded_directories = $excluded_directories;
     }
 
     /**
-     * @param  array|Collection  $except_directories
+     * @param  array|Collection  $excluded_directories
      * @return $this
      */
-    public function exceptDirectories(array|Collection $except_directories): static
+    public function excludeDirectories(array|Collection $excluded_directories): static
     {
-        $this->setExceptDirectories($except_directories);
+        $this->setExcludedDirectories($excluded_directories);
 
         return $this;
     }
 
     /**
-     * @return void
+     * @return static
      */
-    public function bootLaravelFiles(): void
+    public function bootLaravelFiles(): static
     {
-        callAfterResolvingStarterKit(function () {
-            $this
-                ->loadMorphMap()
-                ->loadMigrations()
-                ->loadViews() // Todo: Load views
-                ->loadViewComponentsAs() // Todo: Load View Components As
-                ->loadRoutes()
-                ->loadObservers()
-                ->loadPolicies()
-                ->loadRepositories();
-        });
+        $this
+            ->bootMorphMap()
+            ->bootMigrations()
+            ->bootViews() // Todo: Load views
+            ->bootViewComponentsAs() // Todo: Load View Components As
+            ->bootRoutes()
+            ->bootObservers()
+            ->bootPolicies()
+            ->bootRepositories();
+
+        return $this;
     }
 
     /**
-     * @return void
+     * @return static
      */
-    public function registerLaravelFiles(): void
+    public function registerLaravelFiles(): static
     {
-        callAfterResolvingStarterKit(function (StarterKit $kit, Application $app) {
-            // set the StarterKit instance to be used by load methods
-            $this->kit = $kit;
+        // set the StarterKit instance to be used by load methods
+        $this->provider_data = $this->starter_kit->addToProviders($this->provider);
 
-            $this->provider_data = $kit->addToProviders($this->provider);
+        // set existing paths to be used by
+        $package = $this->provider_data->package;
+        $domain = $this->provider_data->domain;
+        $only = $this->starter_kit->getTargetDirectories()->diff($this->excluded_directories)->toArray();
+        $this->existing_paths = $this->starter_kit->getPathsOnly($package, $domain, $only);
 
-            // set Application instance to be used by loader methods
-            $this->app = $app;
+        $this
+            ->registerTranslations() // Todo: Load Translations
+            ->registerJsonTranslations() // Todo: Load JSON Translations
+            ->registerConfigs()
+            ->registerHelpers();
 
-            // set existing paths to be used by
-            $this->existing_paths = $kit->getPathsOnly(
-                $this->provider_data->package,
-                $this->provider_data->domain,
-                $kit->getTargetDirectories()->diff($this->except_directories)->toArray()
-            );
-
-            $this
-                ->loadTranslations() // Todo: Load Translations
-                ->loadJsonTranslations() // Todo: Load JSON Translations
-                ->loadConfigs()
-                ->loadHelpers();
-        });
+        return $this;
     }
 
     /***** HELPERS *****/
@@ -187,10 +163,10 @@ class PackageDomain
      *
      * @return $this
      */
-    protected function loadHelpers(): static
+    protected function registerHelpers(): static
     {
         if ($this->existing_paths?->has(StarterKit::HELPERS_DIR)) {
-            $this->kit->getHelpers($this->provider_data->package, $this->provider_data->domain)
+            $this->starter_kit->getHelpers($this->provider_data->package, $this->provider_data->domain)
                 ->each(function ($item) {
                     file_exists($item['path']) && require $item['path'];
                 });
@@ -206,13 +182,13 @@ class PackageDomain
      *
      * @return $this
      */
-    protected function loadConfigs(): static
+    protected function registerConfigs(): static
     {
         if (
             $this->existing_paths?->has(StarterKit::CONFIG_DIR) &&
             ! ($this->app instanceof CachesConfiguration && $this->app->configurationIsCached())
         ) {
-            $this->kit->getConfigs($this->provider_data->package, $this->provider_data->domain)
+            $this->starter_kit->getConfigs($this->provider_data->package, $this->provider_data->domain)
                 ->each(function ($item) {
                     $path = $item['path'];
 
@@ -220,10 +196,9 @@ class PackageDomain
                         return;
                     }
 
-                    $config = $this->app->make('config');
                     $key = $item['name'];
-                    $config->set($key, array_merge(
-                        require $path, $config->get($key, [])
+                    $this->config->set($key, array_merge(
+                        require $path, $this->config->get($key, [])
                     ));
                 });
         }
@@ -238,15 +213,13 @@ class PackageDomain
      *
      * @return $this
      */
-    protected function loadMigrations(): static
+    protected function bootMigrations(): static
     {
         if ($this->existing_paths?->has(StarterKit::MIGRATIONS_DIR)) {
-            $paths = $this->kit->getMigrationsPath($this->provider_data->package, $this->provider_data->domain);
+            $paths = $this->starter_kit->getMigrationsPath($this->provider_data->package, $this->provider_data->domain);
 
-            callAfterResolvingService('migrator', function (Migrator $migrator) use ($paths) {
-                $paths->each(function ($path) use ($migrator) {
-                    file_exists($path) && $migrator->path($path);
-                });
+            $paths->each(function ($path) {
+                file_exists($path) && $this->migrator->path($path);
             });
         }
 
@@ -260,7 +233,7 @@ class PackageDomain
      *
      * @return $this
      */
-    protected function loadViews(): static
+    protected function bootViews(): static
     {
 //        $this->callAfterResolving('view', function ($view) use ($path, $namespace) {
 //            if (isset($this->app->config['view']['paths']) &&
@@ -285,7 +258,7 @@ class PackageDomain
      *
      * @return $this
      */
-    protected function loadViewComponentsAs(): static
+    protected function bootViewComponentsAs(): static
     {
 //        $this->callAfterResolving(BladeCompiler::class, function ($blade) use ($prefix, $components) {
 //            foreach ($components as $alias => $component) {
@@ -303,7 +276,7 @@ class PackageDomain
      *
      * @return $this
      */
-    protected function loadTranslations(): static
+    protected function registerTranslations(): static
     {
 //        $this->callAfterResolving('translator', function ($translator) use ($path, $namespace) {
 //            $translator->addNamespace($namespace, $path);
@@ -319,7 +292,7 @@ class PackageDomain
      *
      * @return $this
      */
-    protected function loadJsonTranslations(): static
+    protected function registerJsonTranslations(): static
     {
 //        $this->callAfterResolving('translator', function ($translator) use ($path) {
 //            $translator->addJsonPath($path);
@@ -335,10 +308,10 @@ class PackageDomain
      *
      * @return $this
      */
-    protected function loadObservers(): static
+    protected function bootObservers(): static
     {
         if ($this->existing_paths?->has(StarterKit::OBSERVERS_DIR)) {
-            $this->kit->getObservers($this->provider_data->package, $this->provider_data->domain, $this->getObserverMap())
+            $this->starter_kit->getObservers($this->provider_data->package, $this->provider_data->domain, $this->getObserverMap())
                 ->each(function ($model, $observer) {
                     if ($model instanceof Collection) {
                         $model = $model->first();
@@ -348,8 +321,7 @@ class PackageDomain
                     } catch (Throwable) {
                         starterKit()->clearCache();
                     }
-                }
-                );
+                });
         }
 
         return $this;
@@ -362,10 +334,10 @@ class PackageDomain
      *
      * @return $this
      */
-    protected function loadPolicies(): static
+    protected function bootPolicies(): static
     {
         if ($this->existing_paths?->has(StarterKit::POLICIES_DIR)) {
-            $this->kit->getPolicies($this->provider_data->package, $this->provider_data->domain, $this->getPolicyMap())
+            $this->starter_kit->getPolicies($this->provider_data->package, $this->provider_data->domain, $this->getPolicyMap())
                 ->each(function ($model, $policy) {
                     if ($model instanceof Collection) {
                         $model = $model->first();
@@ -375,8 +347,7 @@ class PackageDomain
                     } catch (Exception) {
                         starterKit()->clearCache();
                     }
-                }
-                );
+                });
         }
 
         return $this;
@@ -389,10 +360,10 @@ class PackageDomain
      *
      * @return $this
      */
-    protected function loadRepositories(): static
+    protected function bootRepositories(): static
     {
         if ($this->existing_paths?->has(StarterKit::REPOSITORIES_DIR)) {
-            $this->kit->getRepositories($this->provider_data->package, $this->provider_data->domain, $this->getRepositoryMap())
+            $this->starter_kit->getRepositories($this->provider_data->package, $this->provider_data->domain, $this->getRepositoryMap())
                 ->each(function ($model, $repository) {
                     if ($model instanceof Collection) {
                         $model = $model->first();
@@ -412,13 +383,13 @@ class PackageDomain
 
     /***** ROUTES *****/
 
-    protected function loadRoutes(): static
+    protected function bootRoutes(): static
     {
         if (
             $this->existing_paths?->has(StarterKit::ROUTES_DIR) &&
             ! ($this->app instanceof CachesRoutes && $this->app->routesAreCached())
         ) {
-            $routes = $this->kit->getRoutes($this->provider_data->package, $this->provider_data->domain)
+            $routes = $this->starter_kit->getRoutes($this->provider_data->package, $this->provider_data->domain)
                 ->filter(fn ($item) => file_exists($item['path']))
                 ->when($this->shouldPrefixRouteWithDirectory(), function (Collection $collection) {
                     return $collection->map(function ($item) {
@@ -453,24 +424,24 @@ class PackageDomain
 
             // Separate api and non-api routes
 
-            $webPaths = collect();
+            $web_paths = collect();
 
-            $apiPaths = $routes->filter(function ($item) use ($webPaths) {
+            $api_paths = $routes->filter(function ($item) use ($web_paths) {
                 $matches = preg_match('/api./', $item['file']);
 
                 if (! $matches) {
-                    $webPaths->add($item);
+                    $web_paths->add($item);
                 }
 
                 return $matches;
             });
 
-            $apiPaths->each(function ($item) {
+            $api_paths->each(function ($item) {
                 $config = $this->getRouteApiConfiguration($item[$this->append_key] ?? null);
                 Route::group($config, $item['path']);
             });
 
-            $webPaths->each(function ($item) {
+            $web_paths->each(function ($item) {
                 $config = $this->getRouteWebConfiguration($item[$this->append_key] ?? null);
                 Route::group($config, $item['path']);
             });
@@ -555,7 +526,7 @@ class PackageDomain
     /**
      * @return $this
      */
-    protected function loadMorphMap(): static
+    protected function bootMorphMap(): static
     {
         if (starterKit()->isMorphMapEnforced()) {
             enforceMorphMap($this->getMorphMap());
