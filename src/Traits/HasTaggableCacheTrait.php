@@ -3,7 +3,7 @@
 namespace Fligno\StarterKit\Traits;
 
 use Closure;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Cache\CacheManager;
 use RuntimeException;
 use Throwable;
 
@@ -20,12 +20,33 @@ trait HasTaggableCacheTrait
     abstract public function getMainTag(): string;
 
     /**
+     * @var CacheManager|null
+     */
+    protected CacheManager|null $cacheManager = null;
+
+    /**
+     * @return CacheManager
+     */
+    public function getCacheManager(): CacheManager
+    {
+        return $this->cacheManager ?? cache();
+    }
+
+    /**
+     * @param  CacheManager|null  $cacheManager
+     */
+    public function setCacheManager(?CacheManager $cacheManager): void
+    {
+        $this->cacheManager = $cacheManager;
+    }
+
+    /**
      * @return bool
      */
     public function isCacheTaggable(): bool
     {
         try {
-            return method_exists(Cache::getStore(), 'tags');
+            return method_exists($this->getCacheManager()->getStore(), 'tags');
         } catch (Throwable) {
             return false;
         }
@@ -37,7 +58,7 @@ trait HasTaggableCacheTrait
     public function clearCache(): bool
     {
         if ($this->isCacheTaggable()) {
-            return Cache::tags($this->getMainTag())->flush();
+            return $this->getCacheManager()->tags($this->getMainTag())->flush();
         }
 
         return false;
@@ -49,7 +70,7 @@ trait HasTaggableCacheTrait
      */
     public function getTags(...$tags): array
     {
-        return collect([config('app.key'), $this->getMainTag()])->merge($tags)->filter()->toArray();
+        return collect($this->getMainTag())->merge($tags)->filter()->toArray();
     }
 
     /**
@@ -66,7 +87,7 @@ trait HasTaggableCacheTrait
                 $this->forgetCache($tags, $key);
             }
 
-            return Cache::tags($tags)->rememberForever($key, $closure);
+            return $this->getCacheManager()->tags($tags)->rememberForever($key, $closure);
         }
 
         return $closure();
@@ -80,7 +101,7 @@ trait HasTaggableCacheTrait
     public function forgetCache(array $tags, string $key): bool
     {
         if ($this->isCacheTaggable()) {
-            return Cache::tags($tags)->forget($key);
+            return $this->getCacheManager()->tags($tags)->forget($key);
         }
 
         return false;

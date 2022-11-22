@@ -86,26 +86,22 @@ if (! function_exists('customResponse')) {
 if (! function_exists('packageDomain')) {
     /**
      * @param  ServiceProvider  $provider
-     * @return PackageDomain|null
+     * @return PackageDomain
      */
-    function packageDomain(ServiceProvider $provider): PackageDomain|null
+    function packageDomain(ServiceProvider $provider): PackageDomain
     {
-        try {
-            return resolve('package-domain', [
-                'provider' => $provider,
-            ]);
-        } catch (Throwable) {
-            return null;
-        }
+        return resolve('package-domain', [
+            'provider' => $provider,
+        ]);
     }
 }
 
 if (! function_exists('package_domain')) {
     /**
      * @param  ServiceProvider  $provider
-     * @return PackageDomain|null
+     * @return PackageDomain
      */
-    function package_domain(ServiceProvider $provider): PackageDomain|null
+    function package_domain(ServiceProvider $provider): PackageDomain
     {
         return packageDomain($provider);
     }

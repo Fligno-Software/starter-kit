@@ -19,17 +19,12 @@ class ServiceProviderData extends BaseJsonSerializable
     /**
      * @var string
      */
-    public string $name;
+    public string $class;
 
     /**
      * @var string
      */
     public string $composer;
-
-    /**
-     * @var ServiceProvider
-     */
-    public ServiceProvider $provider;
 
     /**
      * @var string|null
@@ -57,7 +52,6 @@ class ServiceProviderData extends BaseJsonSerializable
         // Add to StarterKit's paths
         if ($data instanceof ServiceProvider) {
             starterKit()->addToPaths($this);
-            $this->provider = $data;
         }
     }
 
@@ -67,7 +61,8 @@ class ServiceProviderData extends BaseJsonSerializable
      */
     protected function parseServiceProvider(ServiceProvider $provider): array
     {
-        $domain = domain_encode(get_class($provider));
+        $class = get_class($provider);
+        $domain = domain_encode($class);
         $provider_directory = get_dir_from_object_class_dir($provider);
 
         $domain_decoded = null;
@@ -83,11 +78,8 @@ class ServiceProviderData extends BaseJsonSerializable
             ->jsonSerialize();
 
         $search = 'composer.json';
-
         $composer = guess_file_or_directory_path($directory, $search, true);
-
         $package = get_contents_from_composer_json($composer)?->get('name');
-
         $package = $package == 'laravel/laravel' ? null : $package;
 
         $path = Str::of($composer)
@@ -96,7 +88,7 @@ class ServiceProviderData extends BaseJsonSerializable
             ->jsonSerialize();
 
         return [
-            'name' => class_basename(get_class($provider)),
+            'class' => get_class($provider),
             'composer' => $composer,
             'package' => $package,
             'domain' => $domain,
@@ -105,11 +97,11 @@ class ServiceProviderData extends BaseJsonSerializable
     }
 
     /**
-     * @return Collection
+     * @return ServiceProvider|null
      */
-    public function getPackageDomainData(): Collection
+    public function getServiceProvider(): ?ServiceProvider
     {
-        return starterKit()->getPaths($this->package, $this->domain);
+        return app()->getProvider($this->class);
     }
 
     /**
@@ -117,8 +109,10 @@ class ServiceProviderData extends BaseJsonSerializable
      */
     public function getPackageEnvVars(): Collection|null
     {
-        if ($this->provider instanceof BaseStarterKitServiceProvider) {
-            return collect($this->provider->getEnvVars())->map(fn ($item) => (is_string($item) || is_null($item)) ? $item : json_encode($item));
+        $provider = $this->getServiceProvider();
+        if ($provider instanceof BaseStarterKitServiceProvider) {
+            return collect($provider->getEnvVars())
+                ->map(fn ($item) => (is_string($item) || is_null($item)) ? $item : json_encode($item));
         }
 
         return null;

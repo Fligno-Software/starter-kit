@@ -23,7 +23,7 @@ trait UsesProviderRepositoryMapTrait
      */
     public function areRepositoriesEnabled(): bool
     {
-        return config('starter-kit.repositories_enabled', true);
+        return true;
     }
 
     /**

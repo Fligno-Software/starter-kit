@@ -2,7 +2,6 @@
 
 namespace Fligno\StarterKit\Traits;
 
-use Fligno\StarterKit\Services\PackageDomain;
 use Fligno\StarterKit\Services\StarterKit;
 use Illuminate\Support\Collection;
 
@@ -31,30 +30,9 @@ trait UsesProviderStarterKitTrait
     protected array $commands = [];
 
     /**
-     * @var PackageDomain
-     */
-    protected PackageDomain $package_domain;
-
-    /**
-     * @return void
-     */
-    protected function instantiatePackageDomain(): void
-    {
-        $this->package_domain = PackageDomain::fromProvider($this);
-    }
-
-    /**
-     * @return PackageDomain
-     */
-    public function getPackageDomain(): PackageDomain
-    {
-        return $this->package_domain;
-    }
-
-    /**
      * @return Collection
      */
-    public function getExceptTargetDirectories(): Collection
+    public function getExcludedTargetDirectories(): Collection
     {
         return collect()
             ->when(! $this->areConfigsEnabled(), fn ($collection) => $collection->push(StarterKit::CONFIG_DIR))
@@ -93,7 +71,7 @@ trait UsesProviderStarterKitTrait
      */
     public function areTranslationsEnabled(): bool
     {
-        return config('starter-kit.translations_enabled', true);
+        return true;
     }
 
     /***** CONFIGS RELATED *****/
@@ -103,7 +81,7 @@ trait UsesProviderStarterKitTrait
      */
     public function areConfigsEnabled(): bool
     {
-        return config('starter-kit.configs_enabled', true);
+        return true;
     }
 
     /***** MIGRATIONS RELATED *****/
@@ -113,6 +91,6 @@ trait UsesProviderStarterKitTrait
      */
     public function areMigrationsEnabled(): bool
     {
-        return config('starter-kit.migrations_enabled', true);
+        return true;
     }
 }

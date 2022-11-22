@@ -5,8 +5,10 @@ namespace Fligno\StarterKit\Services;
 use Closure;
 use Fligno\StarterKit\Data\ServiceProviderData;
 use Fligno\StarterKit\Traits\HasTaggableCacheTrait;
+use Illuminate\Cache\CacheManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -80,10 +82,65 @@ class StarterKit
     /**
      * Constructor
      */
-    public function __construct()
+    public function __construct(protected Application $app, CacheManager $cacheManager)
     {
-        // Get copy from cache
+        // Get copies from cache
+        $this->setCacheManager($cacheManager);
+        $this->providers = $this->getProviders()->toArray();
         $this->paths = $this->getPaths()->toArray();
+    }
+
+    /**
+     * @param  bool  $rehydrate
+     * @return Collection
+     */
+    public function getProviders(bool $rehydrate = false): Collection
+    {
+        $tags = $this->getTags();
+        $key = 'providers';
+
+        return $this->getCache($tags, $key, fn () => collect($this->providers), $rehydrate);
+    }
+
+    /**
+     * @param  string|null  $package
+     * @param  string|null  $domain
+     * @return Collection<ServiceProvider>
+     */
+    public function getProvidersFromList(string $package = null, string $domain = null): Collection
+    {
+        return $this->getProviders()
+            ->where('package', $package)
+            ->where('domain', $domain)
+            ->map(fn (array $data) => ServiceProviderData::from($data)->getServiceProvider());
+    }
+
+    /**
+     * @param  ServiceProvider  $provider
+     * @return ServiceProviderData
+     */
+    public function addToProviders(ServiceProvider $provider): ServiceProviderData
+    {
+        $providers = $this->getProviders();
+
+        $class = get_class($provider);
+
+        // Check whether already exists
+        if ($data = $providers->get($class)) {
+            return ServiceProviderData::from($data);
+        }
+
+        $data = ServiceProviderData::from($provider);
+        $providers = $providers->put($class, $data->toArray());
+        $this->providers = $providers->toArray();
+        $this->getProviders(rehydrate: true);
+
+        // Publish Environment Variables
+        if ($this->shouldPublishEnvVars()) {
+            $data->publishEnvVars();
+        }
+
+        return $data;
     }
 
     /**
@@ -109,58 +166,6 @@ class StarterKit
         }
 
         return collect($result);
-    }
-
-    /**
-     * @param  bool  $rehydrate
-     * @return Collection
-     */
-    public function getProviders(bool $rehydrate = false): Collection
-    {
-        $tags = $this->getTags();
-        $key = 'providers';
-
-        return $this->getCache($tags, $key, fn () => collect($this->providers), $rehydrate);
-    }
-
-    /**
-     * @param  string|null  $package
-     * @param  string|null  $domain
-     * @return Collection<ServiceProvider>
-     */
-    public function getProvidersFromList(string $package = null, string $domain = null): Collection
-    {
-        return $this->getProviders()
-            ->where('package', $package)
-            ->where('domain', $domain)
-            ->pluck('provider');
-    }
-
-    /**
-     * @param  ServiceProvider  $provider
-     * @return ServiceProviderData
-     */
-    public function addToProviders(ServiceProvider $provider): ServiceProviderData
-    {
-        $providers = $this->getProviders();
-        $class = get_class($provider);
-
-        // Check whether already exists
-        if ($providers->has($class)) {
-            return ServiceProviderData::from($providers->get($class));
-        }
-
-        $data = ServiceProviderData::from($provider);
-        $providers->put($class, $data);
-        $this->providers = $providers->toArray();
-        $this->getProviders(rehydrate: true);
-
-        // Publish Environment Variables
-        if ($this->shouldPublishEnvVars()) {
-            $data->publishEnvVars();
-        }
-
-        return $data;
     }
 
     /**
@@ -593,16 +598,6 @@ class StarterKit
         return ! App::isProduction() && config('starter-kit.sentry_test_api_enabled');
     }
 
-    /***** GIT HOOKS RELATED *****/
-
-    /**
-     * @return array
-     */
-    public function getGitHooks(): array
-    {
-        return config('git-hooks');
-    }
-
     /***** OTHER METHODS *****/
 
     /**
@@ -610,7 +605,7 @@ class StarterKit
      */
     public function shouldPublishEnvVars(): bool
     {
-        return config('starter-kit.publish_env_vars', true);
+        return config('starter-kit.publish_env_vars');
     }
 
     /**

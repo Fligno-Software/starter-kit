@@ -17,13 +17,11 @@ trait UsesProviderHttpKernelTrait
     public function bootHttpKernel(): void
     {
         if ($this instanceof ProviderHttpKernelInterface) {
-            app()->booted(
-                function () {
-                    if (method_exists($this, 'registerToHttpKernel')) {
-                        $this->registerToHttpKernel(app('router'));
-                    }
+            app()->booted(function () {
+                if (method_exists($this, 'registerToHttpKernel')) {
+                    $this->registerToHttpKernel(app('router'));
                 }
-            );
+            });
         }
     }
 }
