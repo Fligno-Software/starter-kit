@@ -26,6 +26,8 @@ class ServiceProviderData extends BaseJsonSerializable
      */
     public string $composer;
 
+    public ServiceProvider|null $provider;
+
     /**
      * @var string|null
      */
@@ -61,6 +63,8 @@ class ServiceProviderData extends BaseJsonSerializable
      */
     protected function parseServiceProvider(ServiceProvider $provider): array
     {
+        $this->provider = $provider;
+
         $class = get_class($provider);
         $domain = domain_encode($class);
         $provider_directory = get_dir_from_object_class_dir($provider);
@@ -101,7 +105,7 @@ class ServiceProviderData extends BaseJsonSerializable
      */
     public function getServiceProvider(): ?ServiceProvider
     {
-        return app()->getProvider($this->class);
+        return $this->provider ?? app()->getProvider($this->class);
     }
 
     /**
