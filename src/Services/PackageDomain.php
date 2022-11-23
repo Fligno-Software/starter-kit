@@ -528,7 +528,7 @@ class PackageDomain
      */
     protected function bootMorphMap(): static
     {
-        if (starterKit()->isMorphMapEnforced()) {
+        if (starterKit()->shouldEnforceMorphMap()) {
             enforceMorphMap($this->getMorphMap());
         }
 

@@ -13,7 +13,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
-use Throwable;
 
 /**
  * Class StarterKitServiceProvider
@@ -59,7 +58,7 @@ class StarterKitServiceProvider extends ServiceProvider
         if (starterKit()->shouldOverrideExceptionHandler()) {
             $this->app->singleton(ExceptionHandler::class, Handler::class);
 
-            starterKit()->addExceptionRender(ModelNotFoundException::class, function (Throwable $e) {
+            starterKit()->addExceptionRender(ModelNotFoundException::class, function () {
                 return customResponse()
                     ->data([])
                     ->message('The identifier you are querying does not exist.')
@@ -68,7 +67,7 @@ class StarterKitServiceProvider extends ServiceProvider
                     ->generate();
             });
 
-            starterKit()->addExceptionRender(AuthorizationException::class, function (Throwable $e) {
+            starterKit()->addExceptionRender(AuthorizationException::class, function () {
                 return customResponse()
                     ->data([])
                     ->message('You do not have right to access this resource.')
@@ -88,21 +87,17 @@ class StarterKitServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../../config/starter-kit.php', 'starter-kit');
 
-        $this->app->singleton('starter-kit', function (Application $app) {
-            return new StarterKit($app, $app->make('cache'));
-        });
+        $this->app->singleton('starter-kit', fn () => new StarterKit());
 
-        $this->app->bind('custom-response', function () {
-            return new CustomResponse();
-        });
+        $this->app->bind('custom-response', fn () => new CustomResponse());
 
         $this->app->bind('package-domain', function (Application $app, array $params) {
             return new PackageDomain(
-                $params['provider'],
-                $app,
-                $app->make('starter-kit'),
-                $app->make('config'),
-                $app->make('migrator'),
+                provider: $params['provider'],
+                app: $app,
+                starter_kit: $app->make('starter-kit'),
+                config: $app->make('config'),
+                migrator: $app->make('migrator'),
             );
         });
 
@@ -159,15 +154,6 @@ class StarterKitServiceProvider extends ServiceProvider
     public function getRoutePrefix(): ?string
     {
         return 'starter-kit';
-    }
-
-    /**
-     * @param  bool  $is_api
-     * @return array
-     */
-    public function getDefaultRouteMiddleware(bool $is_api): array
-    {
-        return [];
     }
 
     /**

@@ -22,22 +22,22 @@ trait HasTaggableCacheTrait
     /**
      * @var CacheManager|null
      */
-    protected CacheManager|null $cacheManager = null;
+    protected CacheManager|null $cache_manager = null;
 
     /**
      * @return CacheManager
      */
     public function getCacheManager(): CacheManager
     {
-        return $this->cacheManager ?? cache();
+        return $this->cache_manager ?? cache();
     }
 
     /**
-     * @param  CacheManager|null  $cacheManager
+     * @param  CacheManager|null  $cache_manager
      */
-    public function setCacheManager(?CacheManager $cacheManager): void
+    public function setCacheManager(?CacheManager $cache_manager): void
     {
-        $this->cacheManager = $cacheManager;
+        $this->cache_manager = $cache_manager;
     }
 
     /**

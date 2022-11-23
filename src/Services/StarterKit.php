@@ -4,11 +4,8 @@ namespace Fligno\StarterKit\Services;
 
 use Closure;
 use Fligno\StarterKit\Data\ServiceProviderData;
-use Fligno\StarterKit\Traits\HasTaggableCacheTrait;
-use Illuminate\Cache\CacheManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -26,8 +23,6 @@ use Symfony\Component\Finder\SplFileInfo;
  */
 class StarterKit
 {
-    use HasTaggableCacheTrait;
-
     /**
      * @var array
      */
@@ -80,26 +75,11 @@ class StarterKit
     }
 
     /**
-     * Constructor
-     */
-    public function __construct(protected Application $app, CacheManager $cacheManager)
-    {
-        // Get copies from cache
-        $this->setCacheManager($cacheManager);
-        $this->providers = $this->getProviders()->toArray();
-        $this->paths = $this->getPaths()->toArray();
-    }
-
-    /**
-     * @param  bool  $rehydrate
      * @return Collection
      */
-    public function getProviders(bool $rehydrate = false): Collection
+    public function getProviders(): Collection
     {
-        $tags = $this->getTags();
-        $key = 'providers';
-
-        return $this->getCache($tags, $key, fn () => collect($this->providers), $rehydrate);
+        return collect($this->providers);
     }
 
     /**
@@ -125,20 +105,9 @@ class StarterKit
 
         $class = get_class($provider);
 
-        // Check whether already exists
-        if ($data = $providers->get($class)) {
-            return ServiceProviderData::from($data);
-        }
-
         $data = ServiceProviderData::from($provider);
         $providers = $providers->put($class, $data->toArray());
         $this->providers = $providers->toArray();
-        $this->getProviders(rehydrate: true);
-
-        // Publish Environment Variables
-        if ($this->shouldPublishEnvVars()) {
-            $data->publishEnvVars();
-        }
 
         return $data;
     }
@@ -146,26 +115,22 @@ class StarterKit
     /**
      * @param  string|null  $package
      * @param  string|null  $domain
-     * @param  bool  $rehydrate
      * @return Collection
      */
-    public function getPaths(string $package = null, string $domain = null, bool $rehydrate = false): Collection
+    public function getPaths(string $package = null, string $domain = null): Collection
     {
-        $tags = $this->getTags();
-        $key = 'paths';
-
-        $result = $this->getCache($tags, $key, fn () => collect($this->paths), $rehydrate);
+        $paths = collect($this->paths);
 
         if ($package) {
-            $result = Arr::get($result, 'packages.'.str_replace('/', '.', $package));
+            $paths = Arr::get($paths, 'packages.'.str_replace('/', '.', $package));
         }
 
         // Since domain name might contain dots due to encoding, dot notation is not possible.
-        if ($domain && $result && isset($result[self::DOMAINS_DIR][$domain])) {
-            $result = $result[self::DOMAINS_DIR][$domain];
+        if ($domain && $paths && isset($paths[self::DOMAINS_DIR][$domain])) {
+            $paths = $paths[self::DOMAINS_DIR][$domain];
         }
 
-        return collect($result);
+        return collect($paths);
     }
 
     /**
@@ -199,7 +164,6 @@ class StarterKit
         }
 
         $this->paths = $paths;
-        $this->getPaths(rehydrate: true);
 
         return true;
     }
@@ -294,15 +258,9 @@ class StarterKit
      */
     public function getPathsOnly(string $package = null, string $domain = null, array $only = []): ?Collection
     {
-        $tags = $this->getTags($package, $domain);
-        $key = 'paths';
+        $paths = $this->getFromPaths($package, $domain, 'directories')?->map(fn ($item) => $item['path']);
 
-        $result = $this->getCache($tags, $key, function () use ($package, $domain) {
-            return $this->getFromPaths($package, $domain, 'directories')
-                ?->map(fn ($item) => $item['path']);
-        });
-
-        return $result?->only($only);
+        return $paths?->only($only);
     }
 
     /**
@@ -619,7 +577,7 @@ class StarterKit
     /**
      * @return bool
      */
-    public function isMorphMapEnforced(): bool
+    public function shouldEnforceMorphMap(): bool
     {
         return config('starter-kit.enforce_morph_map');
     }
