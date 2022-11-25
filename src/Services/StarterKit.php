@@ -561,14 +561,6 @@ class StarterKit
     /**
      * @return bool
      */
-    public function shouldPublishEnvVars(): bool
-    {
-        return config('starter-kit.publish_env_vars');
-    }
-
-    /**
-     * @return bool
-     */
     public function shouldOverrideExceptionHandler(): bool
     {
         return config('starter-kit.override_exception_handler');

@@ -17,7 +17,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Env;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 use JetBrains\PhpStorm\Pure;
@@ -85,25 +84,21 @@ if (! function_exists('customResponse')) {
 
 if (! function_exists('packageDomain')) {
     /**
-     * @param  ServiceProvider  $provider
      * @return PackageDomain
      */
-    function packageDomain(ServiceProvider $provider): PackageDomain
+    function packageDomain(): PackageDomain
     {
-        return resolve('package-domain', [
-            'provider' => $provider,
-        ]);
+        return resolve('package-domain');
     }
 }
 
 if (! function_exists('package_domain')) {
     /**
-     * @param  ServiceProvider  $provider
      * @return PackageDomain
      */
-    function package_domain(ServiceProvider $provider): PackageDomain
+    function package_domain(): PackageDomain
     {
-        return packageDomain($provider);
+        return packageDomain();
     }
 }
 
@@ -111,9 +106,9 @@ if (! function_exists('callAfterResolvingPackageDomain')) {
     /**
      * @param  Closure|null  $callable $callable
      */
-    function callAfterResolvingPackageDomain(ServiceProvider $provider, Closure|null $callable): void
+    function callAfterResolvingPackageDomain(Closure|null $callable): void
     {
-        callAfterResolvingService('package-domain', $callable, ['provider' => $provider]);
+        callAfterResolvingService('package-domain', $callable);
     }
 }
 

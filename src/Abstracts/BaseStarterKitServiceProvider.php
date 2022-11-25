@@ -34,9 +34,7 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Boot Laravel Files
-        package_domain($this)
-            ->registerLaravelFiles()
-            ->bootLaravelFiles();
+        package_domain()->provider($this)->registerLaravelFiles()->bootLaravelFiles();
 
         // For Console Kernel
         $this->bootConsoleKernel();
