@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
+use Illuminate\Translation\Translator;
+use Illuminate\View\Factory;
 use Throwable;
 
 /**
@@ -36,6 +38,11 @@ class PackageDomain
     use UsesProviderObserverMapTrait;
     use UsesProviderPolicyMapTrait;
     use UsesProviderRepositoryMapTrait;
+
+    /**
+     * @var ServiceProvider|null
+     */
+    protected ServiceProvider|null $provider = null;
 
     /**
      * @var Collection|array
@@ -53,19 +60,33 @@ class PackageDomain
     protected Collection|null $existing_paths = null;
 
     /**
-     * @param  ServiceProvider  $provider
      * @param  Application  $app
      * @param  StarterKit  $starter_kit
      * @param  Repository  $config
      * @param  Migrator  $migrator
+     * @param  Factory  $view
+     * @param  Translator  $translator
      */
     public function __construct(
-        protected ServiceProvider $provider,
         protected Application $app,
         protected StarterKit $starter_kit,
         protected Repository $config,
         protected Migrator $migrator,
+        protected Factory $view,
+        protected Translator $translator,
     ) {
+        //
+    }
+
+    // Setters
+
+    /**
+     * @param  ServiceProvider  $provider
+     */
+    public function setProvider(ServiceProvider $provider): void
+    {
+        $this->provider = $provider;
+
         if ($this->provider instanceof BaseStarterKitServiceProvider) {
             $this
                 // General
@@ -94,7 +115,16 @@ class PackageDomain
         }
     }
 
-    // Setters
+    /**
+     * @param  ServiceProvider  $provider
+     * @return $this
+     */
+    public function provider(ServiceProvider $provider): static
+    {
+        $this->setProvider($provider);
+
+        return $this;
+    }
 
     /**
      * @param  array|Collection  $excluded_directories
@@ -120,15 +150,17 @@ class PackageDomain
      */
     public function bootLaravelFiles(): static
     {
-        $this
-            ->bootMorphMap()
-            ->bootMigrations()
-            ->bootViews() // Todo: Load views
-            ->bootViewComponentsAs() // Todo: Load View Components As
-            ->bootRoutes()
-            ->bootObservers()
-            ->bootPolicies()
-            ->bootRepositories();
+        if ($this->provider) {
+            $this
+                ->bootMorphMap()
+                ->bootMigrations()
+                ->bootViews() // Todo: Load views
+                ->bootViewComponentsAs() // Todo: Load View Components As
+                ->bootRoutes()
+                ->bootObservers()
+                ->bootPolicies()
+                ->bootRepositories();
+        }
 
         return $this;
     }
@@ -138,20 +170,22 @@ class PackageDomain
      */
     public function registerLaravelFiles(): static
     {
-        // set the StarterKit instance to be used by load methods
-        $this->provider_data = $this->starter_kit->addToProviders($this->provider);
+        if ($this->provider) {
+            // set the StarterKit instance to be used by load methods
+            $this->provider_data = $this->starter_kit->addToProviders($this->provider);
 
-        // set existing paths to be used by
-        $package = $this->provider_data->package;
-        $domain = $this->provider_data->domain;
-        $only = $this->starter_kit->getTargetDirectories()->diff($this->excluded_directories)->toArray();
-        $this->existing_paths = $this->starter_kit->getPathsOnly($package, $domain, $only);
+            // set existing paths to be used by
+            $package = $this->provider_data->package;
+            $domain = $this->provider_data->domain;
+            $only = $this->starter_kit->getTargetDirectories()->diff($this->excluded_directories)->toArray();
+            $this->existing_paths = $this->starter_kit->getPathsOnly($package, $domain, $only);
 
-        $this
-            ->registerTranslations() // Todo: Load Translations
-            ->registerJsonTranslations() // Todo: Load JSON Translations
-            ->registerConfigs()
-            ->registerHelpers();
+            $this
+                ->registerTranslations() // Todo: Load Translations
+                ->registerJsonTranslations() // Todo: Load JSON Translations
+                ->registerConfigs()
+                ->registerHelpers();
+        }
 
         return $this;
     }
@@ -319,7 +353,7 @@ class PackageDomain
                     try {
                         call_user_func($model.'::observe', $observer);
                     } catch (Throwable) {
-                        starterKit()->clearCache();
+                        //
                     }
                 });
         }
@@ -345,7 +379,7 @@ class PackageDomain
                     try {
                         Gate::policy($model, $policy);
                     } catch (Exception) {
-                        starterKit()->clearCache();
+                        //
                     }
                 });
         }
@@ -372,7 +406,7 @@ class PackageDomain
                         app()->when($repository)->needs(Builder::class)->give(fn (
                         ) => call_user_func($model.'::query'));
                     } catch (Exception) {
-                        starterKit()->clearCache();
+                        //
                     }
                 }
                 );

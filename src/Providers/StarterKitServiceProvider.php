@@ -3,8 +3,6 @@
 namespace Fligno\StarterKit\Providers;
 
 use Fligno\StarterKit\Abstracts\BaseStarterKitServiceProvider as ServiceProvider;
-use Fligno\StarterKit\Console\Commands\StarterKitClearCacheCommand;
-use Fligno\StarterKit\Console\Commands\StarterKitPublishEnvCommand;
 use Fligno\StarterKit\Exceptions\Handler;
 use Fligno\StarterKit\Services\CustomResponse;
 use Fligno\StarterKit\Services\PackageDomain;
@@ -24,10 +22,7 @@ class StarterKitServiceProvider extends ServiceProvider
     /**
      * @var string[]
      */
-    protected array $commands = [
-        StarterKitClearCacheCommand::class,
-        StarterKitPublishEnvCommand::class,
-    ];
+    protected array $commands = [];
 
     /**
      * Publishable Environment Variables
@@ -42,7 +37,6 @@ class StarterKitServiceProvider extends ServiceProvider
         'SK_VERIFY_SSL' => true,
         'SK_SENTRY_ENABLED' => false,
         'SK_SENTRY_TEST_API_ENABLED' => false,
-        'SK_PUBLISH_ENV_VARS' => true,
     ];
 
     /**
@@ -89,17 +83,18 @@ class StarterKitServiceProvider extends ServiceProvider
 
         $this->app->singleton('starter-kit', fn () => new StarterKit());
 
-        $this->app->bind('custom-response', fn () => new CustomResponse());
-
-        $this->app->bind('package-domain', function (Application $app, array $params) {
+        $this->app->singleton('package-domain', function (Application $app) {
             return new PackageDomain(
-                provider: $params['provider'],
                 app: $app,
                 starter_kit: $app->make('starter-kit'),
                 config: $app->make('config'),
                 migrator: $app->make('migrator'),
+                view: $app->make('view'),
+                translator: $app->make('translator'),
             );
         });
+
+        $this->app->bind('custom-response', fn () => new CustomResponse());
 
         parent::register();
     }
