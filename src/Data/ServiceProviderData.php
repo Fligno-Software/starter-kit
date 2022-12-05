@@ -22,9 +22,9 @@ class ServiceProviderData extends BaseJsonSerializable
     public string $class;
 
     /**
-     * @var string
+     * @var string|null
      */
-    public string $composer;
+    public string|null $composer;
 
     public ServiceProvider|null $provider;
 
