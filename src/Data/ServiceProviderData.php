@@ -39,9 +39,9 @@ class ServiceProviderData extends BaseJsonSerializable
     public string|null $domain = null;
 
     /**
-     * @var string
+     * @var string|null
      */
-    public string $path;
+    public string|null $path;
 
     /**
      * @param  mixed  $data
