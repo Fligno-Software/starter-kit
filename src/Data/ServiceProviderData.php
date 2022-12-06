@@ -22,9 +22,9 @@ class ServiceProviderData extends BaseJsonSerializable
     public string $class;
 
     /**
-     * @var string|null
+     * @var string
      */
-    public string|null $composer;
+    public string $composer;
 
     public ServiceProvider|null $provider;
 
@@ -39,9 +39,9 @@ class ServiceProviderData extends BaseJsonSerializable
     public string|null $domain = null;
 
     /**
-     * @var string|null
+     * @var string
      */
-    public string|null $path;
+    public string $path;
 
     /**
      * @param  mixed  $data
@@ -77,7 +77,9 @@ class ServiceProviderData extends BaseJsonSerializable
                 function (Stringable $str) use ($domain, &$domain_decoded) {
                     return $str->before($domain_decoded = domain_decode($domain));
                 },
-                fn (Stringable $str) => $str->before('src')->before('app')
+                function (Stringable $str) {
+                    return $str->before(base_path())->before('src/')->before('app/')->prepend(base_path());
+                }
             )
             ->jsonSerialize();
 
@@ -85,8 +87,6 @@ class ServiceProviderData extends BaseJsonSerializable
         $composer = guess_file_or_directory_path($directory, $search, true);
         $package = get_contents_from_composer_json($composer)?->get('name');
         $package = $package == 'laravel/laravel' ? null : $package;
-
-        info("$class ($provider_directory): $composer");
 
         $path = Str::of($composer)
             ->before($search)
