@@ -86,7 +86,7 @@ class ServiceProviderData extends BaseJsonSerializable
         $package = get_contents_from_composer_json($composer)?->get('name');
         $package = $package == 'laravel/laravel' ? null : $package;
 
-        info($class.': '.$composer);
+        info("$class ($provider_directory): $composer");
 
         $path = Str::of($composer)
             ->before($search)
