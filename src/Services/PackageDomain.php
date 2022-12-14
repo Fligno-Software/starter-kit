@@ -13,7 +13,6 @@ use Fligno\StarterKit\Traits\UsesProviderRoutesTrait;
 use Illuminate\Config\Repository;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Contracts\Foundation\CachesRoutes;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Collection;
@@ -24,6 +23,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 use Illuminate\Translation\Translator;
 use Illuminate\View\Factory;
+use Spatie\QueryBuilder\QueryBuilder;
 use Throwable;
 
 /**
@@ -403,13 +403,14 @@ class PackageDomain
                         $model = $model->first();
                     }
                     try {
-                        app()->when($repository)->needs(Builder::class)->give(fn (
-                        ) => call_user_func($model.'::query'));
+                        $this->app
+                            ->when($repository)
+                            ->needs(QueryBuilder::class)
+                            ->give(fn () => QueryBuilder::for($model));
                     } catch (Exception) {
                         //
                     }
-                }
-                );
+                });
         }
 
         return $this;

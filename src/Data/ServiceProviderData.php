@@ -76,10 +76,12 @@ class ServiceProviderData extends BaseJsonSerializable
                 $domain,
                 function (Stringable $str) use ($domain, &$domain_decoded) {
                     $domain_decoded = domain_decode($domain);
+
                     return $str->before($domain_decoded);
                 },
                 function (Stringable $str) {
                     $base = base_path();
+
                     return $str->after($base)->before('src/')->before('app/')->prepend($base);
                 }
             )
