@@ -6,6 +6,7 @@ use Fligno\StarterKit\Interfaces\RepositoryInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\QueryBuilder\QueryBuilder;
 
 /**
  * Abstract Class BaseRepository
@@ -17,26 +18,26 @@ use Illuminate\Database\Eloquent\Model;
 abstract class BaseRepository implements RepositoryInterface
 {
     /**
-     * @param  Builder|null  $builder
+     * @param  QueryBuilder|null  $builder
      */
-    public function __construct(protected Builder|null $builder = null)
+    public function __construct(protected QueryBuilder|null $builder = null)
     {
     }
 
     /**
-     * @return Builder|null
+     * @return QueryBuilder|null
      */
-    public function getBuilder(): Builder|null
+    public function builder(): QueryBuilder|null
     {
         return $this->builder?->clone();
     }
 
     /**
-     * @return Builder|null
+     * @return QueryBuilder|null
      */
-    public function builder(): Builder|null
+    public function getBuilder(): QueryBuilder|null
     {
-        return $this->builder;
+        return $this->builder();
     }
 
     /**
@@ -45,7 +46,7 @@ abstract class BaseRepository implements RepositoryInterface
      */
     public function all(mixed $attributes = null): Collection|array|null
     {
-        return $this->getBuilder()?->get();
+        return $this->builder()?->get();
     }
 
     /**
@@ -54,7 +55,7 @@ abstract class BaseRepository implements RepositoryInterface
      */
     public function make(mixed $attributes = null): Model|null
     {
-        return $this->getBuilder()?->firstOrNew($attributes ?? []);
+        return $this->builder()?->firstOrNew($attributes ?? []);
     }
 
     /**
@@ -84,7 +85,7 @@ abstract class BaseRepository implements RepositoryInterface
     public function get(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null
     {
         if ($id) {
-            return $this->getBuilder()?->findOrFail($id);
+            return $this->builder()?->findOrFail($id);
         }
 
         return $this->all();
@@ -117,7 +118,7 @@ abstract class BaseRepository implements RepositoryInterface
      */
     public function delete(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null
     {
-        $builder = $this->getBuilder()
+        $builder = $this->builder()
             ->when($id, function (Builder $builder) use ($id) {
                 $key = $builder->getModel()->getQualifiedKeyName();
 
@@ -140,7 +141,7 @@ abstract class BaseRepository implements RepositoryInterface
      */
     public function restore(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null
     {
-        $builder = $this->getBuilder();
+        $builder = $this->builder();
 
         if ($builder?->hasMacro('restore')) {
             $builder = $builder
