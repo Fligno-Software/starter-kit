@@ -7,18 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
 
 /**
- * Class ModelDisablingScope
+ * Class ModelExpiringScope
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
  */
-class ModelDisablingScope implements Scope
+class ModelExpiringScope implements Scope
 {
     /**
      * All the extensions to be added to the builder.
      *
      * @var string[]
      */
-    protected array $extensions = ['Enable', 'Disable', 'WithDisabled', 'WithoutDisabled', 'OnlyDisabled'];
+    protected array $extensions = ['Unexpire', 'Expire', 'WithExpired', 'WithoutExpired', 'OnlyExpired'];
 
     /**
      * Apply the scope to a given Eloquent query builder.
@@ -29,7 +29,7 @@ class ModelDisablingScope implements Scope
      */
     public function apply(Builder $builder, Model $model): void
     {
-        $builder->whereNull($model->getQualifiedDisabledAtColumn());
+        $builder->whereNull($model->getQualifiedExpiresAtColumn());
     }
 
     /**
@@ -46,45 +46,45 @@ class ModelDisablingScope implements Scope
     }
 
     /**
-     * Get the "disabled at" column for the builder.
+     * Get the "expires at" column for the builder.
      *
      * @param  Builder  $builder
      * @return string
      */
-    protected function getDisabledAtColumn(Builder $builder): string
+    protected function getExpiresAtColumn(Builder $builder): string
     {
         if (count($builder->getQuery()->joins) > 0) {
-            return $builder->getModel()->getQualifiedDisabledAtColumn();
+            return $builder->getModel()->getQualifiedExpiresAtColumn();
         }
 
-        return $builder->getModel()->getDisabledAtColumn();
+        return $builder->getModel()->getExpiresAtColumn();
     }
 
     /**
-     * Add the enable extension to the builder.
+     * Add the unexpire extension to the builder.
      *
      * @param  Builder  $builder
      * @return void
      */
-    protected function addEnable(Builder $builder): void
+    protected function addUnexpire(Builder $builder): void
     {
-        $builder->macro('enable', function (Builder $builder) {
-            $builder->withDisabled();
+        $builder->macro('unexpire', function (Builder $builder) {
+            $builder->withExpired();
 
-            return $builder->update([$builder->getModel()->getDisabledAtColumn() => null]);
+            return $builder->update([$builder->getModel()->getExpiresAtColumn() => null]);
         });
     }
 
     /**
-     * Add to disable extension to the builder.
+     * Add to expire extension to the builder.
      *
      * @param  Builder  $builder
      * @return void
      */
-    protected function addDisable(Builder $builder): void
+    protected function addExpire(Builder $builder): void
     {
-        $builder->macro('disable', function (Builder $builder) {
-            $column = $this->getDisabledAtColumn($builder);
+        $builder->macro('expire', function (Builder $builder) {
+            $column = $this->getExpiresAtColumn($builder);
 
             return $builder->update([
                 $column => $builder->getModel()->freshTimestampString(),
@@ -93,16 +93,16 @@ class ModelDisablingScope implements Scope
     }
 
     /**
-     * Add the with-disabled extension to the builder.
+     * Add the with-expired extension to the builder.
      *
      * @param  Builder  $builder
      * @return void
      */
-    protected function addWithDisabled(Builder $builder): void
+    protected function addWithExpired(Builder $builder): void
     {
-        $builder->macro('withDisabled', function (Builder $builder, $withDisabled = true) {
-            if (! $withDisabled) {
-                return $builder->withoutDisabled();
+        $builder->macro('withExpired', function (Builder $builder, $withExpired = true) {
+            if (! $withExpired) {
+                return $builder->withoutExpired();
             }
 
             return $builder->withoutGlobalScope($this);
@@ -110,18 +110,18 @@ class ModelDisablingScope implements Scope
     }
 
     /**
-     * Add the without-disabled extension to the builder.
+     * Add the without-expired extension to the builder.
      *
      * @param  Builder  $builder
      * @return void
      */
-    protected function addWithoutDisabled(Builder $builder): void
+    protected function addWithoutExpired(Builder $builder): void
     {
-        $builder->macro('withoutDisabled', function (Builder $builder) {
+        $builder->macro('withoutExpired', function (Builder $builder) {
             $model = $builder->getModel();
 
             $builder->withoutGlobalScope($this)->whereNull(
-                $model->getQualifiedDisabledAtColumn()
+                $model->getQualifiedExpiresAtColumn()
             );
 
             return $builder;
@@ -129,18 +129,18 @@ class ModelDisablingScope implements Scope
     }
 
     /**
-     * Add the only-disabled extension to the builder.
+     * Add the only-expired extension to the builder.
      *
      * @param  Builder  $builder
      * @return void
      */
-    protected function addOnlyDisabled(Builder $builder): void
+    protected function addOnlyExpired(Builder $builder): void
     {
-        $builder->macro('onlyDisabled', function (Builder $builder) {
+        $builder->macro('onlyExpired', function (Builder $builder) {
             $model = $builder->getModel();
 
             $builder->withoutGlobalScope($this)->whereNotNull(
-                $model->getQualifiedDisabledAtColumn()
+                $model->getQualifiedExpiresAtColumn()
             );
 
             return $builder;
