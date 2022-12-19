@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Builder;
 /**
  * Trait ModelDisablesTrait
  *
- * @method static static|Builder|\Illuminate\Database\Query\Builder withDisabled(bool $withDisabled = true)
- * @method static static|Builder|\Illuminate\Database\Query\Builder onlyDisabled(bool $onlyDisabled = true)
- * @method static static|Builder|\Illuminate\Database\Query\Builder withoutDisabled(bool $withoutDisabled = true)
+ * @method static static|int disable()
+ * @method static static|int enable()
+ * @method static static|Builder|\Illuminate\Database\Query\Builder withDisabled(bool $with_disabled = true)
+ * @method static static|Builder|\Illuminate\Database\Query\Builder onlyDisabled()
+ * @method static static|Builder|\Illuminate\Database\Query\Builder withoutDisabled()
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
  */

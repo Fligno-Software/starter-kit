@@ -29,7 +29,7 @@ class ModelDisablingScope implements Scope
      */
     public function apply(Builder $builder, Model $model): void
     {
-        $builder->whereNull($model->getQualifiedDisabledAtColumn());
+        $builder->withoutDisabled();
     }
 
     /**
@@ -84,11 +84,9 @@ class ModelDisablingScope implements Scope
     protected function addDisable(Builder $builder): void
     {
         $builder->macro('disable', function (Builder $builder) {
-            $column = $this->getDisabledAtColumn($builder);
+            $column = $builder->getModel()->getDisabledAtColumn($builder);
 
-            return $builder->update([
-                $column => $builder->getModel()->freshTimestampString(),
-            ]);
+            return $builder->update([$column => $builder->getModel()->freshTimestampString()]);
         });
     }
 
@@ -100,8 +98,8 @@ class ModelDisablingScope implements Scope
      */
     protected function addWithDisabled(Builder $builder): void
     {
-        $builder->macro('withDisabled', function (Builder $builder, $withDisabled = true) {
-            if (! $withDisabled) {
+        $builder->macro('withDisabled', function (Builder $builder, $with_disabled = true) {
+            if (! $with_disabled) {
                 return $builder->withoutDisabled();
             }
 

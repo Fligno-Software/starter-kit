@@ -5,6 +5,7 @@ namespace Fligno\StarterKit\Scopes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
+use Illuminate\Support\Carbon;
 
 /**
  * Class ModelExpiringScope
@@ -29,7 +30,7 @@ class ModelExpiringScope implements Scope
      */
     public function apply(Builder $builder, Model $model): void
     {
-        $builder->whereNull($model->getQualifiedExpiresAtColumn());
+        $builder->withoutExpired();
     }
 
     /**
@@ -41,6 +42,7 @@ class ModelExpiringScope implements Scope
     public function extend(Builder $builder): void
     {
         foreach ($this->extensions as $extension) {
+            info("add{$extension}");
             $this->{"add{$extension}"}($builder);
         }
     }
@@ -83,12 +85,10 @@ class ModelExpiringScope implements Scope
      */
     protected function addExpire(Builder $builder): void
     {
-        $builder->macro('expire', function (Builder $builder) {
-            $column = $this->getExpiresAtColumn($builder);
+        $builder->macro('expire', function (Builder $builder, Carbon|string|null $date_time = null) {
+            $column = $builder->getModel()->getExpiresAtColumn($builder);
 
-            return $builder->update([
-                $column => $builder->getModel()->freshTimestampString(),
-            ]);
+            return $builder->update([$column => $this->getExpirationDateTime($date_time)]);
         });
     }
 
@@ -100,9 +100,9 @@ class ModelExpiringScope implements Scope
      */
     protected function addWithExpired(Builder $builder): void
     {
-        $builder->macro('withExpired', function (Builder $builder, $withExpired = true) {
-            if (! $withExpired) {
-                return $builder->withoutExpired();
+        $builder->macro('withExpired', function (Builder $builder, bool $with_expired = true, Carbon|string|null $date_time = null) {
+            if (! $with_expired) {
+                return $builder->withoutExpired($date_time);
             }
 
             return $builder->withoutGlobalScope($this);
@@ -117,12 +117,13 @@ class ModelExpiringScope implements Scope
      */
     protected function addWithoutExpired(Builder $builder): void
     {
-        $builder->macro('withoutExpired', function (Builder $builder) {
+        $builder->macro('withoutExpired', function (Builder $builder, Carbon|string|null $date_time = null) {
             $model = $builder->getModel();
+            $column = $model->getQualifiedExpiresAtColumn();
 
-            $builder->withoutGlobalScope($this)->whereNull(
-                $model->getQualifiedExpiresAtColumn()
-            );
+            $builder->withoutGlobalScope($this)
+                ->whereNull($column)
+                ->orWhereDate($column, '>', $this->getExpirationDateTime($date_time));
 
             return $builder;
         });
@@ -136,14 +137,30 @@ class ModelExpiringScope implements Scope
      */
     protected function addOnlyExpired(Builder $builder): void
     {
-        $builder->macro('onlyExpired', function (Builder $builder) {
+        $builder->macro('onlyExpired', function (Builder $builder, Carbon|string|null $date_time = null) {
             $model = $builder->getModel();
+            $column = $model->getQualifiedExpiresAtColumn();
 
-            $builder->withoutGlobalScope($this)->whereNotNull(
-                $model->getQualifiedExpiresAtColumn()
-            );
+            $builder->withoutGlobalScope($this)
+                ->whereNotNull($column)
+                ->whereDate($column, '<=', $this->getExpirationDateTime($date_time));
 
             return $builder;
         });
+    }
+
+    /**
+     * @param  Carbon|string|null  $date_time
+     * @return string
+     */
+    private function getExpirationDateTime(Carbon|string|null $date_time = null): string
+    {
+        if ($date_time) {
+            $date_time = $date_time instanceof Carbon ? $date_time : Carbon::parse($date_time);
+        } else {
+            $date_time = now();
+        }
+
+        return $date_time->toDateTimeString();
     }
 }
