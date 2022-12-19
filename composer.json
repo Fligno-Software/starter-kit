@@ -57,9 +57,9 @@
             }
         },
         "branch-alias": {
-            "dev-master": "3.5.x-dev",
-            "dev-develop": "3.5.x-dev",
-            "dev-feature": "3.5.x-dev"
+            "dev-master": "3.6.x-dev",
+            "dev-develop": "3.6.x-dev",
+            "dev-feature": "3.6.x-dev"
         }
     }
 }
