@@ -10,6 +10,7 @@ use Fligno\StarterKit\Services\StarterKit;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Application;
 
 /**
@@ -70,6 +71,15 @@ class StarterKitServiceProvider extends ServiceProvider
                     ->generate();
             });
         }
+
+        // Register custom migration functions
+        Blueprint::macro('expires', function (string $column = 'expires_at') {
+            $this->timestamp($column)->nullable();
+        });
+
+        Blueprint::macro('disables', function (string $column = 'disabled_at') {
+            $this->timestamp($column)->nullable();
+        });
     }
 
     /**

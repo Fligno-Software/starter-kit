@@ -4,13 +4,16 @@ namespace Fligno\StarterKit\Traits;
 
 use Fligno\StarterKit\Scopes\ModelExpiringScope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 
 /**
  * Trait ModelExpiringTrait
  *
- * @method static static|Builder|\Illuminate\Database\Query\Builder withExpired(bool $withExpired = true)
- * @method static static|Builder|\Illuminate\Database\Query\Builder onlyExpired(bool $onlyExpired = true)
- * @method static static|Builder|\Illuminate\Database\Query\Builder withoutExpired(bool $withoutExpired = true)
+ * @method static static|int expire(Carbon|string|null $date_time = null)
+ * @method static static|int unexpire()
+ * @method static static|Builder|\Illuminate\Database\Query\Builder withExpired(bool $with_expired = true, Carbon|string|null $date_time = null)
+ * @method static static|Builder|\Illuminate\Database\Query\Builder onlyExpired(Carbon|string|null $date_time = null)
+ * @method static static|Builder|\Illuminate\Database\Query\Builder withoutExpired(Carbon|string|null $date_time = null)
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
  */
