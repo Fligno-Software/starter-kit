@@ -42,7 +42,6 @@ class ModelExpiringScope implements Scope
     public function extend(Builder $builder): void
     {
         foreach ($this->extensions as $extension) {
-            info("add{$extension}");
             $this->{"add{$extension}"}($builder);
         }
     }
