@@ -80,6 +80,12 @@ class StarterKitServiceProvider extends ServiceProvider
         Blueprint::macro('disables', function (string $column = 'disabled_at') {
             $this->timestamp($column)->nullable();
         });
+
+        Blueprint::macro('owned', function (string $column = 'owner_id', bool $nullable = false) {
+            $model = starterKit()->getUserModel();
+            $table = starterKit()->getUserQueryBuilder()->getModel()->getTable();
+            $this->foreignIdFor(starterKit()->getUserModel(), $column)->nullable($nullable)->constrained($table);
+        });
     }
 
     /**
