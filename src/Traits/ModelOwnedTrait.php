@@ -16,7 +16,7 @@ trait ModelOwnedTrait
      *
      * @return string
      */
-    public function getOwnerIdColumn(): string
+    public static function getOwnerIdColumn(): string
     {
         return defined('static::OWNER_ID') ? static::OWNER_ID : 'owner_id';
     }
@@ -26,6 +26,6 @@ trait ModelOwnedTrait
      */
     public function owner(): BelongsTo
     {
-        return $this->belongsTo(starterKit()->getUserModel(), $this->getOwnerIdColumn());
+        return $this->belongsTo(starterKit()->getUserModel(), self::getOwnerIdColumn());
     }
 }
