@@ -6,6 +6,7 @@ use Fligno\StarterKit\Interfaces\RepositoryInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\QueryBuilder\QueryBuilder;
 
 /**
@@ -78,27 +79,27 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param  int|string|array|null  $id
+     * @param  int|string|array|null|Model  $id
      * @param  mixed  $attributes
      * @return Model|Collection|array|null
      */
-    public function get(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null
+    public function get(int|string|array|Model $id = null, mixed $attributes = null): Model|Collection|array|null
     {
         if ($id) {
-            return $this->builder()?->findOrFail($id);
+            return $id instanceof Model ? $id : $this->builder()?->findOrFail($id);
         }
 
         return $this->all();
     }
 
     /**
-     * @param  int|string|array|null  $id
+     * @param  int|string|array|null|Model  $id
      * @param  mixed  $attributes
      * @return Model|Collection|array|null
      */
-    public function update(int|string|array $id = null, mixed $attributes = []): Model|Collection|array|null
+    public function update(int|string|array|Model $id = null, mixed $attributes = []): Model|Collection|array|null
     {
-        $model = $this->get($id);
+        $model = $id instanceof Model ? $id : $this->get($id);
 
         if ($model instanceof Model) {
             $model->fill($attributes);
@@ -112,12 +113,16 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param  int|string|array|null  $id
+     * @param  int|string|array|null|Model  $id
      * @param  mixed  $attributes
      * @return Model|Collection|array|null
      */
-    public function delete(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null
+    public function delete(int|string|array|Model $id = null, mixed $attributes = null): Model|Collection|array|null
     {
+        if ($id instanceof Model) {
+            return $id->delete() ? $id : null;
+        }
+
         $builder = $this->builder()
             ->when($id, function (Builder $builder) use ($id) {
                 $key = $builder->getModel()->getQualifiedKeyName();
@@ -135,12 +140,16 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * @param  int|string|array|null  $id
+     * @param  int|string|array|null|Model  $id
      * @param  mixed  $attributes
      * @return Model|Collection|array|null
      */
-    public function restore(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null
+    public function restore(int|string|array|Model $id = null, mixed $attributes = null): Model|Collection|array|null
     {
+        if ($id instanceof Model && class_uses_trait($id, SoftDeletes::class)) {
+            return $id->restore() ? $id : null;
+        }
+
         $builder = $this->builder();
 
         if ($builder?->hasMacro('restore')) {
