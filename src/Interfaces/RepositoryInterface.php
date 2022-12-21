@@ -33,30 +33,30 @@ interface RepositoryInterface
     public function create(mixed $attributes = null): Model|null;
 
     /**
-     * @param  int|string|array|null  $id
+     * @param  int|string|array|null|Model  $id
      * @param  mixed  $attributes
      * @return Model|Collection|array|null
      */
-    public function get(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null;
+    public function get(int|string|array|Model $id = null, mixed $attributes = null): Model|Collection|array|null;
 
     /**
-     * @param  int|string|array|null  $id
+     * @param  int|string|array|null|Model  $id
      * @param  mixed  $attributes
      * @return Model|Collection|array|null
      */
-    public function update(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null;
+    public function update(int|string|array|Model $id = null, mixed $attributes = null): Model|Collection|array|null;
 
     /**
-     * @param  int|string|array|null  $id
+     * @param  int|string|array|null|Model  $id
      * @param  mixed  $attributes
      * @return Model|Collection|array|null
      */
-    public function delete(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null;
+    public function delete(int|string|array|Model $id = null, mixed $attributes = null): Model|Collection|array|null;
 
     /**
-     * @param  int|string|array|null  $id
+     * @param  int|string|array|null|Model  $id
      * @param  mixed  $attributes
      * @return Model|Collection|array|null
      */
-    public function restore(int|string|array $id = null, mixed $attributes = null): Model|Collection|array|null;
+    public function restore(int|string|array|Model $id = null, mixed $attributes = null): Model|Collection|array|null;
 }
