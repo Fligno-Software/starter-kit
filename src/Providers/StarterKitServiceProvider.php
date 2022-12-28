@@ -84,7 +84,7 @@ class StarterKitServiceProvider extends ServiceProvider
         Blueprint::macro('owned', function (string $column = 'owner_id', bool $nullable = false) {
             $model = starterKit()->getUserModel();
             $table = starterKit()->getUserQueryBuilder()->getModel()->getTable();
-            $this->foreignIdFor(starterKit()->getUserModel(), $column)->nullable($nullable)->constrained($table);
+            $this->foreignIdFor($model, $column)->nullable($nullable)->constrained($table);
         });
     }
 
