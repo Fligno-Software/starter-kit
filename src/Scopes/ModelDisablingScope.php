@@ -53,7 +53,7 @@ class ModelDisablingScope implements Scope
      */
     protected function getDisabledAtColumn(Builder $builder): string
     {
-        if (count($builder->getQuery()->joins) > 0) {
+        if (count($builder->getQuery()->joins ?? []) > 0) {
             return $builder->getModel()->getQualifiedDisabledAtColumn();
         }
 
@@ -71,7 +71,7 @@ class ModelDisablingScope implements Scope
         $builder->macro('enable', function (Builder $builder) {
             $builder->withDisabled();
 
-            return $builder->update([$builder->getModel()->getDisabledAtColumn() => null]);
+            return $builder->update([$this->getDisabledAtColumn($builder) => null]);
         });
     }
 
@@ -84,7 +84,7 @@ class ModelDisablingScope implements Scope
     protected function addDisable(Builder $builder): void
     {
         $builder->macro('disable', function (Builder $builder) {
-            $column = $builder->getModel()->getDisabledAtColumn($builder);
+            $column = $this->getDisabledAtColumn($builder);
 
             return $builder->update([$column => $builder->getModel()->freshTimestampString()]);
         });
@@ -116,11 +116,7 @@ class ModelDisablingScope implements Scope
     protected function addWithoutDisabled(Builder $builder): void
     {
         $builder->macro('withoutDisabled', function (Builder $builder) {
-            $model = $builder->getModel();
-
-            $builder->withoutGlobalScope($this)->whereNull(
-                $model->getQualifiedDisabledAtColumn()
-            );
+            $builder->withoutGlobalScope($this)->whereNull($this->getDisabledAtColumn($builder));
 
             return $builder;
         });
@@ -135,11 +131,7 @@ class ModelDisablingScope implements Scope
     protected function addOnlyDisabled(Builder $builder): void
     {
         $builder->macro('onlyDisabled', function (Builder $builder) {
-            $model = $builder->getModel();
-
-            $builder->withoutGlobalScope($this)->whereNotNull(
-                $model->getQualifiedDisabledAtColumn()
-            );
+            $builder->withoutGlobalScope($this)->whereNotNull($this->getDisabledAtColumn($builder));
 
             return $builder;
         });

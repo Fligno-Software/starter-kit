@@ -54,7 +54,7 @@ class ModelExpiringScope implements Scope
      */
     protected function getExpiresAtColumn(Builder $builder): string
     {
-        if (count($builder->getQuery()->joins) > 0) {
+        if (count($builder->getQuery()->joins ?? []) > 0) {
             return $builder->getModel()->getQualifiedExpiresAtColumn();
         }
 
@@ -72,7 +72,7 @@ class ModelExpiringScope implements Scope
         $builder->macro('unexpire', function (Builder $builder) {
             $builder->withExpired();
 
-            return $builder->update([$builder->getModel()->getExpiresAtColumn() => null]);
+            return $builder->update([$this->getExpiresAtColumn($builder) => null]);
         });
     }
 
@@ -85,7 +85,7 @@ class ModelExpiringScope implements Scope
     protected function addExpire(Builder $builder): void
     {
         $builder->macro('expire', function (Builder $builder, Carbon|string|null $date_time = null) {
-            $column = $builder->getModel()->getExpiresAtColumn($builder);
+            $column = $this->getExpiresAtColumn($builder);
 
             return $builder->update([$column => $this->getExpirationDateTime($date_time)]);
         });
@@ -117,8 +117,7 @@ class ModelExpiringScope implements Scope
     protected function addWithoutExpired(Builder $builder): void
     {
         $builder->macro('withoutExpired', function (Builder $builder, Carbon|string|null $date_time = null) {
-            $model = $builder->getModel();
-            $column = $model->getQualifiedExpiresAtColumn();
+            $column = $this->getExpiresAtColumn($builder);
 
             $builder->withoutGlobalScope($this)
                 ->whereNull($column)
@@ -137,14 +136,11 @@ class ModelExpiringScope implements Scope
     protected function addOnlyExpired(Builder $builder): void
     {
         $builder->macro('onlyExpired', function (Builder $builder, Carbon|string|null $date_time = null) {
-            $model = $builder->getModel();
-            $column = $model->getQualifiedExpiresAtColumn();
+            $column = $this->getExpiresAtColumn($builder);
 
-            $builder->withoutGlobalScope($this)
+            return $builder->withoutGlobalScope($this)
                 ->whereNotNull($column)
                 ->whereDate($column, '<=', $this->getExpirationDateTime($date_time));
-
-            return $builder;
         });
     }
 

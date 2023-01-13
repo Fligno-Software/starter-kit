@@ -18,7 +18,7 @@ class UnauthorizedException extends Exception
     #[Pure]
     public function __construct($message = '')
     {
-        parent::__construct($message, null);
+        parent::__construct($message, 403);
     }
 
     public function render($request): JsonResponse
@@ -26,7 +26,7 @@ class UnauthorizedException extends Exception
         return customResponse()
             ->data([])
             ->message($this->getMessage() ?: 'You do not have the necessary permission to access this resource.')
-            ->failed(403)
+            ->failed($this->getCode())
             ->generate();
     }
 }
