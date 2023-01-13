@@ -66,6 +66,9 @@ trait ModelExpiringTrait
      */
     public function getIsExpiredAttribute(): bool
     {
-        return is_null($this->getExpiresAtColumn());
+        $column = $this->getExpiresAtColumn();
+        $value = $this->$column;
+
+        return $value && $value->isPast();
     }
 }

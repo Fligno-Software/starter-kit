@@ -76,11 +76,11 @@ trait HasTaggableCacheTrait
     }
 
     /**
-     * @param string[] $tags
-     * @param string $key
-     * @param Closure $closure
-     * @param bool $rehydrate
-     * @param DateTimeInterface|DateInterval|int|null $ttl
+     * @param  string[]  $tags
+     * @param  string  $key
+     * @param  Closure  $closure
+     * @param  bool  $rehydrate
+     * @param  DateTimeInterface|DateInterval|int|null  $ttl
      * @return mixed
      */
     private function getCache(array $tags, string $key, Closure $closure, bool $rehydrate = false, DateTimeInterface|DateInterval|int $ttl = null): mixed
@@ -90,13 +90,13 @@ trait HasTaggableCacheTrait
                 $this->forgetCache($tags, $key);
             }
 
-            $taggedCache = $this->getCacheManager()->tags($tags);
+            $tagged_cache = $this->getCacheManager()->tags($tags);
 
             if ($ttl) {
-                return $taggedCache->remember($key, $ttl, $closure);
+                return $tagged_cache->remember($key, $ttl, $closure);
             }
 
-            return $taggedCache->rememberForever($key, $closure);
+            return $tagged_cache->rememberForever($key, $closure);
         }
 
         return $closure();
@@ -109,8 +109,10 @@ trait HasTaggableCacheTrait
      */
     public function forgetCache(array $tags, string $key): bool
     {
+        $tagged_cache = $this->getCacheManager()->tags($tags);
+
         if ($this->isCacheTaggable()) {
-            return $this->getCacheManager()->tags($tags)->forget($key);
+            return $tagged_cache->forget($key);
         }
 
         return false;
