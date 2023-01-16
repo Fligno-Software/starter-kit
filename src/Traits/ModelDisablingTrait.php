@@ -45,7 +45,7 @@ trait ModelDisablingTrait
      *
      * @return string
      */
-    public function getDisabledAtColumn(): string
+    public static function getDisabledAtColumn(): string
     {
         return defined('static::DISABLED_AT') ? static::DISABLED_AT : 'disabled_at';
     }

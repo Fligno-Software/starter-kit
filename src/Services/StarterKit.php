@@ -207,7 +207,9 @@ class StarterKit
 
                     self::REPOSITORIES_DIR,
                     self::POLICIES_DIR,
-                    self::OBSERVERS_DIR => collect_classes_from_path($path, Str::of($directory)
+                    self::OBSERVERS_DIR => collect_classes_from_path(
+                        $path,
+                        Str::of($directory)
                         ->singular()
                         ->studly()
                         ->jsonSerialize()
@@ -374,7 +376,8 @@ class StarterKit
         return $possibleModels->mapToGroups(
             function ($item, $key) {
                 return [$item => $key];
-            });
+            }
+        );
     }
 
     /**

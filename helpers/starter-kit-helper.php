@@ -1037,7 +1037,8 @@ if (! function_exists('add_contents_to_env')) {
                 ->values()
                 ->when(
                     $title->isNotEmpty(),
-                    fn (Collection $collection) => $collection->prepend($title
+                    fn (Collection $collection) => $collection->prepend(
+                        $title
                         ->start('# ')
                         ->append(PHP_EOL)
                         ->jsonSerialize()
@@ -1080,7 +1081,8 @@ if (! function_exists('get_combined_key_value')) {
     {
         return Str::of($value)
             ->whenContains(
-                ' ', fn (Stringable $str) => $str->append('"')->prepend('"')
+                ' ',
+                fn (Stringable $str) => $str->append('"')->prepend('"')
             )
             ->prepend($key.'=')
             ->jsonSerialize();

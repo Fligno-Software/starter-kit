@@ -46,7 +46,7 @@ trait ModelExpiringTrait
      *
      * @return string
      */
-    public function getExpiresAtColumn(): string
+    public static function getExpiresAtColumn(): string
     {
         return defined('static::EXPIRES_AT') ? static::EXPIRES_AT : 'expires_at';
     }
