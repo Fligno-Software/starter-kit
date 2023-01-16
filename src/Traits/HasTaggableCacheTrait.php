@@ -80,10 +80,10 @@ trait HasTaggableCacheTrait
      * @param  string  $key
      * @param  Closure  $closure
      * @param  bool  $rehydrate
-     * @param  DateTimeInterface|DateInterval|int|null  $ttl
+     * @param  Closure|DateTimeInterface|DateInterval|int|null  $ttl
      * @return mixed
      */
-    private function getCache(array $tags, string $key, Closure $closure, bool $rehydrate = false, DateTimeInterface|DateInterval|int $ttl = null): mixed
+    private function getCache(array $tags, string $key, Closure $closure, bool $rehydrate = false, Closure|DateTimeInterface|DateInterval|int $ttl = null): mixed
     {
         if ($this->isCacheTaggable()) {
             if ($rehydrate) {
@@ -92,11 +92,19 @@ trait HasTaggableCacheTrait
 
             $tagged_cache = $this->getCacheManager()->tags($tags);
 
-            if ($ttl) {
-                return $tagged_cache->remember($key, $ttl, $closure);
+            // Copied and improved from \Illuminate\Cache\Repository's remember() function
+            $value = $tagged_cache->get($key);
+
+            if (! is_null($value)) {
+                return $value;
             }
 
-            return $tagged_cache->rememberForever($key, $closure);
+            // Pass reference to $ttl to provide option to override cache expiration
+            $value = $closure($ttl);
+
+            $tagged_cache->put($key, $value, value($ttl));
+
+            return $value;
         }
 
         return $closure();

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Str;
+
 use function Pest\Faker\faker;
 use function PHPUnit\Framework\assertFalse;
 use function PHPUnit\Framework\assertTrue;

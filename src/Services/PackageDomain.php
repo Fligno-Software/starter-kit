@@ -232,7 +232,8 @@ class PackageDomain
 
                     $key = $item['name'];
                     $this->config->set($key, array_merge(
-                        require $path, $this->config->get($key, [])
+                        require $path,
+                        $this->config->get($key, [])
                     ));
                 });
         }
