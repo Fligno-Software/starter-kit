@@ -121,7 +121,7 @@ class ModelExpiringScope implements Scope
 
             $builder->withoutGlobalScope($this)
                 ->whereNull($column)
-                ->orWhereDate($column, '>', $this->getExpirationDateTime($date_time));
+                ->orWhere($column, '>', $this->getExpirationDateTime($date_time));
 
             return $builder;
         });
@@ -140,7 +140,7 @@ class ModelExpiringScope implements Scope
 
             return $builder->withoutGlobalScope($this)
                 ->whereNotNull($column)
-                ->whereDate($column, '<=', $this->getExpirationDateTime($date_time));
+                ->where($column, '<=', $this->getExpirationDateTime($date_time));
         });
     }
 
