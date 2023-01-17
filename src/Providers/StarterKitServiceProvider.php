@@ -74,11 +74,11 @@ class StarterKitServiceProvider extends ServiceProvider
 
         // Register custom migration functions
         Blueprint::macro('expires', function (string $column = 'expires_at') {
-            $this->timestamp($column)->nullable();
+            $this->timestamp($column)->index('sk_'.$column)->nullable();
         });
 
         Blueprint::macro('disables', function (string $column = 'disabled_at') {
-            $this->timestamp($column)->nullable();
+            $this->timestamp($column)->index('sk_'.$column)->nullable();
         });
 
         Blueprint::macro('owned', function (string $column = 'owner_id', bool $nullable = false) {
