@@ -148,7 +148,7 @@ class ModelExpiringScope implements Scope
      * @param  Carbon|string|null  $date_time
      * @return string
      */
-    private function getExpirationDateTime(Carbon|string|null $date_time = null): string
+    public static function getExpirationDateTime(Carbon|string|null $date_time = null): string
     {
         if ($date_time) {
             $date_time = $date_time instanceof Carbon ? $date_time : Carbon::parse($date_time);

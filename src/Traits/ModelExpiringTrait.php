@@ -9,8 +9,6 @@ use Illuminate\Support\Carbon;
 /**
  * Trait ModelExpiringTrait
  *
- * @method static static|int expire(Carbon|string|null $date_time = null)
- * @method static static|int unexpire()
  * @method static static|Builder|\Illuminate\Database\Query\Builder withExpired(bool $with_expired = true, Carbon|string|null $date_time = null)
  * @method static static|Builder|\Illuminate\Database\Query\Builder onlyExpired(Carbon|string|null $date_time = null)
  * @method static static|Builder|\Illuminate\Database\Query\Builder withoutExpired(Carbon|string|null $date_time = null)
@@ -70,5 +68,45 @@ trait ModelExpiringTrait
         $value = $this->$column;
 
         return $value && $value->isPast();
+    }
+
+    /**
+     * @param Carbon|string|null $date_time
+     * @return bool
+     */
+    public function expire(Carbon|string|null $date_time = null): bool
+    {
+        $column = self::getExpiresAtColumn();
+        $this->$column = ModelExpiringScope::getExpirationDateTime($date_time);
+
+        return $this->save();
+    }
+
+    /**
+     * @return bool
+     */
+    public function unexpire(): bool
+    {
+        $column = self::getExpiresAtColumn();
+        $this->$column = null;
+
+        return $this->save();
+    }
+
+    /**
+     * @param Carbon|string|null $date_time
+     * @return bool
+     */
+    public function expireQuietly(Carbon|string|null $date_time = null): bool
+    {
+        return static::withoutEvents(fn () => $this->expire($date_time));
+    }
+
+    /**
+     * @return bool
+     */
+    public function unexpireQuietly(): bool
+    {
+        return static::withoutEvents(fn () => $this->unexpire());
     }
 }
