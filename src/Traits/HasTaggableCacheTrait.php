@@ -102,7 +102,9 @@ trait HasTaggableCacheTrait
             // Pass reference to $ttl to provide option to override cache expiration
             $value = $closure($ttl);
 
-            $tagged_cache->put($key, $value, value($ttl));
+            if (($ttl = value($ttl)) && $ttl !== 0) {
+                $tagged_cache->put($key, $value, $ttl);
+            }
 
             return $value;
         }
