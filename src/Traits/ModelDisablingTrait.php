@@ -8,8 +8,6 @@ use Illuminate\Database\Eloquent\Builder;
 /**
  * Trait ModelDisablesTrait
  *
- * @method static static|int disable()
- * @method static static|int enable()
  * @method static static|Builder|\Illuminate\Database\Query\Builder withDisabled(bool $with_disabled = true)
  * @method static static|Builder|\Illuminate\Database\Query\Builder onlyDisabled()
  * @method static static|Builder|\Illuminate\Database\Query\Builder withoutDisabled()
@@ -60,6 +58,8 @@ trait ModelDisablingTrait
         return $this->qualifyColumn($this->getDisabledAtColumn());
     }
 
+    /***** ACCESSORS *****/
+
     /**
      * @return bool
      */
@@ -68,5 +68,45 @@ trait ModelDisablingTrait
         $column = $this->getDisabledAtColumn();
 
         return is_null($this->$column);
+    }
+
+    /***** OTHER FUNCTIONS *****/
+
+    /**
+     * @return bool
+     */
+    public function disable(): bool
+    {
+        $column = self::getDisabledAtColumn();
+        $this->$column = now();
+
+        return $this->save();
+    }
+
+    /**
+     * @return bool
+     */
+    public function enable(): bool
+    {
+        $column = self::getDisabledAtColumn();
+        $this->$column = null;
+
+        return $this->save();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function disableQuietly(): bool
+    {
+        return static::withoutEvents(fn () => $this->disable());
+    }
+
+    /**
+     * @return mixed
+     */
+    public function enableQuietly(): bool
+    {
+        return static::withoutEvents(fn () => $this->enable());
     }
 }
