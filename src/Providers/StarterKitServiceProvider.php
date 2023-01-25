@@ -86,6 +86,10 @@ class StarterKitServiceProvider extends ServiceProvider
             $table = starterKit()->getUserQueryBuilder()->getModel()->getTable();
             $this->foreignIdFor($model, $column)->nullable($nullable)->constrained($table);
         });
+
+        Blueprint::macro('usage', function (string $column = 'usage_left') {
+            $this->unsignedTinyInteger($column)->index('sk_'.$column)->nullable();
+        });
     }
 
     /**
