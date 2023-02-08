@@ -2,6 +2,7 @@
 
 namespace Fligno\StarterKit\Scopes;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
@@ -69,13 +70,17 @@ class ModelOwnedScope implements Scope
      */
     protected function addOwned(Builder $builder): void
     {
-        $builder->macro('owned', function (Builder $builder, User $owner = null) {
-            if (! $owner && ! ($owner = auth()->user())) {
+        $builder->macro('owned', function (Builder $builder, User|bool|null $owner = null) {
+            if (is_null($owner) && is_null($owner = auth()->user())) {
                 return $builder;
             }
 
             return $builder->withoutGlobalScope($this)
-                ->where($this->getOwnerIdColumn($builder), $owner->getKey());
+                ->when(
+                    $owner instanceof Authenticatable,
+                    fn (Builder $q) => $q->where($this->getOwnerIdColumn($builder), $owner->getKey()),
+                    fn (Builder $q) => $q->whereNull(columns: $this->getOwnerIdColumn($builder), not: $owner),
+                );
         });
     }
 }
