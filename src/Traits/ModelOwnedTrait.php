@@ -3,10 +3,14 @@
 namespace Fligno\StarterKit\Traits;
 
 use Fligno\StarterKit\Scopes\ModelOwnedScope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Foundation\Auth\User;
 
 /**
  * Trait ModelOwnedTrait
+ *
+ * @method static static|Builder|\Illuminate\Database\Query\Builder owned(User|bool|null $owner = null)
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
  */
