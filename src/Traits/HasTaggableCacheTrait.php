@@ -59,20 +59,22 @@ trait HasTaggableCacheTrait
      */
     public function clearCache(): bool
     {
+        $manager = $this->getCacheManager();
+
         if ($this->isCacheTaggable()) {
-            return $this->getCacheManager()->tags($this->getMainTag())->flush();
+            $manager = $manager->tags($this->getMainTag());
         }
 
-        return false;
+        return $manager->flush();
     }
 
     /**
      * @param ...$tags
      * @return array
      */
-    public function getTags(...$tags): array
+    protected function getTags(...$tags): array
     {
-        return collect($this->getMainTag())->merge($tags)->filter()->toArray();
+        return collect($this->getMainTag())->merge($tags)->unique()->filter()->toArray();
     }
 
     /**
@@ -83,49 +85,66 @@ trait HasTaggableCacheTrait
      * @param  Closure|DateTimeInterface|DateInterval|int|null  $ttl
      * @return mixed
      */
-    private function getCache(array $tags, string $key, Closure $closure, bool $rehydrate = false, Closure|DateTimeInterface|DateInterval|int $ttl = null): mixed
+    protected function getCache(array $tags, string $key, Closure $closure, bool $rehydrate = false, Closure|DateTimeInterface|DateInterval|int $ttl = null): mixed
     {
-        if ($this->isCacheTaggable()) {
-            if ($rehydrate) {
-                $this->forgetCache($tags, $key);
-            }
+        $tags = $this->getTags(...$tags);
 
-            $tagged_cache = $this->getCacheManager()->tags($tags);
+        $manager = $this->getCacheManager();
 
-            // Copied and improved from \Illuminate\Cache\Repository's remember() function
-            $value = $tagged_cache->get($key);
+        $this->prepareCacheManagerAndKey(manager: $manager, key: $key, tags: $tags);
 
-            if (! is_null($value)) {
-                return $value;
-            }
+        if ($rehydrate) {
+            $manager->forget($key);
+        }
 
-            // Pass reference to $ttl to provide option to override cache expiration
-            $value = $closure($ttl);
+        // Copied and improved from \Illuminate\Cache\Repository's remember() function
+        $value = $manager->get($key);
 
-            if (($ttl = value($ttl)) && $ttl !== 0) {
-                $tagged_cache->put($key, $value, $ttl);
-            }
-
+        if (! is_null($value)) {
             return $value;
         }
 
-        return $closure();
+        // Pass reference to $ttl to provide option to override cache expiration
+        $value = $closure($ttl);
+
+        $ttl = value($ttl);
+
+        if ($ttl !== 0) {
+            $manager->put($key, $value, $ttl);
+        }
+
+        return $value;
     }
 
     /**
-     * @param  string  $key
-     * @param  string[]  $tags
+     * @param string $key
+     * @param string[] $tags
      * @return bool
      */
     public function forgetCache(array $tags, string $key): bool
     {
-        $tagged_cache = $this->getCacheManager()->tags($tags);
+        $tags = $this->getTags(...$tags);
 
+        $manager = $this->getCacheManager();
+
+        $this->prepareCacheManagerAndKey(manager: $manager, key: $key, tags: $tags);
+
+        return $manager->forget($key);
+    }
+
+    /**
+     * @param CacheManager $manager
+     * @param array $tags
+     * @param string $key
+     * @return void
+     */
+    protected function prepareCacheManagerAndKey(CacheManager &$manager, string &$key, array $tags = []): void
+    {
         if ($this->isCacheTaggable()) {
-            return $tagged_cache->forget($key);
+            $manager = $manager->tags($tags);
+        } else {
+            $key = collect(['tags' => $tags, 'key' => $key])->toJson();
         }
-
-        return false;
     }
 
     /**
