@@ -4,8 +4,10 @@ namespace Fligno\StarterKit\Services;
 
 use Fligno\StarterKit\Traits\UsesDataParsingTrait;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Pagination\AbstractPaginator;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
 
 /**
@@ -25,9 +27,14 @@ class CustomResponse
     use UsesDataParsingTrait;
 
     /**
-     * @var mixed
+     * @var string|null
      */
-    protected mixed $data = [];
+    protected ?string $message = null;
+
+    /**
+     * @var mixed|null
+     */
+    protected mixed $data = null;
 
     /**
      * @var int
@@ -40,14 +47,9 @@ class CustomResponse
     protected bool $success = true;
 
     /**
-     * @var array
+     * @var string|null
      */
-    protected array $message = [];
-
-    /**
-     * @var string
-     */
-    protected string $slug = '';
+    protected string|null $slug = null;
 
     /**
      * @var array
@@ -57,19 +59,19 @@ class CustomResponse
     /**
      * ExtendedResponse constructor.
      *
-     * @param  mixed  $data
-     * @param  array|string|null  $message
+     * @param string|null $message
+     * @param mixed $data
+     * @param int $code
      */
-    public function __construct(mixed $data = null, array|string $message = null)
+    public function __construct(?string $message = null, mixed $data = null, int $code = 200)
     {
-        if (empty($data) === false) {
-            $this->data($data);
-        }
-
-        if (empty($message) === false) {
-            $this->message($message);
-        }
+        $this
+            ->message($message)
+            ->data($data)
+            ->code($code);
     }
+
+    /***** HTTP CODE RELATED *****/
 
     /**
      * Set status code
@@ -96,10 +98,7 @@ class CustomResponse
      */
     public function success(int $code = 200): CustomResponse
     {
-        $this->code = $code;
-        $this->success = true;
-
-        return $this;
+        return $this->code($code);
     }
 
     /**
@@ -110,10 +109,7 @@ class CustomResponse
      */
     public function failed(int $code = 400): CustomResponse
     {
-        $this->code = $code;
-        $this->success = false;
-
-        return $this;
+        return $this->code($code);
     }
 
     /**
@@ -122,12 +118,9 @@ class CustomResponse
      *
      * @return $this
      */
-    public function unauthorized(): CustomResponse
+    public function unauthorized(int $code = 401): CustomResponse
     {
-        $this->code = 401;
-        $this->success = false;
-
-        return $this;
+        return $this->code($code);
     }
 
     /**
@@ -135,12 +128,9 @@ class CustomResponse
      *
      * @return $this
      */
-    public function forbidden(): CustomResponse
+    public function forbidden(int $code = 403): CustomResponse
     {
-        $this->code = 403;
-        $this->success = false;
-
-        return $this;
+        return $this->code($code);
     }
 
     /**
@@ -148,23 +138,28 @@ class CustomResponse
      *
      * @return $this
      */
-    public function notFound(): CustomResponse
+    public function notFound(int $code = 404): CustomResponse
     {
-        $this->code = 404;
-        $this->success = false;
-
-        return $this;
+        return $this->code($code);
     }
+
+    /***** HTTP MESSAGE RELATED *****/
 
     /**
      * Set a custom slug
      *
-     * @param  string  $value
+     * @param string $title
+     * @param string[] $dictionary
      * @return $this
      */
-    public function slug(string $value): CustomResponse
+    public function slug(string $title, array $dictionary = []): CustomResponse
     {
-        $this->slug = $value;
+        $title = Str::after($title, '::');
+
+        $default_dictionary = ['@' => 'at', '/' => ' ', '.' => ' '];
+        $dictionary = array_merge($default_dictionary, $dictionary);
+
+        $this->slug = Str::slug(title: $title, separator: '_', dictionary: $dictionary);
 
         return $this;
     }
@@ -172,36 +167,22 @@ class CustomResponse
     /**
      * Set message
      *
-     * @param  array|string|null  $value
+     * @param string|null $message
+     * @param array $replace
      * @return $this
      */
-    public function message(array|string|null $value): CustomResponse
+    public function message(string|null $message, array $replace = []): CustomResponse
     {
-        if (is_string($value)) {
-            $value = [$value];
-        } elseif (is_null($value)) {
-            $value = [];
-        }
+        if ($message) {
+            if (! $this->slug) {
+                $this->slug(title: $message);
+            }
 
-        // set slug too
-        if (empty($this->slug)) {
-            $this->slug = Str::slug($value[0], '_');
+            // Translate the message
+            $this->message = __(key: $message, replace: $replace, locale: App::getLocale());
         }
-
-        $this->message = $this->translateMessage($value);
 
         return $this;
-    }
-
-    /**
-     * Implement a message translator based on slug given
-     *
-     * @param    $fallback
-     * @return mixed
-     */
-    protected function translateMessage($fallback): mixed
-    {
-        return $fallback;
     }
 
     /**
@@ -229,6 +210,8 @@ class CustomResponse
             // separate them on two different array keys to create uniformity
             $this->pagination = $pagination;
             $this->data = $data;
+        } elseif ($value instanceof JsonResource) {
+            $this->data = $value->toArray(request());
         } else {
             $this->data = $this->parse($value);
         }
@@ -243,28 +226,26 @@ class CustomResponse
      */
     public function generate(): JsonResponse
     {
-        return $this->generateResponse();
-    }
-
-    /**
-     * Generate response
-     *
-     * @return JsonResponse
-     */
-    protected function generateResponse(): JsonResponse
-    {
         $data = collect([
             'success' => $this->success,
             'code' => $this->code,
+            'locale' => App::getLocale(),
             'slug' => $this->slug,
             'message' => $this->message,
-            'pagination' => $this->pagination,
         ]);
 
-        if ($this->code >= 400) {
-            $data->put('errors', $this->data);
-        } else {
-            $data->put('data', $this->data);
+        // Add the data or errors based on status code
+        if (! empty($this->data)) {
+            if ($this->code >= 400) {
+                $data->put('errors', $this->data);
+            } else {
+                $data->put('data', $this->data);
+            }
+        }
+
+        // Add pagination if not empty
+        if (! empty($this->pagination)) {
+            $data->put('pagination', $this->pagination);
         }
 
         return response()->json($data->toArray(), $this->code);

@@ -55,18 +55,15 @@ class StarterKitServiceProvider extends ServiceProvider
 
             starterKit()->addExceptionRender(ModelNotFoundException::class, function () {
                 return customResponse()
-                    ->data([])
-                    ->message('The identifier you are querying does not exist.')
+                    ->message('The resource you are looking for does not exist.')
                     ->slug('no_query_result')
                     ->failed(404)
                     ->generate();
             });
 
-            starterKit()->addExceptionRender(AuthorizationException::class, function () {
+            starterKit()->addExceptionRender(AuthorizationException::class, function ($request, AuthorizationException $exception) {
                 return customResponse()
-                    ->data([])
-                    ->message('You do not have right to access this resource.')
-                    ->slug('forbidden_request')
+                    ->message($exception->getMessage())
                     ->failed(403)
                     ->generate();
             });
@@ -109,12 +106,11 @@ class StarterKitServiceProvider extends ServiceProvider
                 starter_kit: $app->make('starter-kit'),
                 config: $app->make('config'),
                 migrator: $app->make('migrator'),
-                view: $app->make('view'),
                 translator: $app->make('translator'),
             );
         });
 
-        $this->app->bind('custom-response', fn () => new CustomResponse());
+        $this->app->bind('custom-response', fn ($app, $params) => new CustomResponse(...$params));
 
         parent::register();
     }

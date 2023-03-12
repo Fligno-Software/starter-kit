@@ -22,7 +22,6 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 use Illuminate\Translation\Translator;
-use Illuminate\View\Factory;
 use Spatie\QueryBuilder\QueryBuilder;
 use Throwable;
 
@@ -60,19 +59,17 @@ class PackageDomain
     protected Collection|null $existing_paths = null;
 
     /**
-     * @param  Application  $app
-     * @param  StarterKit  $starter_kit
-     * @param  Repository  $config
-     * @param  Migrator  $migrator
-     * @param  Factory  $view
-     * @param  Translator  $translator
+     * @param Application $app
+     * @param StarterKit $starter_kit
+     * @param Repository $config
+     * @param Migrator $migrator
+     * @param Translator $translator
      */
     public function __construct(
         protected Application $app,
         protected StarterKit $starter_kit,
         protected Repository $config,
         protected Migrator $migrator,
-        protected Factory $view,
         protected Translator $translator,
     ) {
         //
@@ -154,8 +151,6 @@ class PackageDomain
             $this
                 ->bootMorphMap()
                 ->bootMigrations()
-                ->bootViews() // Todo: Load views
-                ->bootViewComponentsAs() // Todo: Load View Components As
                 ->bootRoutes()
                 ->bootObservers()
                 ->bootPolicies()
@@ -181,8 +176,7 @@ class PackageDomain
             $this->existing_paths = $this->starter_kit->getPathsOnly($package, $domain, $only);
 
             $this
-                ->registerTranslations() // Todo: Load Translations
-                ->registerJsonTranslations() // Todo: Load JSON Translations
+                ->registerTranslations()
                 ->registerConfigs()
                 ->registerHelpers();
         }
@@ -261,77 +255,26 @@ class PackageDomain
         return $this;
     }
 
-    /**
-     * Todo: Views
-     *
-     * Register a view file namespace.
-     *
-     * @return $this
-     */
-    protected function bootViews(): static
-    {
-//        $this->callAfterResolving('view', function ($view) use ($path, $namespace) {
-//            if (isset($this->app->config['view']['paths']) &&
-//                is_array($this->app->config['view']['paths'])) {
-//                foreach ($this->app->config['view']['paths'] as $viewPath) {
-//                    if (is_dir($appPath = $viewPath.'/vendor/'.$namespace)) {
-//                        $view->addNamespace($namespace, $appPath);
-//                    }
-//                }
-//            }
-//
-//            $view->addNamespace($namespace, $path);
-//        });
-
-        return $this;
-    }
+    /***** TRANSLATIONS *****/
 
     /**
-     *  Todo: Views
-     *
-     * Register the given view components with a custom prefix.
-     *
-     * @return $this
-     */
-    protected function bootViewComponentsAs(): static
-    {
-//        $this->callAfterResolving(BladeCompiler::class, function ($blade) use ($prefix, $components) {
-//            foreach ($components as $alias => $component) {
-//                $blade->component($component, is_string($alias) ? $alias : null, $prefix);
-//            }
-//        });
-
-        return $this;
-    }
-
-    /**
-     *  Todo: Localization
-     *
      * Register a translation file namespace.
      *
      * @return $this
      */
     protected function registerTranslations(): static
     {
-//        $this->callAfterResolving('translator', function ($translator) use ($path, $namespace) {
-//            $translator->addNamespace($namespace, $path);
-//        });
+        if ($this->existing_paths?->has(StarterKit::LANG_DIR)) {
+            $paths = $this->starter_kit->getTranslations($this->provider_data->package, $this->provider_data->domain);
 
-        return $this;
-    }
+            $namespace = trim($this->provider_data->package.$this->provider_data->getDecodedDomain(), '/');
 
-    /**
-     * Todo: Localization
-     *
-     * Register a JSON translation file path.
-     *
-     * @return $this
-     */
-    protected function registerJsonTranslations(): static
-    {
-//        $this->callAfterResolving('translator', function ($translator) use ($path) {
-//            $translator->addJsonPath($path);
-//        });
+            // Register Short Keys
+            $this->translator->addNamespace($namespace, $paths);
+
+            // Register Strings as Keys
+            $this->translator->addJsonPath($paths);
+        }
 
         return $this;
     }
