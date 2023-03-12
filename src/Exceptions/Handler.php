@@ -6,7 +6,8 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 /**
@@ -44,7 +45,7 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        if (starterKit()?->isSentryEnabled()) {
+        if (starterKit()->isSentryEnabled()) {
             $this->reportable(
                 static function (Throwable $e) {
                     if (app()->bound('sentry')) {
@@ -56,35 +57,46 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * @param  Request  $request
-     * @param  Throwable  $e
-     * @return Response|JsonResponse|\Symfony\Component\HttpFoundation\Response
+     * @param Request $request
+     * @param Throwable $e
+     * @return Response|\Symfony\Component\HttpFoundation\JsonResponse
      *
      * @throws Throwable
      */
-    public function render($request, Throwable $e): Response|JsonResponse|\Symfony\Component\HttpFoundation\Response
+    public function render($request, Throwable $e): \Symfony\Component\HttpFoundation\JsonResponse|Response
     {
         if ($closure = starterKit()->getExceptionRenders($e)) {
-            return $closure($e);
+            return $closure($request, $e);
         }
 
         return parent::render($request, $e);
     }
 
     /**
-     * @param  Request  $request
-     * @param  AuthenticationException  $exception
-     * @return JsonResponse|\Symfony\Component\HttpFoundation\Response
+     * @param Request $request
+     * @param AuthenticationException $exception
+     * @return JsonResponse
      */
-    public function unauthenticated(
-        $request,
-        AuthenticationException $exception
-    ): JsonResponse|\Symfony\Component\HttpFoundation\Response {
+    public function unauthenticated($request, AuthenticationException $exception): JsonResponse
+    {
         return customResponse()
-            ->data([])
             ->message('You do not have a valid authentication token.')
-            ->slug('missing_bearer_token')
+            ->slug('missing bearer token')
             ->failed(401)
+            ->generate();
+    }
+
+    /**
+     * @param $request
+     * @param ValidationException $exception
+     * @return JsonResponse
+     */
+    protected function invalidJson($request, ValidationException $exception): JsonResponse
+    {
+        return customResponse()
+            ->message($exception->getMessage())
+            ->data($exception->errors())
+            ->failed($exception->status)
             ->generate();
     }
 }

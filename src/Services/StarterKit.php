@@ -48,8 +48,6 @@ class StarterKit
 
     public const LANG_DIR = 'lang';
 
-    public const VIEWS_DIR = 'resources/views';
-
     public const TESTS_DIR = 'tests';
 
     public const ROUTES_DIR = 'routes';
@@ -178,7 +176,6 @@ class StarterKit
             self::MIGRATIONS_DIR,
             self::HELPERS_DIR,
             self::LANG_DIR,
-            self::VIEWS_DIR,
             self::TESTS_DIR,
             self::ROUTES_DIR,
             self::MODELS_DIR,

@@ -57,6 +57,24 @@ class ServiceProviderData extends BaseJsonSerializable
         }
     }
 
+    /***** GETTERS *****/
+
+    /**
+     * @param bool $as_namespace
+     * @param string $separator
+     * @return string|null
+     */
+    public function getDecodedDomain(bool $as_namespace = false, string $separator = '.'): ?string
+    {
+        if ($this->domain) {
+            return domain_decode($this->domain, $as_namespace, $separator);
+        }
+
+        return null;
+    }
+
+    /***** OTHER FUNCTIONS *****/
+
     /**
      * @param  ServiceProvider  $provider
      * @return array

@@ -26,35 +26,21 @@ use Symfony\Component\Process\Process;
 
 if (! function_exists('starterKit')) {
     /**
-     * @return StarterKit|null
+     * @return StarterKit
      */
-    function starterKit(): StarterKit|null
+    function starterKit(): StarterKit
     {
-        try {
-            return resolve('starter-kit');
-        } catch (Throwable) {
-            return null;
-        }
+        return resolve('starter-kit');
     }
 }
 
 if (! function_exists('starter_kit')) {
     /**
-     * @return StarterKit|null
+     * @return StarterKit
      */
-    function starter_kit(): StarterKit|null
+    function starter_kit(): StarterKit
     {
         return starterKit();
-    }
-}
-
-if (! function_exists('callAfterResolvingStarterKit')) {
-    /**
-     * @param  Closure|null  $callable $callable
-     */
-    function callAfterResolvingStarterKit(Closure|null $callable): void
-    {
-        callAfterResolvingService('starter-kit', $callable);
     }
 }
 
@@ -62,21 +48,27 @@ if (! function_exists('callAfterResolvingStarterKit')) {
 
 if (! function_exists('custom_response')) {
     /**
+     * @param string|null $message
+     * @param mixed|null $data
+     * @param int $code
      * @return CustomResponse
      */
-    function custom_response(): CustomResponse
+    function custom_response(?string $message = null, mixed $data = null, int $code = 200): CustomResponse
     {
-        return resolve('custom-response');
+        return resolve('custom-response', func_get_args());
     }
 }
 
 if (! function_exists('customResponse')) {
     /**
+     * @param string|null $message
+     * @param mixed|null $data
+     * @param int $code
      * @return CustomResponse
      */
-    function customResponse(): CustomResponse
+    function customResponse(?string $message = null, mixed $data = null, int $code = 200): CustomResponse
     {
-        return custom_response();
+        return custom_response($message, $data, $code);
     }
 }
 

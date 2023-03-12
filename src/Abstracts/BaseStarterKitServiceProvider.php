@@ -3,7 +3,6 @@
 namespace Fligno\StarterKit\Abstracts;
 
 use Fligno\StarterKit\Traits\UsesProviderStarterKitTrait;
-use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -16,17 +15,6 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     use UsesProviderStarterKitTrait;
 
     /**
-     * Create a new service provider instance.
-     *
-     * @param  Application  $app
-     * @return void
-     */
-    public function __construct(protected $app)
-    {
-        parent::__construct($app);
-    }
-
-    /**
      * Perform post-registration booting of services.
      *
      * @return void
@@ -34,7 +22,9 @@ abstract class BaseStarterKitServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Boot Laravel Files
-        package_domain()->provider($this)->registerLaravelFiles()->bootLaravelFiles();
+        packageDomain()->provider($this)
+            ->registerLaravelFiles()
+            ->bootLaravelFiles();
 
         // For Console Kernel
         $this->bootConsoleKernel();
