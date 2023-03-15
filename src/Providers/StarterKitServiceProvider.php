@@ -4,6 +4,8 @@ namespace Fligno\StarterKit\Providers;
 
 use Fligno\StarterKit\Abstracts\BaseStarterKitServiceProvider as ServiceProvider;
 use Fligno\StarterKit\Exceptions\Handler;
+use Fligno\StarterKit\Http\Middleware\ChangeAppLocaleMiddleware;
+use Fligno\StarterKit\Interfaces\ProviderHttpKernelInterface;
 use Fligno\StarterKit\Services\CustomResponse;
 use Fligno\StarterKit\Services\PackageDomain;
 use Fligno\StarterKit\Services\StarterKit;
@@ -12,13 +14,14 @@ use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Application;
+use Illuminate\Routing\Router;
 
 /**
  * Class StarterKitServiceProvider
  *
  * @author James Carlo Luchavez <jamescarlo.luchavez@fligno.com>
  */
-class StarterKitServiceProvider extends ServiceProvider
+class StarterKitServiceProvider extends ServiceProvider implements ProviderHttpKernelInterface
 {
     /**
      * @var string[]
@@ -38,6 +41,8 @@ class StarterKitServiceProvider extends ServiceProvider
         'SK_VERIFY_SSL' => true,
         'SK_SENTRY_ENABLED' => false,
         'SK_SENTRY_TEST_API_ENABLED' => false,
+        'SK_CHANGE_LOCALE_KEY' => 'lang',
+        'SK_CHANGE_LOCALE_ENABLED' => true,
     ];
 
     /**
@@ -181,5 +186,22 @@ class StarterKitServiceProvider extends ServiceProvider
     public function areConfigsEnabled(): bool
     {
         return false;
+    }
+
+    /***** LANG RELATED *****/
+
+    /**
+     * @param Router $router
+     * @return void
+     */
+    public function registerToHttpKernel(Router $router): void
+    {
+        // Register and add 'change_locale' middleware globally
+        $middleware = 'change_locale';
+
+        $router->aliasMiddleware($middleware, ChangeAppLocaleMiddleware::class);
+
+        collect($router->getMiddlewareGroups())
+            ->each(fn ($v, $k) => $router->pushMiddlewareToGroup($k, $middleware));
     }
 }

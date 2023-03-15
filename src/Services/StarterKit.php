@@ -574,4 +574,22 @@ class StarterKit
     {
         return config('starter-kit.enforce_morph_map');
     }
+
+    /***** LOCALE RELATED *****/
+
+    /**
+     * @return string
+     */
+    public function getChangeLocaleKey(): string
+    {
+        return config('starter-kit.change_locale.key');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isChangeLocaleEnabled(): bool
+    {
+        return (bool) config('starter-kit.change_locale.enabled');
+    }
 }
