@@ -98,7 +98,7 @@ class ServiceProviderData extends BaseJsonSerializable
                     return $str->before($domain_decoded);
                 },
                 function (Stringable $str) {
-                    $base = base_path();
+                    $base = str_replace('\\', '/', base_path());
 
                     return $str->after($base)->before('src/')->before('app/')->prepend($base);
                 }

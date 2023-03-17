@@ -779,7 +779,7 @@ if (! function_exists('make_process')) {
     function make_process(Collection|array $arguments, string $workingDirectory = null): Process
     {
         if (! $workingDirectory) {
-            $workingDirectory = base_path();
+            $workingDirectory = str_replace('\\', '/', base_path());
         }
 
         if ($arguments instanceof Collection) {
@@ -955,7 +955,7 @@ if (! function_exists('qualify_composer_json')) {
                 ->jsonSerialize();
         }
 
-        return base_path('composer.json');
+        return str_replace('\\', '/', base_path('composer.json'));
     }
 }
 
@@ -1025,20 +1025,20 @@ if (! function_exists('add_contents_to_env')) {
         if ($contents->count()) {
             $title = Str::of($title);
             $addon = $contents
-                ->map(fn ($item, $key) => get_combined_key_value($key, $item).PHP_EOL)
+                ->map(fn ($item, $key) => get_combined_key_value($key, $item)."\n")
                 ->values()
                 ->when(
                     $title->isNotEmpty(),
                     fn (Collection $collection) => $collection->prepend(
                         $title
                         ->start('# ')
-                        ->append(PHP_EOL)
+                        ->append("\n")
                         ->jsonSerialize()
                     )
                 )
                 ->implode(null);
 
-            $env = Str::of($env)->append(PHP_EOL, $addon)->jsonSerialize();
+            $env = Str::of($env)->append("\n", $addon)->jsonSerialize();
         }
 
         return $env !== $copy_env && ! file_put_contents($path, $env) === false;
@@ -1141,7 +1141,7 @@ if (! function_exists('add_provider_to_app_config')) {
         if (
             ! file_exists($path = config_path('app.php')) ||
             app()->getProvider($provider) || (
-                ($contents = explode(PHP_EOL, file_get_contents($path))) &&
+                ($contents = explode("\n", file_get_contents($path))) &&
                 preg_grep('/'.preg_quote($provider).'/', $contents)
             )
         ) {
@@ -1187,7 +1187,7 @@ if (! function_exists('add_provider_to_app_config')) {
                 $providers[] = Str::finish($sample, ',');
                 $pieces->put(1, $providers);
 
-                return file_put_contents($path, $pieces->collapse()->implode(PHP_EOL));
+                return file_put_contents($path, $pieces->collapse()->implode("\n"));
             }
         }
 
@@ -1207,13 +1207,13 @@ if (! function_exists('remove_provider_from_app_config')) {
             return false;
         }
 
-        $contents = explode(PHP_EOL, file_get_contents($path));
+        $contents = explode("\n", file_get_contents($path));
 
         if (($matches = preg_grep('/'.preg_quote($provider).'/', $contents)) && count($matches)) {
             $index = array_keys($matches)[0];
             unset($contents[$index]);
 
-            return file_put_contents($path, implode(PHP_EOL, $contents));
+            return file_put_contents($path, implode("\n", $contents));
         }
 
         return false;
